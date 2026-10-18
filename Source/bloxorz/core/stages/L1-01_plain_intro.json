@@ -1,0 +1,27 @@
+{
+  "id": "L1-01",
+  "name": "Stage 01 - Plain Intro",
+  "group": "L1",
+  "difficulty": "Basic",
+  "source": "Coolmath Games Bloxorz - Stage 1",
+  "rows": 6,
+  "cols": 10,
+  "start": [
+    1,
+    1
+  ],
+  "goal": [
+    4,
+    7
+  ],
+  "grid": [
+    "ooo.......",
+    "oSo.......",
+    "ooo.......",
+    "...ooo....",
+    "...ooGoo..",
+    "...ooooo.."
+  ],
+  "switches": [],
+  "bridges": []
+}

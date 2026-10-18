@@ -1,0 +1,28 @@
+{
+  "id": "L2-02",
+  "name": "Stage 05 - Fragile Stepping Stones",
+  "group": "L2",
+  "difficulty": "Fragile",
+  "source": "Coolmath Games Bloxorz - Stage 5",
+  "rows": 7,
+  "cols": 14,
+  "start": [
+    1,
+    2
+  ],
+  "goal": [
+    5,
+    11
+  ],
+  "grid": [
+    "..oooo........",
+    "..oSoo.ffff...",
+    "..oooo.ffff...",
+    ".......ffff.oo",
+    ".......ffff.oG",
+    "............oo",
+    "............oo"
+  ],
+  "switches": [],
+  "bridges": []
+}

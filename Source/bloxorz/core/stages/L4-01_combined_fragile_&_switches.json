@@ -1,0 +1,95 @@
+{
+  "id": "L4-01",
+  "name": "Stage 10 - Combined Fragile & Switches",
+  "group": "L4",
+  "difficulty": "Combined",
+  "source": "Coolmath Games Bloxorz - Stage 10",
+  "rows": 8,
+  "cols": 14,
+  "start": [
+    1,
+    1
+  ],
+  "goal": [
+    6,
+    11
+  ],
+  "grid": [
+    ".oooo.........",
+    ".oSoo.ff......",
+    ".oo+o.ff..==..",
+    "......ff..==.o",
+    "......ff..==oX",
+    "......oooo==oG",
+    "......oooo...o",
+    "......oooo...."
+  ],
+  "switches": [
+    {
+      "type": "soft",
+      "pos": [
+        2,
+        2
+      ],
+      "action": "toggle",
+      "bridges": [
+        [
+          2,
+          10
+        ],
+        [
+          3,
+          10
+        ]
+      ]
+    },
+    {
+      "type": "heavy",
+      "pos": [
+        4,
+        13
+      ],
+      "action": "permanent",
+      "bridges": [
+        [
+          4,
+          10
+        ],
+        [
+          5,
+          10
+        ]
+      ]
+    }
+  ],
+  "bridges": [
+    {
+      "pos": [
+        2,
+        10
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        3,
+        10
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        4,
+        10
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        5,
+        10
+      ],
+      "initially_open": false
+    }
+  ]
+}

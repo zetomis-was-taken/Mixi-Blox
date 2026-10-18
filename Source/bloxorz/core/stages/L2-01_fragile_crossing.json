@@ -1,0 +1,27 @@
+{
+  "id": "L2-01",
+  "name": "Stage 04 - Fragile Crossing",
+  "group": "L2",
+  "difficulty": "Fragile",
+  "source": "Coolmath Games Bloxorz - Stage 3",
+  "rows": 6,
+  "cols": 12,
+  "start": [
+    1,
+    1
+  ],
+  "goal": [
+    3,
+    10
+  ],
+  "grid": [
+    ".oooo.......",
+    ".oSoo.ff....",
+    ".oooo.ff.ooo",
+    "......ff.oGo",
+    "......ff.ooo",
+    ".........ooo"
+  ],
+  "switches": [],
+  "bridges": []
+}

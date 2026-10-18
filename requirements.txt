@@ -1,0 +1,11 @@
+# Bloxorz Solver - CSC14003 Project 1 Dependencies
+
+# Benchmarking & Visualization
+matplotlib>=3.8.0
+
+# 3D GUI Engine (per team agreement)
+ursina>=5.0.0; python_version < "3.14"
+
+# Testing & Quality Assurance
+pytest>=7.4.0
+ruff>=0.1.0

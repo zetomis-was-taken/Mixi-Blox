@@ -1,0 +1,94 @@
+{
+  "id": "L3-03",
+  "name": "Stage 09 - Dual Switch Coordination",
+  "group": "L3",
+  "difficulty": "Switches",
+  "source": "Coolmath Games Bloxorz - Stage 9",
+  "rows": 7,
+  "cols": 14,
+  "start": [
+    1,
+    1
+  ],
+  "goal": [
+    5,
+    12
+  ],
+  "grid": [
+    ".ooooo..==....",
+    ".oSo+o..==.ooo",
+    ".ooooo..==.oXo",
+    "........==.ooo",
+    "...........==.",
+    "..........oGo.",
+    "..........ooo."
+  ],
+  "switches": [
+    {
+      "type": "soft",
+      "pos": [
+        1,
+        3
+      ],
+      "action": "toggle",
+      "bridges": [
+        [
+          0,
+          8
+        ],
+        [
+          1,
+          8
+        ],
+        [
+          2,
+          8
+        ]
+      ]
+    },
+    {
+      "type": "heavy",
+      "pos": [
+        2,
+        12
+      ],
+      "action": "toggle",
+      "bridges": [
+        [
+          4,
+          11
+        ]
+      ]
+    }
+  ],
+  "bridges": [
+    {
+      "pos": [
+        0,
+        8
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        1,
+        8
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        2,
+        8
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        4,
+        11
+      ],
+      "initially_open": false
+    }
+  ]
+}

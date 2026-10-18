@@ -1,0 +1,83 @@
+{
+  "id": "L3-01",
+  "name": "Stage 07 - Soft Switch Bridge",
+  "group": "L3",
+  "difficulty": "Switches",
+  "source": "Coolmath Games Bloxorz - Stage 7",
+  "rows": 6,
+  "cols": 13,
+  "start": [
+    1,
+    1
+  ],
+  "goal": [
+    3,
+    11
+  ],
+  "grid": [
+    ".ooo........o",
+    ".oS+o..==..oo",
+    ".ooo...==.oGo",
+    ".......==.ooo",
+    ".......==..oo",
+    "...........oo"
+  ],
+  "switches": [
+    {
+      "type": "soft",
+      "pos": [
+        1,
+        2
+      ],
+      "action": "toggle",
+      "bridges": [
+        [
+          1,
+          7
+        ],
+        [
+          1,
+          8
+        ],
+        [
+          2,
+          7
+        ],
+        [
+          2,
+          8
+        ]
+      ]
+    }
+  ],
+  "bridges": [
+    {
+      "pos": [
+        1,
+        7
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        1,
+        8
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        2,
+        7
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        2,
+        8
+      ],
+      "initially_open": false
+    }
+  ]
+}

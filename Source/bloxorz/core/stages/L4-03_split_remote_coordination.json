@@ -1,0 +1,101 @@
+{
+  "id": "L4-03",
+  "name": "Stage 12 - Split Remote Coordination",
+  "group": "L4",
+  "difficulty": "Combined",
+  "source": "Coolmath Games Bloxorz - Stage 12",
+  "rows": 8,
+  "cols": 16,
+  "start": [
+    1,
+    1
+  ],
+  "goal": [
+    6,
+    13
+  ],
+  "grid": [
+    ".ooooo..........",
+    ".oSooY..........",
+    ".ooooo...==...oo",
+    ".........==..oGo",
+    "..+......==...oo",
+    "..oo..ff........",
+    "..oo..ff..+.....",
+    "......ff..oo...."
+  ],
+  "switches": [
+    {
+      "type": "split",
+      "pos": [
+        1,
+        5
+      ],
+      "teleport_cubes": [
+        [
+          4,
+          2
+        ],
+        [
+          6,
+          10
+        ]
+      ]
+    },
+    {
+      "type": "soft",
+      "pos": [
+        4,
+        2
+      ],
+      "action": "toggle",
+      "bridges": [
+        [
+          2,
+          9
+        ],
+        [
+          3,
+          9
+        ]
+      ]
+    },
+    {
+      "type": "soft",
+      "pos": [
+        6,
+        10
+      ],
+      "action": "toggle",
+      "bridges": [
+        [
+          4,
+          9
+        ]
+      ]
+    }
+  ],
+  "bridges": [
+    {
+      "pos": [
+        2,
+        9
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        3,
+        9
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        4,
+        9
+      ],
+      "initially_open": false
+    }
+  ]
+}

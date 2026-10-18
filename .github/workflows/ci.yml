@@ -2,7 +2,7 @@ name: CI - Code Quality & Testing
 
 on:
   push:
-    branches: [ main, "feat/**", "chore/**" ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -30,7 +30,7 @@ jobs:
 
       - name: Lint with Ruff
         run: |
-          ruff check . --exit-zero
+          ruff check --no-cache . --exit-zero
 
       - name: Run verification checks
         run: |

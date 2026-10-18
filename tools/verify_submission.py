@@ -67,13 +67,21 @@ def check_structure(root_dir: Path) -> list[str]:
     return errors
 
 
-def check_forbidden_artifacts(root_dir: Path, ignore_git: bool = False) -> list[str]:
+def check_forbidden_artifacts(root_dir: Path, is_repo_check: bool = False) -> list[str]:
     """Scans for unwanted cache and virtual environment files."""
     violations = []
     for path in root_dir.rglob("*"):
         rel_str = str(path.relative_to(root_dir)).replace("\\", "/")
-        if ignore_git and (rel_str == ".git" or rel_str.startswith(".git/")):
-            continue
+        if is_repo_check:
+            # During CI / local development on the git repo, ignore git and transient test/linter caches
+            if rel_str == ".git" or rel_str.startswith(".git/"):
+                continue
+            if rel_str == ".ruff_cache" or rel_str.startswith(".ruff_cache/"):
+                continue
+            if rel_str == ".pytest_cache" or rel_str.startswith(".pytest_cache/"):
+                continue
+            if rel_str == ".mypy_cache" or rel_str.startswith(".mypy_cache/"):
+                continue
         for pattern in FORBIDDEN_PATTERNS:
             if re.search(pattern, rel_str, re.IGNORECASE):
                 violations.append(f"FORBIDDEN ARTIFACT: {rel_str}")
@@ -135,7 +143,7 @@ def run_checks(project_root: Path) -> bool:
     # 2. Forbidden artifacts check
     print("\n[2/4] Scanning for Forbidden Artifacts (__pycache__, .venv, temp files)...")
     is_git_repo = (project_root / ".git").exists()
-    artifact_issues = check_forbidden_artifacts(project_root, ignore_git=is_git_repo)
+    artifact_issues = check_forbidden_artifacts(project_root, is_repo_check=is_git_repo)
     if artifact_issues:
         for a in artifact_issues[:10]:
             print(f"  [X] {a}")

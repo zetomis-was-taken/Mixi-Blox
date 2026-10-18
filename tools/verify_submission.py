@@ -33,9 +33,14 @@ FORBIDDEN_PATTERNS = [
 ]
 
 TRAP_KEYWORDS = [
+    # Unicode-escaped patterns to prevent any terminal or git encoding slips
+    r"m\xe8o\s+l\u01b0\u1ee3ng\s+t\u1eed",
     r"mèo\s+lượng\s+tử",
+    r"meo\s+luong\s+tu",
     r"quantum\s+cat",
-    r"định\s+lý\s+con\s+mèo"
+    r"\u0111\u1ecbnh\s+l\xfd\s+con\s+m\xe8o",
+    r"định\s+lý\s+con\s+mèo",
+    r"dinh\s+ly\s+con\s+meo"
 ]
 
 def check_structure(root_dir: Path) -> list[str]:

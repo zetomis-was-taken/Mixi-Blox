@@ -4,16 +4,6 @@
   "group": "L3",
   "difficulty": "Switches",
   "source": "Coolmath Games Bloxorz - Stage 8",
-  "rows": 7,
-  "cols": 13,
-  "start": [
-    1,
-    1
-  ],
-  "goal": [
-    5,
-    10
-  ],
   "grid": [
     ".oooo........",
     ".oSoX..==....",
@@ -28,7 +18,7 @@
       "type": "heavy",
       "pos": [
         1,
-        3
+        4
       ],
       "action": "permanent",
       "bridges": [
@@ -47,8 +37,25 @@
         [
           2,
           8
+        ],
+        [
+          3,
+          7
+        ],
+        [
+          3,
+          8
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          4,
+          8
         ]
-      ]
+      ],
+      "teleport_cubes": null
     }
   ],
   "bridges": [
@@ -76,6 +83,34 @@
     {
       "pos": [
         2,
+        8
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        3,
+        7
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        3,
+        8
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        4,
+        7
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        4,
         8
       ],
       "initially_open": false

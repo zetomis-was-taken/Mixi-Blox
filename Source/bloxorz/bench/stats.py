@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from typing import Any, List, Literal, Optional
 import csv
 import json
 
@@ -37,12 +37,21 @@ class Stats:
         }
 
 
+Status = Literal["solved", "cap", "unsolvable"]
+
+
 @dataclass
 class SearchResult:
-    """Standard result returned by any solver."""
-    moves: Optional[List[Any]]  # None if no solution found
-    cost: int
-    stats: Stats
+    """Standard result returned by any solver (conforms to Issue #31)."""
+    status: Status = "solved"
+    path: Optional[Any] = None  # None if unsolved or cap reached without path
+    cost: int = 0
+    stats: Stats = field(default_factory=Stats)
+
+    @property
+    def moves(self) -> Optional[Any]:
+        """Backward-compatibility alias for path."""
+        return self.path
 
 
 @dataclass
@@ -85,7 +94,7 @@ def export_records_csv(records: List[BenchmarkRecord], filepath: str):
         writer.writeheader()
         for r in records:
             writer.writerow(r.to_dict())
-    print(f"[✓] Exported CSV to: {filepath}")
+    print(f"[+] Exported CSV to: {filepath}")
 
 
 def export_records_json(records: List[BenchmarkRecord], filepath: str):
@@ -93,7 +102,7 @@ def export_records_json(records: List[BenchmarkRecord], filepath: str):
     data = [r.to_dict() for r in records]
     with open(filepath, mode="w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-    print(f"[✓] Exported JSON to: {filepath}")
+    print(f"[+] Exported JSON to: {filepath}")
 
 
 def export_records_latex(
@@ -139,5 +148,5 @@ def export_records_latex(
     if filepath:
         with open(filepath, mode="w", encoding="utf-8") as f:
             f.write(table_code)
-        print(f"[✓] Exported LaTeX table to: {filepath}")
+        print(f"[+] Exported LaTeX table to: {filepath}")
     return table_code

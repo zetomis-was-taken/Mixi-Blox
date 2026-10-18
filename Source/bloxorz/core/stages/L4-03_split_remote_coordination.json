@@ -4,16 +4,6 @@
   "group": "L4",
   "difficulty": "Combined",
   "source": "Coolmath Games Bloxorz - Stage 12",
-  "rows": 8,
-  "cols": 16,
-  "start": [
-    1,
-    1
-  ],
-  "goal": [
-    6,
-    13
-  ],
   "grid": [
     ".ooooo..........",
     ".oSooY..........",
@@ -31,6 +21,8 @@
         1,
         5
       ],
+      "action": null,
+      "bridges": null,
       "teleport_cubes": [
         [
           4,
@@ -55,10 +47,19 @@
           9
         ],
         [
+          2,
+          10
+        ],
+        [
           3,
           9
+        ],
+        [
+          3,
+          10
         ]
-      ]
+      ],
+      "teleport_cubes": null
     },
     {
       "type": "soft",
@@ -71,8 +72,13 @@
         [
           4,
           9
+        ],
+        [
+          4,
+          10
         ]
-      ]
+      ],
+      "teleport_cubes": null
     }
   ],
   "bridges": [
@@ -85,6 +91,13 @@
     },
     {
       "pos": [
+        2,
+        10
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
         3,
         9
       ],
@@ -92,8 +105,22 @@
     },
     {
       "pos": [
+        3,
+        10
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
         4,
         9
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        4,
+        10
       ],
       "initially_open": false
     }

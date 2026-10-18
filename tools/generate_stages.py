@@ -7,7 +7,12 @@ Generates 12 standardized test stages across 4 difficulty tiers:
   - L3: Switches & Bridges (Soft and heavy switches, toggle/permanent bridges)
   - L4: Combined & Split (Complex stages with split switches and dual cube coordination)
 
-Sources: Transcribed from classic Bloxorz stages on Coolmath Games (FAQ Q1, Q2, Q5, Q9).
+Conforms to Interface Contract (Issue #8, PR #32):
+  - Grid glyphs are the single source of truth for start ('S') and goal ('G').
+  - No redundant 'start', 'goal', 'rows', 'cols' fields.
+  - Every '=' tile is declared as an individual bridge cell.
+  - All switch entries carry complete fields ('action', 'bridges', 'teleport_cubes' with null when unused).
+  - Clean filenames without special characters (Issue #8: no '&').
 """
 
 import json
@@ -17,6 +22,11 @@ def create_stages():
     stages_dir = Path(__file__).resolve().parent.parent / "Source" / "bloxorz" / "core" / "stages"
     stages_dir.mkdir(parents=True, exist_ok=True)
 
+    # Remove any obsolete stage files (e.g. ones with '&')
+    for old_file in stages_dir.glob("*_&_*.json"):
+        old_file.unlink()
+        print(f"[-] Removed obsolete file: {old_file.name}")
+
     stages = [
         # --- GROUP L1: BASIC ---
         {
@@ -24,18 +34,14 @@ def create_stages():
             "name": "Stage 01 - Plain Intro",
             "group": "L1",
             "difficulty": "Basic",
-            "source": "Coolmath Games Bloxorz - Stage 1",
-            "rows": 6,
-            "cols": 10,
-            "start": [1, 1],
-            "goal": [4, 7],
+            "source": "Coolmath Games Bloxorz - Stage 1 (Passcode 780464)",
             "grid": [
                 "ooo.......",
-                "oSo.......",
-                "ooo.......",
-                "...ooo....",
-                "...ooGoo..",
-                "...ooooo.."
+                "oSoooo....",
+                "ooooooooo.",
+                ".ooooooooo",
+                ".....ooGoo",
+                "......ooo."
             ],
             "switches": [],
             "bridges": []
@@ -46,10 +52,6 @@ def create_stages():
             "group": "L1",
             "difficulty": "Basic",
             "source": "Coolmath Games Bloxorz - Stage 2",
-            "rows": 6,
-            "cols": 12,
-            "start": [1, 2],
-            "goal": [2, 10],
             "grid": [
                 "..oooo......",
                 "..oSoo......",
@@ -67,10 +69,6 @@ def create_stages():
             "group": "L1",
             "difficulty": "Basic",
             "source": "Coolmath Games Bloxorz - Stage 4",
-            "rows": 7,
-            "cols": 12,
-            "start": [1, 1],
-            "goal": [5, 10],
             "grid": [
                 ".ooooo......",
                 ".oSooo......",
@@ -90,18 +88,13 @@ def create_stages():
             "name": "Stage 04 - Fragile Crossing",
             "group": "L2",
             "difficulty": "Fragile",
-            "source": "Coolmath Games Bloxorz - Stage 3",
-            "rows": 6,
-            "cols": 12,
-            "start": [1, 1],
-            "goal": [3, 10],
+            "source": "Coolmath Games Bloxorz - Fragile Bridge",
             "grid": [
-                ".oooo.......",
-                ".oSoo.ff....",
-                ".oooo.ff.ooo",
-                "......ff.oGo",
-                "......ff.ooo",
-                ".........ooo"
+                "..ooooffooo..",
+                "..oSooffoGo..",
+                "..ooooffooo..",
+                "..oooo..ooo..",
+                "..oooo..ooo.."
             ],
             "switches": [],
             "bridges": []
@@ -111,19 +104,14 @@ def create_stages():
             "name": "Stage 05 - Fragile Stepping Stones",
             "group": "L2",
             "difficulty": "Fragile",
-            "source": "Coolmath Games Bloxorz - Stage 5",
-            "rows": 7,
-            "cols": 14,
-            "start": [1, 2],
-            "goal": [5, 11],
+            "source": "Coolmath Games Bloxorz - Fragile Stepping",
             "grid": [
                 "..oooo........",
-                "..oSoo.ffff...",
-                "..oooo.ffff...",
-                ".......ffff.oo",
-                ".......ffff.oG",
-                "............oo",
-                "............oo"
+                "..oSooff..oooo",
+                "..ooooff..oGoo",
+                "......ff..oooo",
+                "......ff..oooo",
+                "......ffoooo.."
             ],
             "switches": [],
             "bridges": []
@@ -134,10 +122,6 @@ def create_stages():
             "group": "L2",
             "difficulty": "Fragile",
             "source": "Coolmath Games Bloxorz - Stage 6",
-            "rows": 7,
-            "cols": 12,
-            "start": [1, 1],
-            "goal": [5, 9],
             "grid": [
                 ".ooooo......",
                 ".oSooo......",
@@ -158,10 +142,6 @@ def create_stages():
             "group": "L3",
             "difficulty": "Switches",
             "source": "Coolmath Games Bloxorz - Stage 7",
-            "rows": 6,
-            "cols": 13,
-            "start": [1, 1],
-            "goal": [3, 11],
             "grid": [
                 ".ooo........o",
                 ".oS+o..==..oo",
@@ -171,13 +151,28 @@ def create_stages():
                 "...........oo"
             ],
             "switches": [
-                {"type": "soft", "pos": [1, 2], "action": "toggle", "bridges": [[1, 7], [1, 8], [2, 7], [2, 8]]}
+                {
+                    "type": "soft",
+                    "pos": [1, 3],
+                    "action": "toggle",
+                    "bridges": [
+                        [1, 7], [1, 8],
+                        [2, 7], [2, 8],
+                        [3, 7], [3, 8],
+                        [4, 7], [4, 8]
+                    ],
+                    "teleport_cubes": None
+                }
             ],
             "bridges": [
                 {"pos": [1, 7], "initially_open": False},
                 {"pos": [1, 8], "initially_open": False},
                 {"pos": [2, 7], "initially_open": False},
-                {"pos": [2, 8], "initially_open": False}
+                {"pos": [2, 8], "initially_open": False},
+                {"pos": [3, 7], "initially_open": False},
+                {"pos": [3, 8], "initially_open": False},
+                {"pos": [4, 7], "initially_open": False},
+                {"pos": [4, 8], "initially_open": False}
             ]
         },
         {
@@ -186,10 +181,6 @@ def create_stages():
             "group": "L3",
             "difficulty": "Switches",
             "source": "Coolmath Games Bloxorz - Stage 8",
-            "rows": 7,
-            "cols": 13,
-            "start": [1, 1],
-            "goal": [5, 10],
             "grid": [
                 ".oooo........",
                 ".oSoX..==....",
@@ -200,13 +191,28 @@ def create_stages():
                 "..........ooo"
             ],
             "switches": [
-                {"type": "heavy", "pos": [1, 3], "action": "permanent", "bridges": [[1, 7], [1, 8], [2, 7], [2, 8]]}
+                {
+                    "type": "heavy",
+                    "pos": [1, 4],
+                    "action": "permanent",
+                    "bridges": [
+                        [1, 7], [1, 8],
+                        [2, 7], [2, 8],
+                        [3, 7], [3, 8],
+                        [4, 7], [4, 8]
+                    ],
+                    "teleport_cubes": None
+                }
             ],
             "bridges": [
                 {"pos": [1, 7], "initially_open": False},
                 {"pos": [1, 8], "initially_open": False},
                 {"pos": [2, 7], "initially_open": False},
-                {"pos": [2, 8], "initially_open": False}
+                {"pos": [2, 8], "initially_open": False},
+                {"pos": [3, 7], "initially_open": False},
+                {"pos": [3, 8], "initially_open": False},
+                {"pos": [4, 7], "initially_open": False},
+                {"pos": [4, 8], "initially_open": False}
             ]
         },
         {
@@ -215,10 +221,6 @@ def create_stages():
             "group": "L3",
             "difficulty": "Switches",
             "source": "Coolmath Games Bloxorz - Stage 9",
-            "rows": 7,
-            "cols": 14,
-            "start": [1, 1],
-            "goal": [5, 12],
             "grid": [
                 ".ooooo..==....",
                 ".oSo+o..==.ooo",
@@ -229,28 +231,49 @@ def create_stages():
                 "..........ooo."
             ],
             "switches": [
-                {"type": "soft", "pos": [1, 3], "action": "toggle", "bridges": [[0, 8], [1, 8], [2, 8]]},
-                {"type": "heavy", "pos": [2, 12], "action": "toggle", "bridges": [[4, 11]]}
+                {
+                    "type": "soft",
+                    "pos": [1, 4],
+                    "action": "toggle",
+                    "bridges": [
+                        [0, 8], [0, 9],
+                        [1, 8], [1, 9],
+                        [2, 8], [2, 9],
+                        [3, 8], [3, 9]
+                    ],
+                    "teleport_cubes": None
+                },
+                {
+                    "type": "heavy",
+                    "pos": [2, 12],
+                    "action": "toggle",
+                    "bridges": [
+                        [4, 11], [4, 12]
+                    ],
+                    "teleport_cubes": None
+                }
             ],
             "bridges": [
                 {"pos": [0, 8], "initially_open": False},
+                {"pos": [0, 9], "initially_open": False},
                 {"pos": [1, 8], "initially_open": False},
+                {"pos": [1, 9], "initially_open": False},
                 {"pos": [2, 8], "initially_open": False},
-                {"pos": [4, 11], "initially_open": False}
+                {"pos": [2, 9], "initially_open": False},
+                {"pos": [3, 8], "initially_open": False},
+                {"pos": [3, 9], "initially_open": False},
+                {"pos": [4, 11], "initially_open": False},
+                {"pos": [4, 12], "initially_open": False}
             ]
         },
 
         # --- GROUP L4: COMBINED & SPLIT BLOCKS ---
         {
             "id": "L4-01",
-            "name": "Stage 10 - Combined Fragile & Switches",
+            "name": "Stage 10 - Combined Fragile and Switches",
             "group": "L4",
             "difficulty": "Combined",
             "source": "Coolmath Games Bloxorz - Stage 10",
-            "rows": 8,
-            "cols": 14,
-            "start": [1, 1],
-            "goal": [6, 11],
             "grid": [
                 ".oooo.........",
                 ".oSoo.ff......",
@@ -262,14 +285,36 @@ def create_stages():
                 "......oooo...."
             ],
             "switches": [
-                {"type": "soft", "pos": [2, 2], "action": "toggle", "bridges": [[2, 10], [3, 10]]},
-                {"type": "heavy", "pos": [4, 13], "action": "permanent", "bridges": [[4, 10], [5, 10]]}
+                {
+                    "type": "soft",
+                    "pos": [2, 3],
+                    "action": "toggle",
+                    "bridges": [
+                        [2, 10], [2, 11],
+                        [3, 10], [3, 11]
+                    ],
+                    "teleport_cubes": None
+                },
+                {
+                    "type": "heavy",
+                    "pos": [4, 13],
+                    "action": "permanent",
+                    "bridges": [
+                        [4, 10], [4, 11],
+                        [5, 10], [5, 11]
+                    ],
+                    "teleport_cubes": None
+                }
             ],
             "bridges": [
                 {"pos": [2, 10], "initially_open": False},
+                {"pos": [2, 11], "initially_open": False},
                 {"pos": [3, 10], "initially_open": False},
+                {"pos": [3, 11], "initially_open": False},
                 {"pos": [4, 10], "initially_open": False},
-                {"pos": [5, 10], "initially_open": False}
+                {"pos": [4, 11], "initially_open": False},
+                {"pos": [5, 10], "initially_open": False},
+                {"pos": [5, 11], "initially_open": False}
             ]
         },
         {
@@ -278,10 +323,6 @@ def create_stages():
             "group": "L4",
             "difficulty": "Combined",
             "source": "Coolmath Games Bloxorz - Stage 11",
-            "rows": 7,
-            "cols": 15,
-            "start": [1, 1],
-            "goal": [5, 12],
             "grid": [
                 ".oooo.........o",
                 ".oSoY..........",
@@ -292,13 +333,32 @@ def create_stages():
                 "..oo..........."
             ],
             "switches": [
-                {"type": "split", "pos": [1, 3], "teleport_cubes": [[4, 2], [6, 2]]},
-                {"type": "soft", "pos": [4, 2], "action": "toggle", "bridges": [[2, 8], [3, 8], [4, 8]]}
+                {
+                    "type": "split",
+                    "pos": [1, 4],
+                    "action": None,
+                    "bridges": None,
+                    "teleport_cubes": [[4, 2], [6, 2]]
+                },
+                {
+                    "type": "soft",
+                    "pos": [4, 2],
+                    "action": "toggle",
+                    "bridges": [
+                        [2, 8], [2, 9],
+                        [3, 8], [3, 9],
+                        [4, 8], [4, 9]
+                    ],
+                    "teleport_cubes": None
+                }
             ],
             "bridges": [
                 {"pos": [2, 8], "initially_open": False},
+                {"pos": [2, 9], "initially_open": False},
                 {"pos": [3, 8], "initially_open": False},
-                {"pos": [4, 8], "initially_open": False}
+                {"pos": [3, 9], "initially_open": False},
+                {"pos": [4, 8], "initially_open": False},
+                {"pos": [4, 9], "initially_open": False}
             ]
         },
         {
@@ -307,10 +367,6 @@ def create_stages():
             "group": "L4",
             "difficulty": "Combined",
             "source": "Coolmath Games Bloxorz - Stage 12",
-            "rows": 8,
-            "cols": 16,
-            "start": [1, 1],
-            "goal": [6, 13],
             "grid": [
                 ".ooooo..........",
                 ".oSooY..........",
@@ -322,14 +378,40 @@ def create_stages():
                 "......ff..oo...."
             ],
             "switches": [
-                {"type": "split", "pos": [1, 5], "teleport_cubes": [[4, 2], [6, 10]]},
-                {"type": "soft", "pos": [4, 2], "action": "toggle", "bridges": [[2, 9], [3, 9]]},
-                {"type": "soft", "pos": [6, 10], "action": "toggle", "bridges": [[4, 9]]}
+                {
+                    "type": "split",
+                    "pos": [1, 5],
+                    "action": None,
+                    "bridges": None,
+                    "teleport_cubes": [[4, 2], [6, 10]]
+                },
+                {
+                    "type": "soft",
+                    "pos": [4, 2],
+                    "action": "toggle",
+                    "bridges": [
+                        [2, 9], [2, 10],
+                        [3, 9], [3, 10]
+                    ],
+                    "teleport_cubes": None
+                },
+                {
+                    "type": "soft",
+                    "pos": [6, 10],
+                    "action": "toggle",
+                    "bridges": [
+                        [4, 9], [4, 10]
+                    ],
+                    "teleport_cubes": None
+                }
             ],
             "bridges": [
                 {"pos": [2, 9], "initially_open": False},
+                {"pos": [2, 10], "initially_open": False},
                 {"pos": [3, 9], "initially_open": False},
-                {"pos": [4, 9], "initially_open": False}
+                {"pos": [3, 10], "initially_open": False},
+                {"pos": [4, 9], "initially_open": False},
+                {"pos": [4, 10], "initially_open": False}
             ]
         }
     ]

@@ -81,19 +81,19 @@ def main():
         runner.register_solver("UCS", ucs.solve)
         runner.register_solver("A*", astar.solve)
         has_real_solvers = True
-        print("[✓] Loaded real solvers from bloxorz.search.")
+        print("[+] Loaded real solvers from bloxorz.search.")
     except (ImportError, AttributeError):
         print("[i] Solvers still under construction in bloxorz.search.")
         print("[i] Using baseline mock solvers to demonstrate pipeline end-to-end.")
         
         def mock_bfs(stage):
-            return SearchResult(moves=["U", "R", "D", "R"], cost=4, stats=Stats(expanded=35, generated=80))
+            return SearchResult(status="solved", path=["U", "R", "D", "R"], cost=4, stats=Stats(expanded=35, generated=80))
         def mock_dfs(stage):
-            return SearchResult(moves=["U", "L", "U", "R", "D", "R"], cost=6, stats=Stats(expanded=98, generated=140))
+            return SearchResult(status="solved", path=["U", "L", "U", "R", "D", "R"], cost=6, stats=Stats(expanded=98, generated=140))
         def mock_ucs(stage):
-            return SearchResult(moves=["U", "R", "D", "R"], cost=4, stats=Stats(expanded=42, generated=90))
+            return SearchResult(status="solved", path=["U", "R", "D", "R"], cost=4, stats=Stats(expanded=42, generated=90))
         def mock_astar(stage):
-            return SearchResult(moves=["U", "R", "D", "R"], cost=4, stats=Stats(expanded=18, generated=45))
+            return SearchResult(status="solved", path=["U", "R", "D", "R"], cost=4, stats=Stats(expanded=18, generated=45))
 
         runner.register_solver("BFS", mock_bfs)
         runner.register_solver("DFS", mock_dfs)

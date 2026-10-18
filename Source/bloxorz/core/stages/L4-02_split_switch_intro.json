@@ -4,16 +4,6 @@
   "group": "L4",
   "difficulty": "Combined",
   "source": "Coolmath Games Bloxorz - Stage 11",
-  "rows": 7,
-  "cols": 15,
-  "start": [
-    1,
-    1
-  ],
-  "goal": [
-    5,
-    12
-  ],
   "grid": [
     ".oooo.........o",
     ".oSoY..........",
@@ -28,8 +18,10 @@
       "type": "split",
       "pos": [
         1,
-        3
+        4
       ],
+      "action": null,
+      "bridges": null,
       "teleport_cubes": [
         [
           4,
@@ -54,14 +46,27 @@
           8
         ],
         [
+          2,
+          9
+        ],
+        [
           3,
           8
         ],
         [
+          3,
+          9
+        ],
+        [
           4,
           8
+        ],
+        [
+          4,
+          9
         ]
-      ]
+      ],
+      "teleport_cubes": null
     }
   ],
   "bridges": [
@@ -74,6 +79,13 @@
     },
     {
       "pos": [
+        2,
+        9
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
         3,
         8
       ],
@@ -81,8 +93,22 @@
     },
     {
       "pos": [
+        3,
+        9
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
         4,
         8
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        4,
+        9
       ],
       "initially_open": false
     }

@@ -41,7 +41,8 @@ class BenchmarkRunner:
         try:
             raw_result = solver_fn(stage_data)
             end_time = time.perf_counter()
-            success = raw_result is not None and raw_result.moves is not None
+            status = getattr(raw_result, "status", "solved") if raw_result is not None else "unsolvable"
+            success = (raw_result is not None) and (status == "solved")
         except Exception as exc:
             end_time = time.perf_counter()
             error_msg = str(exc)
@@ -57,8 +58,9 @@ class BenchmarkRunner:
             solver_stats = raw_result.stats
             solver_stats.time_s = elapsed_seconds
             solver_stats.peak_mem_bytes = peak_bytes
-            moves = len(raw_result.moves) if raw_result.moves is not None else -1
-            cost = raw_result.cost if hasattr(raw_result, "cost") else moves
+            path = getattr(raw_result, "path", getattr(raw_result, "moves", None))
+            moves = len(path) if path is not None else -1
+            cost = getattr(raw_result, "cost", moves)
         else:
             solver_stats = Stats(
                 expanded=0,

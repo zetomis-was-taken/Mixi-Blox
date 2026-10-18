@@ -4,16 +4,6 @@
   "group": "L1",
   "difficulty": "Basic",
   "source": "Coolmath Games Bloxorz - Stage 2",
-  "rows": 6,
-  "cols": 12,
-  "start": [
-    1,
-    2
-  ],
-  "goal": [
-    2,
-    10
-  ],
   "grid": [
     "..oooo......",
     "..oSoo......",

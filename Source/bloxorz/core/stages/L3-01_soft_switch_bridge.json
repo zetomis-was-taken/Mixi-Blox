@@ -4,16 +4,6 @@
   "group": "L3",
   "difficulty": "Switches",
   "source": "Coolmath Games Bloxorz - Stage 7",
-  "rows": 6,
-  "cols": 13,
-  "start": [
-    1,
-    1
-  ],
-  "goal": [
-    3,
-    11
-  ],
   "grid": [
     ".ooo........o",
     ".oS+o..==..oo",
@@ -27,7 +17,7 @@
       "type": "soft",
       "pos": [
         1,
-        2
+        3
       ],
       "action": "toggle",
       "bridges": [
@@ -46,8 +36,25 @@
         [
           2,
           8
+        ],
+        [
+          3,
+          7
+        ],
+        [
+          3,
+          8
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          4,
+          8
         ]
-      ]
+      ],
+      "teleport_cubes": null
     }
   ],
   "bridges": [
@@ -75,6 +82,34 @@
     {
       "pos": [
         2,
+        8
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        3,
+        7
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        3,
+        8
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        4,
+        7
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        4,
         8
       ],
       "initially_open": false

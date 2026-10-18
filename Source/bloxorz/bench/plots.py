@@ -1,7 +1,13 @@
 import os
 from typing import List
-import matplotlib.pyplot as plt
-import numpy as np
+
+try:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    HAS_MATPLOTLIB = True
+except ImportError:
+    HAS_MATPLOTLIB = False
+
 from .stats import BenchmarkRecord
 
 PALETTE = {
@@ -26,6 +32,10 @@ def plot_benchmark_charts(
     3. Expanded Nodes
     4. Solution Length (Moves)
     """
+    if not HAS_MATPLOTLIB:
+        print("[!] Note: matplotlib and numpy are not installed. Skipping plot chart generation.")
+        return
+
     if not records:
         print("[!] No records to plot.")
         return

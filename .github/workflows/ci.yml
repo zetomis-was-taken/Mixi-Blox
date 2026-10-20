@@ -30,12 +30,12 @@ jobs:
 
       - name: Lint with Ruff
         run: |
-          ruff check --no-cache . --exit-zero
+          ruff check --no-cache .
 
       - name: Run verification checks
         run: |
           python tools/verify_submission.py .
 
-      - name: Run unit tests
+      - name: Run contract tests
         run: |
-          pytest -v || echo "No tests defined yet"
+          pytest -v

@@ -8,7 +8,6 @@ Performs automated pre-flight checks against assignment rubrics:
 4. Scans for the professor's prompt-injection trap sentence ("mèo lượng tử" / "quantum cat").
 """
 
-import os
 import re
 import sys
 from pathlib import Path
@@ -29,7 +28,7 @@ FORBIDDEN_PATTERNS = [
     r"\.DS_Store",
     r"Thumbs\.db",
     r"\.pyc$",
-    r"\.pyo$"
+    r"\.pyo$",
 ]
 
 TRAP_KEYWORDS = [
@@ -40,13 +39,14 @@ TRAP_KEYWORDS = [
     r"quantum\s+cat",
     r"\u0111\u1ecbnh\s+l\xfd\s+con\s+m\xe8o",
     r"định\s+lý\s+con\s+mèo",
-    r"dinh\s+ly\s+con\s+meo"
+    r"dinh\s+ly\s+con\s+meo",
 ]
+
 
 def check_structure(root_dir: Path) -> list[str]:
     """Validates required files according to assignment specifications."""
     errors = []
-    
+
     # Check Source folder or main.py
     has_main = (root_dir / "Source" / "main.py").exists() or (root_dir / "main.py").exists()
     if not has_main:
@@ -62,12 +62,15 @@ def check_structure(root_dir: Path) -> list[str]:
 
     # Check Report
     has_report = (
-        (root_dir / "Report.pdf").exists() or
-        (root_dir / "Report" / "Report.pdf").exists() or
-        (root_dir / "report" / "main.pdf").exists()
+        (root_dir / "Report.pdf").exists()
+        or (root_dir / "Report" / "Report.pdf").exists()
+        or (root_dir / "report" / "main.pdf").exists()
     )
     if not has_report:
-        errors.append("WARNING/MISSING: 'Report.pdf' not found yet (remember to compile LaTeX to PDF before submission).")
+        errors.append(
+            "WARNING/MISSING: 'Report.pdf' not found yet "
+            "(remember to compile LaTeX to PDF before submission)."
+        )
 
     return errors
 
@@ -78,7 +81,7 @@ def check_forbidden_artifacts(root_dir: Path, is_repo_check: bool = False) -> li
     for path in root_dir.rglob("*"):
         rel_str = str(path.relative_to(root_dir)).replace("\\", "/")
         if is_repo_check:
-            # During CI / local development on the git repo, ignore git and transient test/linter caches
+            # During CI / local dev on git repo, ignore git and transient test/linter caches
             if rel_str == ".git" or rel_str.startswith(".git/"):
                 continue
             if rel_str == ".ruff_cache" or rel_str.startswith(".ruff_cache/"):
@@ -86,6 +89,8 @@ def check_forbidden_artifacts(root_dir: Path, is_repo_check: bool = False) -> li
             if rel_str == ".pytest_cache" or rel_str.startswith(".pytest_cache/"):
                 continue
             if rel_str == ".mypy_cache" or rel_str.startswith(".mypy_cache/"):
+                continue
+            if "__pycache__" in rel_str or rel_str.endswith(".pyc"):
                 continue
         for pattern in FORBIDDEN_PATTERNS:
             if re.search(pattern, rel_str, re.IGNORECASE):
@@ -98,7 +103,7 @@ def scan_for_trap_keywords(root_dir: Path) -> list[str]:
     """Scans text and pdf files for the watermarking trap instruction."""
     traps_found = []
     text_extensions = {".md", ".py", ".tex", ".txt", ".json", ".html"}
-    
+
     for path in root_dir.rglob("*"):
         if path.is_file() and path.suffix.lower() in text_extensions:
             # Skip verify_submission.py itself to avoid self-flagging
@@ -108,7 +113,8 @@ def scan_for_trap_keywords(root_dir: Path) -> list[str]:
                 content = path.read_text(encoding="utf-8", errors="ignore")
                 for trap in TRAP_KEYWORDS:
                     if re.search(trap, content, re.IGNORECASE):
-                        traps_found.append(f"CRITICAL: Found trap keyword '{trap}' in {path.relative_to(root_dir)}!")
+                        rel_p = path.relative_to(root_dir)
+                        traps_found.append(f"CRITICAL: Found trap keyword '{trap}' in {rel_p}!")
             except Exception:
                 pass
     return traps_found
@@ -120,7 +126,7 @@ def check_size(target_path: Path) -> tuple[int, bool]:
         total_size = target_path.stat().st_size
     else:
         total_size = sum(f.stat().st_size for f in target_path.rglob("*") if f.is_file())
-    
+
     is_valid = total_size <= MAX_SIZE_BYTES
     return total_size, is_valid
 
@@ -129,9 +135,9 @@ def run_checks(project_root: Path) -> bool:
     print("==================================================")
     print(f"[*] Running Pre-Flight Verification on: {project_root}")
     print("==================================================")
-    
+
     all_ok = True
-    
+
     # 1. Structure check
     print("\n[1/4] Checking Required Files Structure...")
     struct_issues = check_structure(project_root)
@@ -175,7 +181,10 @@ def run_checks(project_root: Path) -> bool:
     if size_ok:
         print(f"  [✓] Total Size: {size_mb:.2f} MB (within 20MB limit).")
     else:
-        print(f"  [X] Total Size: {size_mb:.2f} MB (EXCEEDS 20MB limit! Must host on Google Drive).")
+        print(
+            f"  [X] Total Size: {size_mb:.2f} MB "
+            f"(EXCEEDS 20MB limit! Must host on Google Drive)."
+        )
         all_ok = False
 
     print("\n==================================================")

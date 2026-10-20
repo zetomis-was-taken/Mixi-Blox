@@ -24,10 +24,24 @@ if hasattr(sys.stdout, "reconfigure"):
 from verify_submission import run_checks
 
 IGNORE_PATTERNS = shutil.ignore_patterns(
-    "__pycache__", "*.pyc", "*.pyo", ".venv", "venv",
-    ".git", ".github", ".pytest_cache", ".mypy_cache", ".ruff_cache",
-    ".vscode", ".idea", ".DS_Store", "Thumbs.db", "*.zip", "*.rar"
+    "__pycache__",
+    "*.pyc",
+    "*.pyo",
+    ".venv",
+    "venv",
+    ".git",
+    ".github",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".vscode",
+    ".idea",
+    ".DS_Store",
+    "Thumbs.db",
+    "*.zip",
+    "*.rar",
 )
+
 
 def package_submission(project_root: Path, student_ids: list[str], output_dir: Path = None):
     if not student_ids:
@@ -60,7 +74,9 @@ def package_submission(project_root: Path, student_ids: list[str], output_dir: P
             for item in ["main.py", "bloxorz"]:
                 src_item = project_root / item
                 if src_item.is_dir():
-                    shutil.copytree(src_item, temp_pack_dir / "Source" / item, ignore=IGNORE_PATTERNS)
+                    shutil.copytree(
+                        src_item, temp_pack_dir / "Source" / item, ignore=IGNORE_PATTERNS
+                    )
                 elif src_item.is_file():
                     shutil.copy2(src_item, temp_pack_dir / "Source" / item)
 
@@ -75,7 +91,7 @@ def package_submission(project_root: Path, student_ids: list[str], output_dir: P
         report_candidates = [
             project_root / "Report.pdf",
             project_root / "Report" / "Report.pdf",
-            project_root / "report" / "main.pdf"
+            project_root / "report" / "main.pdf",
         ]
         report_copied = False
         for rep in report_candidates:
@@ -83,10 +99,12 @@ def package_submission(project_root: Path, student_ids: list[str], output_dir: P
                 shutil.copy2(rep, temp_pack_dir / "Report.pdf")
                 report_copied = True
                 break
-        
+
         if not report_copied:
             print("[!] Note: Report.pdf not found in project. Creating a placeholder notice.")
-            (temp_pack_dir / "Report.pdf").write_text("Placeholder: Please place finalized Report.pdf here.", encoding="utf-8")
+            (temp_pack_dir / "Report.pdf").write_text(
+                "Placeholder: Please place finalized Report.pdf here.", encoding="utf-8"
+            )
 
         # Run pre-flight verification on the staged directory
         print("\n[*] Running verification on staged package...")
@@ -104,7 +122,7 @@ def package_submission(project_root: Path, student_ids: list[str], output_dir: P
 
         final_mb = zip_path.stat().st_size / (1024 * 1024)
         print(f"[✓] Successfully packaged: {zip_path} ({final_mb:.2f} MB)")
-        
+
     finally:
         # Cleanup temp directory
         if temp_pack_dir.parent.exists():
@@ -113,5 +131,9 @@ def package_submission(project_root: Path, student_ids: list[str], output_dir: P
 
 if __name__ == "__main__":
     root = Path(__file__).resolve().parent.parent
-    ids = sys.argv[1:] if len(sys.argv) > 1 else ["23120000", "23120001", "23120002", "23120003", "23120004"]
+    ids = (
+        sys.argv[1:]
+        if len(sys.argv) > 1
+        else ["23120000", "23120001", "23120002", "23120003", "23120004"]
+    )
     package_submission(root, ids)

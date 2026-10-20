@@ -1,9 +1,10 @@
 import gc
-import sys
 import time
 import tracemalloc
 from typing import Any, Callable, Dict, List, Optional
+
 from .stats import BenchmarkRecord, SearchResult, Stats
+
 
 class BenchmarkRunner:
     """
@@ -24,8 +25,10 @@ class BenchmarkRunner:
         """Registers a stage along with its difficulty group (L1, L2, L3, L4)."""
         self.stages[name] = {"data": stage_data, "group": group}
 
-    def run_single(self, algo_name: str, stage_name: str, stage_data: Any, group: str, runs: int = 3) -> BenchmarkRecord:
-        """Runs a solver across multiple runs (median of 3 per Issue #30) with isolated resource tracking."""
+    def run_single(
+        self, algo_name: str, stage_name: str, stage_data: Any, group: str, runs: int = 3
+    ) -> BenchmarkRecord:
+        """Runs a solver across multiple runs (median of 3 per Issue #30)."""
         solver_fn = self.solvers[algo_name]
 
         times: List[float] = []
@@ -47,7 +50,11 @@ class BenchmarkRunner:
                 times.append(end_time - start_time)
                 memories.append(peak_bytes)
                 raw_result = current_result
-                status = getattr(raw_result, "status", "solved") if raw_result is not None else "unsolvable"
+                status = (
+                    getattr(raw_result, "status", "solved")
+                    if raw_result is not None
+                    else "unsolvable"
+                )
                 success = (raw_result is not None) and (status == "solved")
             except Exception as exc:
                 end_time = time.perf_counter()
@@ -68,19 +75,38 @@ class BenchmarkRunner:
             elapsed_seconds = times[mid]
             peak_bytes = memories[mid]
 
-        # Merge measurements
-        if raw_result and hasattr(raw_result, "stats"):
-            solver_stats = raw_result.stats
-            solver_stats.time_s = elapsed_seconds
-            solver_stats.peak_mem_bytes = peak_bytes
+        # Build Stats from solver's Counts + measured medians
+        if raw_result and hasattr(raw_result, "counts") and raw_result.counts is not None:
+            counts = raw_result.counts
+            solver_stats = Stats(
+                expanded=counts.expanded,
+                generated=counts.generated,
+                frontier_peak=counts.frontier_peak,
+                time_s=elapsed_seconds,
+                peak_mem_bytes=peak_bytes,
+            )
+            path = raw_result.path
+            moves = len(path) if path is not None else -1
+            cost = getattr(raw_result, "cost", moves)
+        elif raw_result and hasattr(raw_result, "stats"):
+            st = raw_result.stats
+            solver_stats = Stats(
+                expanded=getattr(st, "expanded", 0),
+                generated=getattr(st, "generated", 0),
+                frontier_peak=getattr(st, "frontier_peak", 0),
+                time_s=elapsed_seconds,
+                peak_mem_bytes=peak_bytes,
+            )
             path = getattr(raw_result, "path", getattr(raw_result, "moves", None))
             moves = len(path) if path is not None else -1
             cost = getattr(raw_result, "cost", moves)
         else:
             solver_stats = Stats(
                 expanded=0,
+                generated=0,
+                frontier_peak=0,
                 time_s=elapsed_seconds,
-                peak_mem_bytes=peak_bytes
+                peak_mem_bytes=peak_bytes,
             )
             moves = -1
             cost = -1
@@ -93,20 +119,20 @@ class BenchmarkRunner:
             solution_length=moves,
             cost=cost,
             stats=solver_stats,
-            error_message=error_msg
+            error_message=error_msg,
         )
 
     def run_all(self, verbose: bool = True) -> List[BenchmarkRecord]:
         """Runs all registered solvers on all registered stages."""
         self.records.clear()
-        
+
         for stage_name, info in self.stages.items():
             stage_data = info["data"]
             group = info["group"]
             if verbose:
-                print(f"\n==========================================")
+                print("\n==========================================")
                 print(f">> Stage: {stage_name} [{group}]")
-                print(f"==========================================")
+                print("==========================================")
 
             for algo_name in self.solvers:
                 if verbose:
@@ -117,7 +143,12 @@ class BenchmarkRunner:
 
                 if verbose:
                     if record.success:
-                        print(f"OK | Time: {record.stats.time_ms:.1f}ms | RAM: {record.stats.peak_mem_kb:.1f}KB | Nodes: {record.stats.expanded} | Moves: {record.solution_length}")
+                        print(
+                            f"OK | Time: {record.stats.time_ms:.1f}ms "
+                            f"| RAM: {record.stats.peak_mem_kb:.1f}KB "
+                            f"| Nodes: {record.stats.expanded} "
+                            f"| Moves: {record.solution_length}"
+                        )
                     else:
                         print(f"FAILED | {record.error_message or 'No solution'}")
 

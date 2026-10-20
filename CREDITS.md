@@ -20,15 +20,17 @@ beyond this line.
 | `FIX-01` | Straight line | L1 | original | authored for the engine tests (#38) | loads, solvable in 6 |
 | `FIX-02` | East then south | L1 | original | authored for the engine tests (#38) | loads, solvable in 4 |
 | `FIX-03` | South then east | L1 | original | authored for the engine tests (#38) | loads, solvable in 4 |
-| `L1-01` | Plain Intro | L1 | transcribed | Coolmath Games, Bloxorz, stage 1 (passcode 780464) | loads, solvable in 7 |
+| `L1-01` | Plain Intro | L1 | transcribed | Coolmath Games, Bloxorz, level 1 (passcode 780464) | matches the reference exactly; solvable in 7 |
+| `L4-01` | Split into the far room | L4 | transcribed | Coolmath Games, Bloxorz, level 8 (passcode 499707) | matches the reference exactly; solvable in 10 |
 | `L1-02` | Turning Corner | L1 | claimed transcription, unsourced | cites stage 2 | **does not match any original level** |
 | `L1-03` | Narrow Corridors | L1 | claimed transcription, unsourced | cites stage 4 | **does not match any original level** |
 | `L2-01` | Fragile Crossing | L2 | claimed transcription, unsourced | cites "Fragile Bridge" | **does not match any original level** |
 | `L2-02` | Fragile Stepping Stones | L2 | claimed transcription, unsourced | cites "Fragile Stepping" | **does not match any original level** |
 | `L2-03` | Fragile Maze | L2 | claimed transcription, unsourced | cites stage 6 | **does not match any original level** |
 
-Nine stages, four of them hand-solved fixtures and five transcribed. **Six of these arrive with
-#25**; the three `FIX` stages are already on `main`.
+Ten stages: three hand-solved `FIX` fixtures, one verified transcription, and six from #25 of which
+five are unsourced. `FIX-01` to `FIX-03` and `L4-01` are on `main`; the rest arrive with #25 or
+replace it.
 
 ## The provenance audit
 
@@ -53,6 +55,9 @@ may not cite a Coolmath stage for them.
 Solvability was measured with a breadth-first search over the engine, used as verification only. No
 `expected.optimal_cost` in the repository came from a solver: the fixtures' costs were derived by hand
 and the solver run only confirms the boards are finishable.
+
+A transcribed stage comes out of `tools/transcribe_levels.py`, which only rewrites data and cannot
+alter a board. Each one is then diffed against the reference and solved, in that order.
 
 **Board fidelity is checked mechanically, where a stage claims to be a transcription.** The extracted
 level data above is the reference, and the comparison is exact: same bounding box, same cells, same

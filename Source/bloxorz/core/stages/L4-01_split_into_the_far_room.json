@@ -1,0 +1,40 @@
+{
+  "id": "L4-01",
+  "name": "Split into the far room",
+  "group": "L4",
+  "source": "Coolmath Games, Bloxorz, level 8 (passcode 499707)",
+  "grid": [
+    ".........ooo...",
+    ".........ooo...",
+    ".........ooo...",
+    "oooooo...oooooo",
+    "oSooYo...ooooGo",
+    "oooooo...oooooo",
+    ".........ooo...",
+    ".........ooo...",
+    ".........ooo...",
+    "..............."
+  ],
+  "switches": [
+    {
+      "type": "split",
+      "pos": [
+        4,
+        4
+      ],
+      "action": null,
+      "bridges": null,
+      "teleport_cubes": [
+        [
+          1,
+          10
+        ],
+        [
+          7,
+          10
+        ]
+      ]
+    }
+  ],
+  "bridges": []
+}

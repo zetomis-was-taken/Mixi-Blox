@@ -1,0 +1,19 @@
+{
+  "id": "L1-03",
+  "name": "South then east",
+  "group": "L1",
+  "source": "original",
+  "grid": [
+    "......",
+    ".S....",
+    ".o....",
+    ".o....",
+    ".oooG.",
+    "......"
+  ],
+  "switches": [],
+  "bridges": [],
+  "expected": {
+    "optimal_cost": 4
+  }
+}

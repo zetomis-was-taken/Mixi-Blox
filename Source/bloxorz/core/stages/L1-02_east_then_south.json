@@ -1,0 +1,19 @@
+{
+  "id": "L1-02",
+  "name": "East then south",
+  "group": "L1",
+  "source": "original",
+  "grid": [
+    ".......",
+    ".Sooo..",
+    "....o..",
+    "....o..",
+    "....G..",
+    "......."
+  ],
+  "switches": [],
+  "bridges": [],
+  "expected": {
+    "optimal_cost": 4
+  }
+}

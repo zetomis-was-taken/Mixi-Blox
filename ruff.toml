@@ -6,3 +6,7 @@ line-length = 100
 # rules below stay readable. Widen after the tree is green, not before — a 300-warning wall is how
 # `--exit-zero` gets put back.
 select = ["E", "F", "I"]
+
+[lint.isort]
+# `Source/` is the package root, not `src/`, so isort needs telling that `bloxorz` is ours.
+known-first-party = ["bloxorz"]

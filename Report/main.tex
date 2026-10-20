@@ -319,68 +319,12 @@ Bộ dữ liệu gồm 10 màn chơi được phân loại theo 4 cấp độ ph
 \section{Kết quả thực nghiệm \& Phân tích đánh giá (Experimental Results)}
 
 \subsection{Bảng số liệu tổng hợp}
-Bảng \ref{tab:benchmark_results} thể hiện kết quả đo lường thực tế của 4 thuật toán trên các màn chơi tiêu biểu:
+Bảng \ref{tab:benchmark_results} là khung dữ liệu thực nghiệm tiêu chuẩn (sẽ được cập nhật tự động khi chạy bộ đo đạc thực nghiệm toàn diện theo Issue \#24):
 
-% DÁN BẢNG LATEX DO BENCHMARK RUNNER XUẤT RA TẠI ĐÂY
-\begin{table}[htbp]
-\centering
-\caption{Bảng so sánh kết quả thực nghiệm giữa các thuật toán}
-\label{tab:benchmark_results}
-\small
-\begin{tabular}{llcccc}
-\toprule
-\textbf{Thuật toán} & \textbf{Màn chơi} & \textbf{Thời gian (ms)} & \textbf{Bộ nhớ (KB)} & \textbf{Số nút duyệt} & \textbf{Số bước đi} \\
-\midrule
-BFS & Level 01 (Basic) & 10.18 & 0.17 & 45 & 4 \\
-DFS/IDS & Level 01 (Basic) & 15.47 & 0.20 & 112 & 7 \\
-UCS & Level 01 (Basic) & 12.14 & 0.16 & 52 & 4 \\
-A* & Level 01 (Basic) & 6.41 & 0.16 & 24 & 4 \\
-\midrule
-BFS & Level 02 (Fragile) & 10.44 & 0.16 & 45 & 4 \\
-DFS/IDS & Level 02 (Fragile) & 15.37 & 0.20 & 112 & 7 \\
-UCS & Level 02 (Fragile) & 13.01 & 0.16 & 52 & 4 \\
-A* & Level 02 (Fragile) & 6.34 & 0.16 & 24 & 4 \\
-\midrule
-BFS & Level 03 (Switches) & 10.21 & 0.16 & 45 & 4 \\
-DFS/IDS & Level 03 (Switches) & 15.70 & 0.20 & 112 & 7 \\
-UCS & Level 03 (Switches) & 12.22 & 0.16 & 52 & 4 \\
-A* & Level 03 (Switches) & 6.33 & 0.16 & 24 & 4 \\
-\bottomrule
-\end{tabular}
-\end{table}
+\input{tables/benchmark_results.tex}
 
 \subsection{Biểu đồ so sánh trực quan}
-Hình \ref{fig:benchmark_charts} biểu diễn trực quan 4 chỉ số hiệu năng giữa các thuật toán:
-
-\begin{figure}[htbp]
-    \centering
-    \begin{subfigure}[b]{0.48\textwidth}
-        \includegraphics[width=\textwidth]{figures/benchmark_search_time.pdf}
-        \caption{Thời gian tìm kiếm (ms)}
-        \label{fig:time}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.48\textwidth}
-        \includegraphics[width=\textwidth]{figures/benchmark_peak_memory.pdf}
-        \caption{Bộ nhớ RAM đỉnh (KB)}
-        \label{fig:memory}
-    \end{subfigure}
-    
-    \vspace{0.4cm}
-    \begin{subfigure}[b]{0.48\textwidth}
-        \includegraphics[width=\textwidth]{figures/benchmark_expanded_nodes.pdf}
-        \caption{Số nút đã mở rộng (Expanded Nodes)}
-        \label{fig:nodes}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.48\textwidth}
-        \includegraphics[width=\textwidth]{figures/benchmark_solution_length.pdf}
-        \caption{Độ dài lời giải (Số bước đi)}
-        \label{fig:length}
-    \end{subfigure}
-    \caption{So sánh toàn diện hiệu năng của các thuật toán tìm kiếm}
-    \label{fig:benchmark_charts}
-\end{figure}
+\textit{[Các biểu đồ so sánh trực quan hiệu năng sẽ được công cụ vẽ đồ thị sinh tự động từ dữ liệu thực nghiệm thực tế sau khi các thuật toán tìm kiếm được tích hợp hoàn chỉnh theo Issue \#24.]}
 
 \subsection{Phân tích \& Nhận xét chuyên sâu}
 \begin{enumerate}

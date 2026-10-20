@@ -1,63 +1,15 @@
+% Benchmark results placeholder
+% Real measurements will be populated by the benchmark runner (Issue #24) once solvers are integrated.
 \begin{table}[htbp]
 \centering
-\caption{Bảng so sánh kết quả thực nghiệm 4 thuật toán tìm kiếm trên các nhóm màn chơi}
+\caption{Bảng kết quả đo lường thực nghiệm (Chờ tích hợp solvers theo Issue \#24)}
 \label{tab:benchmark_results}
 \small
 \begin{tabular}{lllcccc}
 \toprule
 \textbf{Thuật toán} & \textbf{Nhóm} & \textbf{Màn chơi} & \textbf{Thời gian (ms)} & \textbf{RAM (KB)} & \textbf{Số nút duyệt} & \textbf{Số bước đi} \\
 \midrule
-BFS & L1 & Stage 01 - Plain Intro & 0.07 & 1.10 & 35 & 4 \\
-DFS & L1 & Stage 01 - Plain Intro & 0.06 & 1.07 & 98 & 6 \\
-UCS & L1 & Stage 01 - Plain Intro & 0.07 & 0.99 & 42 & 4 \\
-A* & L1 & Stage 01 - Plain Intro & 0.05 & 0.95 & 18 & 4 \\
-BFS & L1 & Stage 02 - Turning Corner & 0.06 & 0.90 & 35 & 4 \\
-DFS & L1 & Stage 02 - Turning Corner & 0.06 & 0.85 & 98 & 6 \\
-UCS & L1 & Stage 02 - Turning Corner & 0.06 & 0.79 & 42 & 4 \\
-A* & L1 & Stage 02 - Turning Corner & 0.06 & 0.73 & 18 & 4 \\
-BFS & L1 & Stage 03 - Narrow Corridors & 0.05 & 0.69 & 35 & 4 \\
-DFS & L1 & Stage 03 - Narrow Corridors & 0.07 & 0.70 & 98 & 6 \\
-UCS & L1 & Stage 03 - Narrow Corridors & 0.06 & 0.69 & 42 & 4 \\
-A* & L1 & Stage 03 - Narrow Corridors & 0.04 & 0.69 & 18 & 4 \\
-\midrule
-BFS & L2 & Stage 04 - Fragile Crossing & 0.07 & 0.69 & 35 & 4 \\
-DFS & L2 & Stage 04 - Fragile Crossing & 0.05 & 0.70 & 98 & 6 \\
-UCS & L2 & Stage 04 - Fragile Crossing & 0.05 & 0.69 & 42 & 4 \\
-A* & L2 & Stage 04 - Fragile Crossing & 0.05 & 0.69 & 18 & 4 \\
-BFS & L2 & Stage 05 - Fragile Stepping Stones & 0.07 & 0.69 & 35 & 4 \\
-DFS & L2 & Stage 05 - Fragile Stepping Stones & 0.07 & 0.70 & 98 & 6 \\
-UCS & L2 & Stage 05 - Fragile Stepping Stones & 0.07 & 0.69 & 42 & 4 \\
-A* & L2 & Stage 05 - Fragile Stepping Stones & 0.05 & 0.69 & 18 & 4 \\
-BFS & L2 & Stage 06 - Fragile Maze & 0.04 & 0.69 & 35 & 4 \\
-DFS & L2 & Stage 06 - Fragile Maze & 0.05 & 0.70 & 98 & 6 \\
-UCS & L2 & Stage 06 - Fragile Maze & 0.05 & 0.69 & 42 & 4 \\
-A* & L2 & Stage 06 - Fragile Maze & 0.05 & 0.69 & 18 & 4 \\
-\midrule
-BFS & L3 & Stage 07 - Soft Switch Bridge & 0.07 & 0.69 & 35 & 4 \\
-DFS & L3 & Stage 07 - Soft Switch Bridge & 0.05 & 0.70 & 98 & 6 \\
-UCS & L3 & Stage 07 - Soft Switch Bridge & 0.05 & 0.69 & 42 & 4 \\
-A* & L3 & Stage 07 - Soft Switch Bridge & 0.06 & 0.69 & 18 & 4 \\
-BFS & L3 & Stage 08 - Heavy Switch Logic & 0.05 & 0.69 & 35 & 4 \\
-DFS & L3 & Stage 08 - Heavy Switch Logic & 0.06 & 0.70 & 98 & 6 \\
-UCS & L3 & Stage 08 - Heavy Switch Logic & 0.06 & 0.69 & 42 & 4 \\
-A* & L3 & Stage 08 - Heavy Switch Logic & 0.04 & 0.69 & 18 & 4 \\
-BFS & L3 & Stage 09 - Dual Switch Coordination & 0.07 & 0.69 & 35 & 4 \\
-DFS & L3 & Stage 09 - Dual Switch Coordination & 0.05 & 0.70 & 98 & 6 \\
-UCS & L3 & Stage 09 - Dual Switch Coordination & 0.06 & 0.69 & 42 & 4 \\
-A* & L3 & Stage 09 - Dual Switch Coordination & 0.07 & 0.69 & 18 & 4 \\
-\midrule
-BFS & L4 & Stage 10 - Combined Fragile and Switches & 0.07 & 0.69 & 35 & 4 \\
-DFS & L4 & Stage 10 - Combined Fragile and Switches & 0.05 & 0.70 & 98 & 6 \\
-UCS & L4 & Stage 10 - Combined Fragile and Switches & 0.07 & 0.69 & 42 & 4 \\
-A* & L4 & Stage 10 - Combined Fragile and Switches & 0.06 & 0.69 & 18 & 4 \\
-BFS & L4 & Stage 11 - Split Switch Intro & 0.05 & 0.69 & 35 & 4 \\
-DFS & L4 & Stage 11 - Split Switch Intro & 0.05 & 0.70 & 98 & 6 \\
-UCS & L4 & Stage 11 - Split Switch Intro & 0.05 & 0.69 & 42 & 4 \\
-A* & L4 & Stage 11 - Split Switch Intro & 0.04 & 0.69 & 18 & 4 \\
-BFS & L4 & Stage 12 - Split Remote Coordination & 0.04 & 0.69 & 35 & 4 \\
-DFS & L4 & Stage 12 - Split Remote Coordination & 0.06 & 0.70 & 98 & 6 \\
-UCS & L4 & Stage 12 - Split Remote Coordination & 0.05 & 0.69 & 42 & 4 \\
-A* & L4 & Stage 12 - Split Remote Coordination & 0.07 & 0.69 & 18 & 4 \\
+\multicolumn{7}{c}{\textit{[Dữ liệu thực nghiệm đang chờ đo lường thực tế từ các thuật toán tìm kiếm]}} \\
 \bottomrule
 \end{tabular}
 \end{table}

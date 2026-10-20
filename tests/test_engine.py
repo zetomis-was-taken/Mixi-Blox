@@ -232,11 +232,10 @@ def test_a_switch_may_not_close_a_bridge_under_the_block(tmp_path: Path) -> None
 
 def test_a_lone_cube_does_not_fire_a_split_switch(tmp_path: Path) -> None:
     board = split_board(tmp_path)
-    lone = State(cubes=(((4, 2),), ((2, 4),)), bridges=())
-    moves = {action: state for state, action in board.successors(lone)}
-    next_state = moves[(0, "U")]
-    assert len(next_state.cubes) == 2, "a lone cube is inert on Y (§ Board)"
-    assert next_state.cubes[0] == ((3, 2),)
+    lone = State(cubes=(((3, 2),), ((2, 4),)), bridges=())
+    landing = {action: state for state, action in board.successors(lone)}[(0, "D")]
+    assert landing.cubes[0] == ((4, 2),), "a lone cube may stand on Y and nothing happens"
+    assert len(landing.cubes) == 2
 
 
 def split_board(tmp_path: Path) -> Board:

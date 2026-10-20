@@ -21,20 +21,32 @@ beyond this line.
 | `FIX-02` | East then south | L1 | original | authored for the engine tests (#38) | loads, solvable in 4 |
 | `FIX-03` | South then east | L1 | original | authored for the engine tests (#38) | loads, solvable in 4 |
 | `L1-01` | Plain Intro | L1 | transcribed | Coolmath Games, Bloxorz, stage 1 (passcode 780464) | loads, solvable in 7 |
-| `L1-02` | Turning Corner | L1 | transcribed | Coolmath Games, Bloxorz, stage 2 | loads, solvable in 14 |
-| `L1-03` | Narrow Corridors | L1 | transcribed | Coolmath Games, Bloxorz, stage 4 | loads, solvable in 10 |
-| `L2-01` | Fragile Crossing | L2 | transcribed | Coolmath Games, Bloxorz, "Fragile Bridge" | loads, solvable in 9 |
-| `L2-02` | Fragile Stepping Stones | L2 | transcribed | Coolmath Games, Bloxorz, "Fragile Stepping" | loads, solvable in 16 |
-| `L2-03` | Fragile Maze | L2 | transcribed | Coolmath Games, Bloxorz, stage 6 | loads, solvable in 11 |
+| `L1-02` | Turning Corner | L1 | claimed transcription, unsourced | cites stage 2 | **does not match any original level** |
+| `L1-03` | Narrow Corridors | L1 | claimed transcription, unsourced | cites stage 4 | **does not match any original level** |
+| `L2-01` | Fragile Crossing | L2 | claimed transcription, unsourced | cites "Fragile Bridge" | **does not match any original level** |
+| `L2-02` | Fragile Stepping Stones | L2 | claimed transcription, unsourced | cites "Fragile Stepping" | **does not match any original level** |
+| `L2-03` | Fragile Maze | L2 | claimed transcription, unsourced | cites stage 6 | **does not match any original level** |
 
 Nine stages, four of them hand-solved fixtures and five transcribed. **Six of these arrive with
 #25**; the three `FIX` stages are already on `main`.
 
-Two entries need their citation tightened before the report names them:
+## The provenance audit
 
-- `L1-03` is named "Stage 03" and cites **stage 4**. One of the two is wrong.
-- `L2-01` and `L2-02` cite descriptive names rather than stage numbers, so the report cannot say which
-  level they came from.
+The original levels were extracted from the game's SWF and published as text in
+`jacobcoughenour/bloxorz_gba`, `game/levels.json`: 33 levels keyed by the game's own passcodes, one
+letter per mechanic (`b` floor, `e` exit, `f` fragile, `s` soft switch, `h` heavy switch, `k`/`l`/`q`/`r`
+bridge halves, `v` split). That file also settles whether a claim of transcription is true.
+
+**One of the six holds up.** `L1-01` reproduces original level 1 exactly: same 6x10 bounding box, same
+35 cells, same walls, same exit, same spawn, after mapping letters to glyphs.
+
+**The other five match no level in the set**, at any size. They are playable boards with invented
+citations, and they are marked unsourced above rather than attributed to stages they do not reproduce.
+Two of them also disagree with their own names: `L1-03` is "Stage 03" and cites stage 4, and `L2-01`
+and `L2-02` name no number at all.
+
+Until those five are replaced with real transcriptions or re-labelled as original boards, the report
+may not cite a Coolmath stage for them.
 
 ## What "checked" means, and what it does not
 
@@ -42,11 +54,10 @@ Solvability was measured with a breadth-first search over the engine, used as ve
 `expected.optimal_cost` in the repository came from a solver: the fixtures' costs were derived by hand
 and the solver run only confirms the boards are finishable.
 
-**Board fidelity to the original game was not verified.** Transcribing a level from play and checking
-it against a reference are different claims. The reference was unavailable: the open-source Bloxorz
-clones carry their own small demo boards rather than the 33-stage set, so comparing against them would
-prove nothing. Until someone plays the level beside the JSON, the table above claims "transcribed from
-the Coolmath build", not "identical to stage N".
+**Board fidelity is checked mechanically, where a stage claims to be a transcription.** The extracted
+level data above is the reference, and the comparison is exact: same bounding box, same cells, same
+spawn, same exit. Five claims fail that check. Nothing in the table says "identical to stage N" unless
+the comparison passed.
 
 ## Not in the set
 

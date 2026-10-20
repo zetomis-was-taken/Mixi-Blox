@@ -1,7 +1,7 @@
 # v1 Interface Contract
 
-**Status:** v1, frozen 2026-10-20. Every clause below has an owner; the two acks still
-outstanding are listed at the end and none of them changes a signature.
+**Status:** v1, frozen 2026-10-20. Every clause below has an owner, and both acks are
+confirmed — rule 6 is a standing start (§2.1, §2.2, and the single `S`), and `State` arity is 2.
 
 This file records decisions, it does not make them. A section changes when the owner named
 below changes it, and the change links its issue.
@@ -464,8 +464,11 @@ Owns `BenchmarkRecord` and `error_message`.
   `board.successors` / `board.is_goal` and checks the cap before incrementing; the sentence about
   the measured window covering stage loading is dropped, because #30 puts loading outside it.
 
-**Two acks outstanding, neither blocking:**
+**Both acks confirmed, 2026-10-20:**
 
-1. Rule 6 — "the start block must be lying" became "stands", per §2.1, §2.2 and the single `S`.
-2. `State` arity is 2 — the field list in #6's staleness test, and the reason no `active` field is
-   needed once actions name their cube.
+1. Rule 6 — "the start block must be lying" became "stands". §2.1 states it, §2.2 makes lying a
+two-cell footprint while rule 2 allows exactly one `S`, and the reference implementation spawns at
+zero rotation, which its own `isStanding()` reports as standing.
+2. `State` arity is 2 — `cubes` and `bridges`, asserted by #6's staleness test as
+`len(fields(State)) == 2`. No `active` field is needed because an `Action` names its cube. The
+assertion is on the field count, not on `len(bridges)`, which is stage-defined.

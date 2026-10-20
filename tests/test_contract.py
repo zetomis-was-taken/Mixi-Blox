@@ -92,8 +92,13 @@ def _layer(path: Path) -> str:
 
 
 def _skip_unless_package() -> None:
-    if not PACKAGE.is_dir():
-        pytest.skip("Source/bloxorz/ does not exist yet")
+    """Skip when there is no package code.
+
+    `is_dir()` is not enough: a leftover directory, or one holding only `__pycache__`, made three
+    checks below pass without checking anything.
+    """
+    if not _python_files(PACKAGE):
+        pytest.skip("Source/bloxorz/ has no Python modules yet")
 
 
 def test_frozen_types_are_defined_once() -> None:
@@ -182,7 +187,7 @@ def test_root_holds_no_derived_artifacts() -> None:
 def test_stage_files_match_the_frozen_schema() -> None:
     """contracts.md § Stage: the grid is the only source of truth, not a place to cache results."""
     stages = PACKAGE / "core" / "stages"
-    if not stages.is_dir():
+    if not any(stages.glob("*.json")):
         pytest.skip("no stage files yet")
     violations = []
     for path in sorted(stages.glob("*.json")):

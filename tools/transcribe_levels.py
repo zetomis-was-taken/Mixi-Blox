@@ -121,12 +121,36 @@ def transcribe(level: dict, stage_id: str, name: str, group: str) -> dict:
     return stage
 
 
+def verify(stage: dict, level: dict) -> list[str]:
+    """Compare a stage with the reference, cell by cell, before it is written.
+
+    This catches offsets, cropping and stale files, which is where the first version of this tool
+    went wrong. It cannot catch a misreading of the reference, because both sides use the same map.
+    """
+    tiles = level["tiles"]
+    width = max(len(row) for row in tiles)
+    spawn = (level["spawn"][1], level["spawn"][0])
+    problems: list[str] = []
+    for y in range(len(tiles)):
+        written = stage["grid"][y] if y < len(stage["grid"]) else ""
+        for x in range(width):
+            want = "S" if (y, x) == spawn else GLYPH[tiles[y][x] if x < len(tiles[y]) else " "]
+            got = written[x] if x < len(written) else ""
+            if want != got:
+                problems.append(f"({y},{x}): wrote {got!r}, reference says {want!r}")
+    return problems
+
+
 def main(reference: Path, out: Path, numbers: list[int]) -> None:
     levels = json.loads(reference.read_text(encoding="utf-8"))["levels"]
     for number in numbers:
         stage_id, name, group = PLAN[number]
         level = dict(levels[number - 1], _number=number)
         stage = transcribe(level, stage_id, name, group)
+        problems = verify(stage, level)
+        if problems:
+            first = problems[0]
+            raise SystemExit(f"level {number}: {len(problems)} cells disagree, first: {first}")
         slug = name.lower().replace(" ", "_")
         path = out / f"{stage_id}_{slug}.json"
         path.write_text(json.dumps(stage, indent=2) + "\n", encoding="utf-8", newline="\n")

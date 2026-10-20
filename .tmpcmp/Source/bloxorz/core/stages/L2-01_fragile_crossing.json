@@ -1,0 +1,15 @@
+{
+  "id": "L2-01",
+  "name": "Stage 04 - Fragile Crossing",
+  "group": "L2",
+  "source": "Coolmath Games Bloxorz - Fragile Bridge",
+  "grid": [
+    "..ooooffooo..",
+    "..oSooffoGo..",
+    "..ooooffooo..",
+    "..oooo..ooo..",
+    "..oooo..ooo.."
+  ],
+  "switches": [],
+  "bridges": []
+}

@@ -22,6 +22,10 @@ The original game agrees: split pieces cross orange tiles without breaking them,
 over fragile ground is how the original levels are solved. § Board already assumes this reading; the
 ADR supplies the citation it was missing.
 
+The course FAQ settles it outright. Q16 asks whether a split 1×1×1 cube standing on a fragile tile
+breaks it, and the answer is *"Không á em."* (no). That is the instructor answering the exact
+question, not an inference from §2.5.
+
 ## Decision
 
 Fragile is passable for a lone cube — `passable(f, "cube", …)` is `True`, and nothing is consumed.

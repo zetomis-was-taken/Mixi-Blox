@@ -196,14 +196,29 @@ def test_expected_holds_only_a_cost(tmp_path: Path) -> None:
     assert "optimal_cost" in text
 
 
+def test_stage_ids_are_unique() -> None:
+    """#5 names a stage by its id, so two files may never share one."""
+    seen: dict[str, str] = {}
+    for path in sorted(STAGES.glob("*.json")):
+        stage_id = json.loads(path.read_text(encoding="utf-8"))["id"]
+        assert stage_id not in seen, f"{path.name} reuses {stage_id} from {seen.get(stage_id)}"
+        seen[stage_id] = path.name
+
+
+def test_every_committed_stage_loads() -> None:
+    """A file in core/stages that cannot load is a defect, not a hard benchmark."""
+    for path in sorted(STAGES.glob("*.json")):
+        load_stage(path)
+
+
 def test_a_stage_without_expected_loads(tmp_path: Path) -> None:
     assert load_stage(stage_file(tmp_path)).expected is None
 
 
-def test_the_L1_fixtures_load_with_a_hand_computed_cost() -> None:
+def test_the_fixtures_load_with_a_hand_computed_cost() -> None:
     """Only fixtures carry ``expected``. Benchmark stages have no hand-computed answer, so the glob
     is scoped by name; a directory-wide rule would fail on every stage #5 adds."""
-    fixtures = sorted(STAGES.glob("L1-0*.json"))
+    fixtures = sorted(STAGES.glob("FIX-*.json"))
     assert len(fixtures) >= 3
     for path in fixtures:
         stage = load_stage(path)

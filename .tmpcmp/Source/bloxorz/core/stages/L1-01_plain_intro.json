@@ -1,0 +1,16 @@
+{
+  "id": "L1-01",
+  "name": "Stage 01 - Plain Intro",
+  "group": "L1",
+  "source": "Coolmath Games Bloxorz - Stage 1 (Passcode 780464)",
+  "grid": [
+    "ooo.......",
+    "oSoooo....",
+    "ooooooooo.",
+    ".ooooooooo",
+    ".....ooGoo",
+    "......ooo."
+  ],
+  "switches": [],
+  "bridges": []
+}

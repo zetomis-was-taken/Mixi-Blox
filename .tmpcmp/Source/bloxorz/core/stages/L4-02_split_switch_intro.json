@@ -1,0 +1,115 @@
+{
+  "id": "L4-02",
+  "name": "Stage 11 - Split Switch Intro",
+  "group": "L4",
+  "source": "Coolmath Games Bloxorz - Stage 11",
+  "grid": [
+    ".oooo.........o",
+    ".oSoY..........",
+    ".oooo...==..ooo",
+    "........==..oGo",
+    "..+.....==..ooo",
+    "..oo...........",
+    "..oo..........."
+  ],
+  "switches": [
+    {
+      "type": "split",
+      "pos": [
+        1,
+        4
+      ],
+      "action": null,
+      "bridges": null,
+      "teleport_cubes": [
+        [
+          4,
+          2
+        ],
+        [
+          6,
+          2
+        ]
+      ]
+    },
+    {
+      "type": "soft",
+      "pos": [
+        4,
+        2
+      ],
+      "action": "toggle",
+      "bridges": [
+        [
+          2,
+          8
+        ],
+        [
+          2,
+          9
+        ],
+        [
+          3,
+          8
+        ],
+        [
+          3,
+          9
+        ],
+        [
+          4,
+          8
+        ],
+        [
+          4,
+          9
+        ]
+      ],
+      "teleport_cubes": null
+    }
+  ],
+  "bridges": [
+    {
+      "pos": [
+        2,
+        8
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        2,
+        9
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        3,
+        8
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        3,
+        9
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        4,
+        8
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        4,
+        9
+      ],
+      "initially_open": false
+    }
+  ]
+}

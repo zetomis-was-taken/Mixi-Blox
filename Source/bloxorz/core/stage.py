@@ -201,6 +201,14 @@ def _switches(
         action = entry["action"]
         if action is not None and action not in {"toggle", "permanent"}:
             _fail(path, text, f"schema: unknown switch action {action!r}", '"action"')
+        wanted = {"soft": "toggle", "heavy": "permanent", "split": None}[kind]
+        if action != wanted:
+            _fail(
+                path,
+                text,
+                f"schema: a {kind} switch takes action {wanted!r}, not {action!r}",
+                '"action"',
+            )
         switches.append(
             Switch(
                 type=kind,  # type: ignore[arg-type]

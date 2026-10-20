@@ -13,6 +13,7 @@ from bloxorz.core.stage import load_stage
 
 ROOT = Path(__file__).resolve().parents[1]
 STAGES = ROOT / "Source" / "bloxorz" / "core" / "stages"
+FIXTURES = ROOT / "tests" / "fixtures"
 LINE = ["......", ".SoooG", "......"]
 
 
@@ -102,7 +103,7 @@ def test_step_cost_is_one_move(tmp_path: Path) -> None:
 
 
 def test_unsplit_actions_name_cube_zero(tmp_path: Path) -> None:
-    board = Board(load_stage(STAGES / "FIX-01_straight_line.json"))
+    board = Board(load_stage(FIXTURES / "FIX-01_straight_line.json"))
     assert {action[0] for _, action in board.successors(board.start())} == {0}
 
 
@@ -164,6 +165,38 @@ def test_a_soft_switch_toggles_its_bridge(tmp_path: Path) -> None:
     assert next_state.bridges == (True,), "any contact fires a soft switch"
 
 
+@pytest.mark.parametrize(("mode", "expected"), [("on", (True,)), ("off", (False,))])
+def test_a_one_way_mode_sets_the_bridge_instead_of_inverting_it(
+    tmp_path: Path, mode: str, expected: tuple[bool, ...]
+) -> None:
+    """`on` and `off` set the bridge, so pressing the same switch twice leaves it where it was.
+
+    The original game uses both one-way modes, on the same bridge, in the same level; a vocabulary
+    of {toggle, permanent} would have collapsed them into one word.
+    """
+    board = board_for(
+        tmp_path,
+        ["......", ".So+o.", "..=...", ".G...."],
+        switches=[
+            {
+                "type": "soft",
+                "pos": [1, 3],
+                "action": mode,
+                "bridges": [[2, 2]],
+                "teleport_cubes": None,
+            }
+        ],
+        bridges=[{"pos": [2, 2], "initially_open": mode == "off"}],
+    )
+    start = board.start()
+    (pressed, _), = board.successors(start)
+    assert pressed.bridges == expected
+
+    back = {action: state for state, action in board.successors(pressed)}[(0, "L")]
+    (again, _), = board.successors(back)
+    assert again.bridges == expected, "a one-way mode is a set, not an inversion"
+
+
 def test_a_heavy_switch_ignores_a_lying_block(tmp_path: Path) -> None:
     board = board_for(
         tmp_path,
@@ -172,7 +205,7 @@ def test_a_heavy_switch_ignores_a_lying_block(tmp_path: Path) -> None:
             {
                 "type": "heavy",
                 "pos": [3, 1],
-                "action": "permanent",
+                "action": "toggle",
                 "bridges": [[2, 3]],
                 "teleport_cubes": None,
             }
@@ -193,7 +226,7 @@ def test_a_heavy_switch_fires_for_a_standing_block(tmp_path: Path) -> None:
             {
                 "type": "heavy",
                 "pos": [4, 1],
-                "action": "permanent",
+                "action": "off",
                 "bridges": [[2, 3]],
                 "teleport_cubes": None,
             }
@@ -204,7 +237,7 @@ def test_a_heavy_switch_fires_for_a_standing_block(tmp_path: Path) -> None:
     moves = {action: state for state, action in board.successors(lying)}
     standing = moves[(0, "D")]
     assert cells(standing) == ((4, 1),)
-    assert standing.bridges == (False,)
+    assert standing.bridges == (False,), "the `off` mode closes the bridge"
 
 
 def test_a_switch_may_not_close_a_bridge_under_the_block(tmp_path: Path) -> None:
@@ -322,7 +355,7 @@ def test_two_cubes_never_share_a_cell_or_swap(tmp_path: Path) -> None:
 def test_fixture_plans_reach_the_goal_at_the_hand_computed_cost(
     stage_id: str, moves: str
 ) -> None:
-    path = next(STAGES.glob(f"{stage_id}_*.json"))
+    path = next(FIXTURES.glob(f"{stage_id}_*.json"))
     stage = load_stage(path)
     board = Board(stage)
     state = board.start()

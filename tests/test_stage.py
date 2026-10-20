@@ -12,6 +12,7 @@ from bloxorz.core.stage import StageError, load_stage
 
 ROOT = Path(__file__).resolve().parents[1]
 STAGES = ROOT / "Source" / "bloxorz" / "core" / "stages"
+FIXTURES = ROOT / "tests" / "fixtures"
 
 BASE: dict[str, object] = {
     "id": "T-01",
@@ -167,13 +168,25 @@ def test_switch_entries_carry_every_field(tmp_path: Path) -> None:
     assert "missing" in text
 
 
-@pytest.mark.parametrize(
-    ("kind", "glyph", "action"),
-    [("soft", "+", "permanent"), ("heavy", "X", "toggle"), ("split", "Y", "toggle")],
-)
-def test_a_switch_action_must_match_its_type(
-    tmp_path: Path, kind: str, glyph: str, action: str
-) -> None:
+def test_a_split_switch_takes_no_action(tmp_path: Path) -> None:
+    text = message(
+        tmp_path,
+        grid=[".....", ".SY.G", "....."],
+        switches=[
+            {
+                "type": "split",
+                "pos": [1, 2],
+                "action": "toggle",
+                "bridges": None,
+                "teleport_cubes": [[2, 2], [2, 3]],
+            }
+        ],
+    )
+    assert "no action" in text, text
+
+
+@pytest.mark.parametrize(("kind", "glyph"), [("soft", "+"), ("heavy", "X")])
+def test_a_bridge_switch_names_its_action(tmp_path: Path, kind: str, glyph: str) -> None:
     text = message(
         tmp_path,
         grid=[".....", f".S{glyph}.G", "....."],
@@ -181,14 +194,14 @@ def test_a_switch_action_must_match_its_type(
             {
                 "type": kind,
                 "pos": [1, 2],
-                "action": action,
-                "bridges": [[1, 3]] if kind != "split" else None,
-                "teleport_cubes": [[2, 2], [2, 3]] if kind == "split" else None,
+                "action": None,
+                "bridges": [[1, 3]],
+                "teleport_cubes": None,
             }
         ],
-        bridges=[{"pos": [1, 3], "initially_open": True}] if kind != "split" else [],
+        bridges=[{"pos": [1, 3], "initially_open": True}],
     )
-    assert "takes action" in text, text
+    assert "takes an action" in text, text
 
 
 def test_expected_holds_only_a_cost(tmp_path: Path) -> None:
@@ -218,7 +231,7 @@ def test_a_stage_without_expected_loads(tmp_path: Path) -> None:
 def test_the_fixtures_load_with_a_hand_computed_cost() -> None:
     """Only fixtures carry ``expected``. Benchmark stages have no hand-computed answer, so the glob
     is scoped by name; a directory-wide rule would fail on every stage #5 adds."""
-    fixtures = sorted(STAGES.glob("FIX-*.json"))
+    fixtures = sorted(FIXTURES.glob("FIX-*.json"))
     assert len(fixtures) >= 3
     for path in fixtures:
         stage = load_stage(path)

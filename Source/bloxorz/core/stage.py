@@ -199,16 +199,11 @@ def _switches(
                 _fail(path, text, "schema: a bridge switch must name its bridges", '"bridges"')
             teleport_cubes = None
         action = entry["action"]
-        if action is not None and action not in {"toggle", "permanent"}:
+        if action is not None and action not in {"toggle", "on", "off"}:
             _fail(path, text, f"schema: unknown switch action {action!r}", '"action"')
-        wanted = {"soft": "toggle", "heavy": "permanent", "split": None}[kind]
-        if action != wanted:
-            _fail(
-                path,
-                text,
-                f"schema: a {kind} switch takes action {wanted!r}, not {action!r}",
-                '"action"',
-            )
+        if (kind == "split") != (action is None):
+            wanted = "no action" if kind == "split" else "an action: 'toggle', 'on' or 'off'"
+            _fail(path, text, f"schema: a {kind} switch takes {wanted}", '"action"')
         switches.append(
             Switch(
                 type=kind,  # type: ignore[arg-type]

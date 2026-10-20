@@ -31,7 +31,7 @@ def create_stages():
         # --- GROUP L1: BASIC ---
         {
             "id": "L1-01",
-            "name": "Stage 01 - Plain Intro",
+            "name": "Plain Intro",
             "group": "L1",
             "source": "Coolmath Games Bloxorz - Stage 1 (Passcode 780464)",
             "grid": [
@@ -47,7 +47,7 @@ def create_stages():
         },
         {
             "id": "L1-02",
-            "name": "Stage 02 - Turning Corner",
+            "name": "Turning Corner",
             "group": "L1",
             "source": "Coolmath Games Bloxorz - Stage 2",
             "grid": [
@@ -63,7 +63,7 @@ def create_stages():
         },
         {
             "id": "L1-03",
-            "name": "Stage 03 - Narrow Corridors",
+            "name": "Narrow Corridors",
             "group": "L1",
             "source": "Coolmath Games Bloxorz - Stage 4",
             "grid": [
@@ -81,7 +81,7 @@ def create_stages():
         # --- GROUP L2: FRAGILE TILES ---
         {
             "id": "L2-01",
-            "name": "Stage 04 - Fragile Crossing",
+            "name": "Fragile Crossing",
             "group": "L2",
             "source": "Coolmath Games Bloxorz - Fragile Bridge",
             "grid": [
@@ -96,7 +96,7 @@ def create_stages():
         },
         {
             "id": "L2-02",
-            "name": "Stage 05 - Fragile Stepping Stones",
+            "name": "Fragile Stepping Stones",
             "group": "L2",
             "source": "Coolmath Games Bloxorz - Fragile Stepping",
             "grid": [
@@ -112,7 +112,7 @@ def create_stages():
         },
         {
             "id": "L2-03",
-            "name": "Stage 06 - Fragile Maze",
+            "name": "Fragile Maze",
             "group": "L2",
             "source": "Coolmath Games Bloxorz - Stage 6",
             "grid": [

@@ -429,18 +429,18 @@ Consumers: #24 tabulates `status` with no special-casing; #21 replays `path` whe
 - Cost inside the transition model.
 - Defining `BenchmarkRecord` or any exporter format (#24).
 
-## Mechanics presumed
+## Mechanics answered and presumed
 
-§2.5 leaves five interactions unstated. The defaults below are what this contract assumes; each
-is owned by an open mechanics issue and none of them changes a signature if one flips.
+§2.5 leaves five interactions unstated. Two are answered — #12 by ADR-003, #16 by ADR-004 — and
+three are still presumed. None of the five changes a signature if one flips.
 
-| Issue | Presumed outcome | Where it is assumed |
-| --- | --- | --- |
-| #12 fragile under a lone cube | safe — one unit on one tile equals a lying block's load | the `fragile` row of the passability table |
-| #13 cube-cube interaction | no shared cell, no cell swap in one action | `successors` legality |
-| #14 merge orientation | decided by the pair's adjacency axis | `successors`, "merging" rule |
-| #15 split switch re-trigger | always fires for a full block, inert for a lone cube | the `Y` activation rule |
-| #16 one cube falls off | the move is not generated, equivalent to immediate loss | `successors` legality |
+| Issue | Outcome | Where it is assumed | Status |
+| --- | --- | --- | --- |
+| #12 fragile under a lone cube | safe — one unit on one tile equals a lying block's load | the `fragile` row of the passability table | answered, ADR-003 |
+| #13 cube-cube interaction | no shared cell, no cell swap in one action | `successors` legality | presumed |
+| #14 merge orientation | decided by the pair's adjacency axis | `successors`, "merging" rule | presumed |
+| #15 split switch re-trigger | always fires for a full block, inert for a lone cube | the `Y` activation rule | presumed |
+| #16 one cube falls off | the move is not generated, equivalent to immediate loss | `successors` legality | answered as subsumed by #11, ADR-004 |
 
 ## Obligations
 

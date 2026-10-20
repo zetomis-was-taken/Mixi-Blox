@@ -1,0 +1,66 @@
+{
+  "id": "L3-03",
+  "name": "Two heavy switches",
+  "group": "L3",
+  "source": "Coolmath Games, Bloxorz, level 12 (passcode 958640)",
+  "grid": [
+    ".............X.",
+    "......ooo..ooo.",
+    "......oXooooo=.",
+    "....ooooo..oo..",
+    "....oGo=...oo..",
+    "..ooooo...oooo.",
+    ".ooSo.....oooo.",
+    ".oooo..ooooo...",
+    "......ooo......",
+    "......ooo......"
+  ],
+  "switches": [
+    {
+      "type": "heavy",
+      "pos": [
+        0,
+        13
+      ],
+      "action": "toggle",
+      "bridges": [
+        [
+          4,
+          7
+        ]
+      ],
+      "teleport_cubes": null
+    },
+    {
+      "type": "heavy",
+      "pos": [
+        2,
+        7
+      ],
+      "action": "toggle",
+      "bridges": [
+        [
+          2,
+          13
+        ]
+      ],
+      "teleport_cubes": null
+    }
+  ],
+  "bridges": [
+    {
+      "pos": [
+        2,
+        13
+      ],
+      "initially_open": false
+    },
+    {
+      "pos": [
+        4,
+        7
+      ],
+      "initially_open": false
+    }
+  ]
+}

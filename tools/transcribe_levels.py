@@ -38,8 +38,16 @@ SWITCH_TYPE = {"s": "soft", "h": "heavy"}
 MODE = {"onoff": "toggle", "on": "on", "off": "off"}
 
 PLAN: dict[int, tuple[str, str, str]] = {
+    1: ("L1-01", "Long corridor", "L1"),
+    3: ("L1-02", "Two flights", "L1"),
+    6: ("L1-03", "Side rooms", "L1"),
+    4: ("L2-01", "Fragile shelves", "L2"),
+    13: ("L2-02", "Fragile ring", "L2"),
     7: ("L3-01", "Bridge under a heavy switch", "L3"),
+    11: ("L3-02", "A one-way bridge", "L3"),
+    12: ("L3-03", "Two heavy switches", "L3"),
     8: ("L4-01", "Split into the far room", "L4"),
+    9: ("L4-02", "Split across the middle", "L4"),
 }
 
 

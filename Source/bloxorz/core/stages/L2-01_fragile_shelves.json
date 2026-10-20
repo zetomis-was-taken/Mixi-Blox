@@ -1,0 +1,20 @@
+{
+  "id": "L2-01",
+  "name": "Fragile shelves",
+  "group": "L2",
+  "source": "Coolmath Games, Bloxorz, level 4 (passcode 520967)",
+  "grid": [
+    "...............",
+    "...fffffff.....",
+    "...fffffff.....",
+    "oooo.....ooo...",
+    "ooo.......oo...",
+    "ooo.......oo...",
+    "oSo..oooofffff.",
+    "ooo..oooofffff.",
+    ".....oGo..ffof.",
+    ".....ooo..ffff."
+  ],
+  "switches": [],
+  "bridges": []
+}

@@ -1,0 +1,40 @@
+{
+  "id": "L4-02",
+  "name": "Split across the middle",
+  "group": "L4",
+  "source": "Coolmath Games, Bloxorz, level 9 (passcode 74355)",
+  "grid": [
+    "...............",
+    "...............",
+    "...............",
+    "oooo...o...oooo",
+    "oSoo...o...ooYo",
+    "ooooooooooooooo",
+    "......oGo......",
+    "......ooo......",
+    "...............",
+    "..............."
+  ],
+  "switches": [
+    {
+      "type": "split",
+      "pos": [
+        4,
+        13
+      ],
+      "action": null,
+      "bridges": null,
+      "teleport_cubes": [
+        [
+          4,
+          12
+        ],
+        [
+          4,
+          2
+        ]
+      ]
+    }
+  ],
+  "bridges": []
+}

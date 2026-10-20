@@ -61,6 +61,19 @@ def roll(cube: Cube, direction: Direction, split: bool) -> Cube | None:
     return ((top, col + 1), (top + 1, col + 1))
 
 
+def _after_mode(action: str | None, is_open: bool) -> bool:
+    """Apply one of the original's three bridge modes: `on` opens, `off` closes, `toggle` inverts.
+
+    The mode is data, so a heavy switch may open a bridge and a soft one may close it. What a tile's
+    *type* decides is who fires it, not what it does.
+    """
+    if action == "on":
+        return True
+    if action == "off":
+        return False
+    return not is_open
+
+
 def _merge(cubes: list[Cube]) -> list[Cube]:
     """Merge two orthogonally adjacent cubes into one lying block, along their axis (ADR-007)."""
     if len(cubes) != 2 or len(cubes[0]) != 1 or len(cubes[1]) != 1:
@@ -210,7 +223,7 @@ class Board:
                 continue
             for pos in switch.bridges or ():
                 slot = self._index.bridge_of[pos]
-                bridges[slot] = not bridges[slot] if switch.type == "soft" else False
+                bridges[slot] = _after_mode(switch.action, bridges[slot])
         if landed and allow_split:
             return self._fire(cubes, bridges, landed, before, allow_split=False)
         return cubes, bridges

@@ -1,0 +1,20 @@
+{
+  "id": "L2-02",
+  "name": "Fragile ring",
+  "group": "L2",
+  "source": "Coolmath Games, Bloxorz, level 13 (passcode 448106)",
+  "grid": [
+    ".ooofoooofoooo.",
+    ".oo........ooo.",
+    ".oo.........ooo",
+    ".ooo...ooo..oSo",
+    ".ooofffoGo..ooo",
+    ".ooo..fooo..o..",
+    "...o..fffffoo..",
+    "...oooffofff...",
+    "....ooffffff...",
+    "....ooo..oo...."
+  ],
+  "switches": [],
+  "bridges": []
+}

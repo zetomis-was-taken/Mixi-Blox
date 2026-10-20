@@ -151,7 +151,8 @@ Rules:
 - A **heavy** or **split** switch fires only for `standing`; a **soft** switch fires on any
   contact. `Y` is inert for a lone cube. A switch fires on the contact one action makes, not on
   occupancy: a cube parked on a switch does not press it again when the other cube moves, and a
-  split's teleport targets count as one contact.
+  split's teleport targets count as one contact. The mode (`toggle`, `on`, `off`) is data: the type
+  decides who fires the switch, the mode decides what it does to the bridge.
 - Merging happens on orthogonal adjacency and yields a lying block along the axis the two cubes
   are adjacent on.
 
@@ -162,7 +163,7 @@ Rules:
 class Stage:
     id: str
     name: str
-    group: str                 # L1 plain, L2 fragile, L3 switches, L4 combined
+    group: str                 # L1 plain, L2 fragile, L3 switches, L4 two-cube (split)
     grid: tuple[str, ...]
     source: str | None         # URL for transcribed stages, "original" for authored
     expected: Expected | None  # fixtures only
@@ -207,8 +208,13 @@ Switch entries carry every field; unused ones are `null`, never absent:
 ```json
 { "type": "split", "pos": [1,3], "action": null, "bridges": null, "teleport_cubes": [[4,2],[6,2]] }
 { "type": "soft",  "pos": [1,3], "action": "toggle", "bridges": [[1,7],[1,8]], "teleport_cubes": null }
-{ "type": "heavy", "pos": [1,3], "action": "permanent", "bridges": [[1,7],[1,8]], "teleport_cubes": null }
+{ "type": "heavy", "pos": [1,3], "action": "toggle", "bridges": [[1,7],[1,8]], "teleport_cubes": null }
 ```
+
+`action` is the bridge mode, and it comes from the level's data rather than from the tile's type:
+`toggle` inverts the bridge, `on` opens it, `off` closes it. The original game uses all three, and
+uses any of them on either switch type, so a heavy switch may open a bridge. A split switch carries
+no action, because it teleports instead. See ADR-009.
 
 Loader rules — any violation is a hard error carrying file and line:
 

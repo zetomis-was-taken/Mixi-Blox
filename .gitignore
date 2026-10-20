@@ -12,6 +12,10 @@ venv/
 node_modules/
 dist/
 
+# Scratch copies of other branches
+/.tmp*/
+/tmp*/
+
 # Editors / OS
 .vscode/
 .idea/

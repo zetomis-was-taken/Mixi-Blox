@@ -46,7 +46,7 @@ class Switch:
 
     type: Literal["soft", "heavy", "split"]
     pos: Cell
-    action: Literal["toggle", "permanent"] | None = None
+    action: Literal["toggle", "on", "off"] | None = None
     bridges: tuple[Cell, ...] | None = None
     teleport_cubes: tuple[Cell, Cell] | None = None
 

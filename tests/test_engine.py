@@ -102,7 +102,7 @@ def test_step_cost_is_one_move(tmp_path: Path) -> None:
 
 
 def test_unsplit_actions_name_cube_zero(tmp_path: Path) -> None:
-    board = Board(load_stage(STAGES / "L1-01_straight_line.json"))
+    board = Board(load_stage(STAGES / "FIX-01_straight_line.json"))
     assert {action[0] for _, action in board.successors(board.start())} == {0}
 
 
@@ -317,7 +317,7 @@ def test_two_cubes_never_share_a_cell_or_swap(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize(
     ("stage_id", "moves"),
-    [("L1-01", "RRRRRR"), ("L1-02", "RRDD"), ("L1-03", "DDRR")],
+    [("FIX-01", "RRRRRR"), ("FIX-02", "RRDD"), ("FIX-03", "DDRR")],
 )
 def test_fixture_plans_reach_the_goal_at_the_hand_computed_cost(
     stage_id: str, moves: str

@@ -1,15 +1,15 @@
 {
-  "id": "L1-02",
-  "name": "East then south",
+  "id": "FIX-03",
+  "name": "South then east",
   "group": "L1",
   "source": "original",
   "grid": [
-    ".......",
-    ".Sooo..",
-    "....o..",
-    "....o..",
-    "....G..",
-    "......."
+    "......",
+    ".S....",
+    ".o....",
+    ".o....",
+    ".oooG.",
+    "......"
   ],
   "switches": [],
   "bridges": [],

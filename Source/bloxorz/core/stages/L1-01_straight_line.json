@@ -1,0 +1,16 @@
+{
+  "id": "L1-01",
+  "name": "Straight line",
+  "group": "L1",
+  "source": "original",
+  "grid": [
+    "............",
+    ".SooooooooG.",
+    "............"
+  ],
+  "switches": [],
+  "bridges": [],
+  "expected": {
+    "optimal_cost": 6
+  }
+}

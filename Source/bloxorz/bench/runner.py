@@ -24,34 +24,49 @@ class BenchmarkRunner:
         """Registers a stage along with its difficulty group (L1, L2, L3, L4)."""
         self.stages[name] = {"data": stage_data, "group": group}
 
-    def run_single(self, algo_name: str, stage_name: str, stage_data: Any, group: str) -> BenchmarkRecord:
-        """Runs a single solver on a single stage with isolated resource tracking."""
+    def run_single(self, algo_name: str, stage_name: str, stage_data: Any, group: str, runs: int = 3) -> BenchmarkRecord:
+        """Runs a solver across multiple runs (median of 3 per Issue #30) with isolated resource tracking."""
         solver_fn = self.solvers[algo_name]
 
-        # Force garbage collection prior to tracing
-        gc.collect()
-        tracemalloc.start()
-        tracemalloc.reset_peak()
-        start_time = time.perf_counter()
-
+        times: List[float] = []
+        memories: List[int] = []
         raw_result: Optional[SearchResult] = None
         error_msg: Optional[str] = None
         success = False
 
-        try:
-            raw_result = solver_fn(stage_data)
-            end_time = time.perf_counter()
-            status = getattr(raw_result, "status", "solved") if raw_result is not None else "unsolvable"
-            success = (raw_result is not None) and (status == "solved")
-        except Exception as exc:
-            end_time = time.perf_counter()
-            error_msg = str(exc)
-            success = False
-        finally:
-            _, peak_bytes = tracemalloc.get_traced_memory()
-            tracemalloc.stop()
+        for _ in range(max(1, runs)):
+            gc.collect()
+            tracemalloc.start()
+            tracemalloc.reset_peak()
+            start_time = time.perf_counter()
 
-        elapsed_seconds = end_time - start_time
+            try:
+                current_result = solver_fn(stage_data)
+                end_time = time.perf_counter()
+                _, peak_bytes = tracemalloc.get_traced_memory()
+                times.append(end_time - start_time)
+                memories.append(peak_bytes)
+                raw_result = current_result
+                status = getattr(raw_result, "status", "solved") if raw_result is not None else "unsolvable"
+                success = (raw_result is not None) and (status == "solved")
+            except Exception as exc:
+                end_time = time.perf_counter()
+                _, peak_bytes = tracemalloc.get_traced_memory()
+                error_msg = str(exc)
+                success = False
+                break
+            finally:
+                tracemalloc.stop()
+
+        if not times:
+            elapsed_seconds = 0.0
+            peak_bytes = 0
+        else:
+            times.sort()
+            memories.sort()
+            mid = len(times) // 2
+            elapsed_seconds = times[mid]
+            peak_bytes = memories[mid]
 
         # Merge measurements
         if raw_result and hasattr(raw_result, "stats"):

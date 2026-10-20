@@ -1,0 +1,8 @@
+target-version = "py311"
+line-length = 100
+
+[lint]
+# Deliberately narrow to start: E and F catch defects, I keeps imports ordered so the layering
+# rules below stay readable. Widen after the tree is green, not before — a 300-warning wall is how
+# `--exit-zero` gets put back.
+select = ["E", "F", "I"]

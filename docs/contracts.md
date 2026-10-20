@@ -135,7 +135,9 @@ Rules:
   twice in a row; while unsplit only index `0` is emitted. Actions that would place any cell over
   void or a closed bridge, or two cubes on one cell, are not generated — an illegal move is
   absence, not a losing transition. Fragile follows the same style: impassable for `standing`,
-  rather than passable-then-detect-the-loss.
+  rather than passable-then-detect-the-loss. A **switch** action is filtered the same way:
+  `bridges` is updated first, and if the result leaves an occupied cell over a closed bridge, the
+  action is not generated (ADR-005: a switch may not close a bridge under the block).
 - `step_cost` defaults to `1.0` for every action (#7); non-uniform weights are policy, so tuning
   them never edits engine code.
 - `passable` is the only place passability is decided. A cell declares exactly one kind, so it
@@ -431,11 +433,12 @@ Consumers: #24 tabulates `status` with no special-casing; #21 replays `path` whe
 
 ## Mechanics answered and presumed
 
-§2.5 leaves five interactions unstated. Two are answered — #12 by ADR-003, #16 by ADR-004 — and
-three are still presumed. None of the five changes a signature if one flips.
+§2.5 leaves six interactions unstated. Three are answered — #11 by ADR-005, #12 by ADR-003, #16 by
+ADR-004 — and three are still presumed. None of the six changes a signature if it flips.
 
 | Issue | Outcome | Where it is assumed | Status |
 | --- | --- | --- | --- |
+| #11 bridge closing under the block | the action is not generated, not lost | `successors` legality | answered, ADR-005 |
 | #12 fragile under a lone cube | safe — one unit on one tile equals a lying block's load | the `fragile` row of the passability table | answered, ADR-003 |
 | #13 cube-cube interaction | no shared cell, no cell swap in one action | `successors` legality | presumed |
 | #14 merge orientation | decided by the pair's adjacency axis | `successors`, "merging" rule | presumed |

@@ -147,17 +147,19 @@ class Board:
         moved = roll(state.cubes[index], direction, split)
         if moved is None:
             return False
+        before = set(cells(state))
         cubes = [*state.cubes]
         cubes[index] = moved
         if not self._passable_cubes(cubes, state.bridges) or self._shares_a_cell(cubes):
             return False
-        cubes, bridges = self._fire_switches(cubes, list(state.bridges))
+        cubes, bridges = self._fire(cubes, list(state.bridges), set(moved) - before, before)
         if tuple(bridges) == state.bridges:
             return False
         return not self._passable_cubes(_merge(cubes), tuple(bridges))
 
     def _advance(self, state: State, index: int, direction: Direction) -> State | None:
         split = len(state.cubes) == 2
+        before = set(cells(state))
         moved = roll(state.cubes[index], direction, split)
         if moved is None:
             return None
@@ -167,7 +169,7 @@ class Board:
             return None
         if self._shares_a_cell(cubes):
             return None
-        cubes, bridges = self._fire_switches(cubes, list(state.bridges))
+        cubes, bridges = self._fire(cubes, list(state.bridges), set(moved) - before, before)
         cubes = _merge(cubes)
         if not self._passable_cubes(cubes, tuple(bridges)):
             return None
@@ -175,25 +177,42 @@ class Board:
             return None
         return State(cubes=tuple(cubes), bridges=tuple(bridges))
 
-    def _fire_switches(
-        self, cubes: list[Cube], bridges: list[bool]
+    def _fire(
+        self,
+        cubes: list[Cube],
+        bridges: list[bool],
+        touched: set[Cell],
+        before: set[Cell],
+        *,
+        allow_split: bool = True,
     ) -> tuple[list[Cube], list[bool]]:
-        """Apply every switch the block touches. A split switch rewrites the cubes (ADR-008)."""
+        """Fire the switches the moved piece newly touches, not the ones it still stands on.
+
+        A cube parked on a plate must not press it again when the other cube moves, and a switch the
+        block was already sitting on fired on the move that put it there. A split's teleport targets
+        count as contact once: a switch there may move a bridge, and a second split switch is
+        ignored, so one action never chains (ADR-008).
+        """
         split = len(cubes) == 2
         standing = not split and len(cubes[0]) == 1
-        for cell in sorted(cell for cube in cubes for cell in cube):
+        landed: set[Cell] | None = None
+        for cell in sorted(touched):
             switch = self._index.switch_at.get(cell)
             if switch is None:
                 continue
             if switch.type == "split":
-                if standing and switch.teleport_cubes is not None:
+                if allow_split and standing and switch.teleport_cubes is not None:
                     cubes = [(pos,) for pos in switch.teleport_cubes]
+                    landed = {pos for pos in switch.teleport_cubes if pos not in before}
+                    standing = False
                 continue
             if switch.type == "heavy" and not standing:
                 continue
             for pos in switch.bridges or ():
                 slot = self._index.bridge_of[pos]
                 bridges[slot] = not bridges[slot] if switch.type == "soft" else False
+        if landed and allow_split:
+            return self._fire(cubes, bridges, landed, before, allow_split=False)
         return cubes, bridges
 
     def _passable_cubes(self, cubes: list[Cube], bridges: tuple[bool, ...]) -> bool:

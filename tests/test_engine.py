@@ -337,3 +337,97 @@ def test_fixture_plans_reach_the_goal_at_the_hand_computed_cost(
     assert board.is_goal(state), f"{stage_id}: the plan does not finish on the goal"
     assert stage.expected is not None
     assert cost == stage.expected.optimal_cost
+
+
+def switch_and_split_board(tmp_path: Path) -> Board:
+    """A split whose first target lands on a soft switch wired to a closed bridge."""
+    return board_for(
+        tmp_path,
+        [
+            "........oo",
+            ".So.......",
+            ".o........",
+            ".o........",
+            ".Y....+...",
+            "........=G",
+        ],
+        switches=[
+            {
+                "type": "soft",
+                "pos": [4, 6],
+                "action": "toggle",
+                "bridges": [[5, 8]],
+                "teleport_cubes": None,
+            },
+            {
+                "type": "split",
+                "pos": [4, 1],
+                "action": None,
+                "bridges": None,
+                "teleport_cubes": [[4, 6], [0, 8]],
+            },
+        ],
+        bridges=[{"pos": [5, 8], "initially_open": False}],
+    )
+
+
+def test_a_teleport_landing_presses_a_soft_switch_once(tmp_path: Path) -> None:
+    board = switch_and_split_board(tmp_path)
+    lying = {action: state for state, action in board.successors(board.start())}[(0, "D")]
+    split = {action: state for state, action in board.successors(lying)}[(0, "D")]
+    assert split.cubes == (((4, 6),), ((0, 8),))
+    assert split.bridges == (True,), "landing on a switch is a contact"
+
+
+def test_a_parked_cube_does_not_press_its_switch_again(tmp_path: Path) -> None:
+    board = switch_and_split_board(tmp_path)
+    parked = State(cubes=(((4, 6),), ((0, 8),)), bridges=(True,))
+    moves = {action: state for state, action in board.successors(parked)}
+    assert moves[(1, "R")].bridges == (True,), "occupancy is not contact, so nothing fires"
+
+
+def test_a_split_switch_does_not_chain(tmp_path: Path) -> None:
+    board = board_for(
+        tmp_path,
+        ["......o.", ".So.....", ".o......", ".o......", ".Y......", "..Y...G."],
+        switches=[
+            {
+                "type": "split",
+                "pos": [4, 1],
+                "action": None,
+                "bridges": None,
+                "teleport_cubes": [[5, 2], [0, 6]],
+            },
+            {
+                "type": "split",
+                "pos": [5, 2],
+                "action": None,
+                "bridges": None,
+                "teleport_cubes": [[1, 7], [2, 7]],
+            },
+        ],
+    )
+    hovering = State(cubes=(((2, 1), (3, 1)),), bridges=())
+    landed = {action: state for state, action in board.successors(hovering)}[(0, "D")]
+    assert landed.cubes == (((5, 2),), ((0, 6),)), "one landing, no second split"
+
+
+def test_a_split_whose_targets_are_adjacent_merges_at_once(tmp_path: Path) -> None:
+    board = board_for(
+        tmp_path,
+        ["........", "..S.....", "..o.....", "..o.oo..", "..Y.....", ".......G"],
+        switches=[
+            {
+                "type": "split",
+                "pos": [4, 2],
+                "action": None,
+                "bridges": None,
+                "teleport_cubes": [[3, 4], [3, 5]],
+            }
+        ],
+    )
+    hovering = State(cubes=(((2, 2), (3, 2)),), bridges=())
+    landed = {action: state for state, action in board.successors(hovering)}[(0, "D")]
+    assert landed.cubes == (((3, 4), (3, 5)),), (
+        "adjacent targets merge on arrival (ADR-007), so such a Y is a free teleport"
+    )

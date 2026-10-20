@@ -149,7 +149,9 @@ Rules:
   one cell, a lying one puts one unit on each of two, and a lone cube puts one unit on one. So a
   lone cube is as safe as a lying block and only `standing` breaks the tile.
 - A **heavy** or **split** switch fires only for `standing`; a **soft** switch fires on any
-  contact. `Y` is inert for a lone cube.
+  contact. `Y` is inert for a lone cube. A switch fires on the contact one action makes, not on
+  occupancy: a cube parked on a switch does not press it again when the other cube moves, and a
+  split's teleport targets count as one contact.
 - Merging happens on orthogonal adjacency and yields a lying block along the axis the two cubes
   are adjacent on.
 

@@ -1,0 +1,20 @@
+{
+  "id": "L1-03",
+  "name": "Side rooms",
+  "group": "L1",
+  "source": "Coolmath Games, Bloxorz, level 6 (passcode 524383)",
+  "grid": [
+    ".....oooooo....",
+    ".....o..ooo....",
+    ".....o..ooooo..",
+    "Sooooo.....oooo",
+    "....ooo....ooGo",
+    "....ooo.....ooo",
+    "......o..oo....",
+    "......ooooo....",
+    "......ooooo....",
+    ".......ooo....."
+  ],
+  "switches": [],
+  "bridges": []
+}

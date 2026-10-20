@@ -1,0 +1,44 @@
+{
+  "id": "L3-01",
+  "name": "Bridge under a heavy switch",
+  "group": "L3",
+  "source": "Coolmath Games, Bloxorz, level 7 (passcode 189493)",
+  "grid": [
+    "...............",
+    "........oooo...",
+    "........oooo...",
+    "ooo.....o..oooo",
+    "oSooooooo...oGo",
+    "ooo....ooX..ooo",
+    "ooo....ooo..ooo",
+    ".oo=...o.......",
+    "..oooooo.......",
+    "..............."
+  ],
+  "switches": [
+    {
+      "type": "heavy",
+      "pos": [
+        5,
+        9
+      ],
+      "action": "toggle",
+      "bridges": [
+        [
+          7,
+          3
+        ]
+      ],
+      "teleport_cubes": null
+    }
+  ],
+  "bridges": [
+    {
+      "pos": [
+        7,
+        3
+      ],
+      "initially_open": false
+    }
+  ]
+}

@@ -15,22 +15,26 @@ beyond this line.
 
 ## The benchmark set
 
-| ID | Name | Group | Origin | Cited source | Checked |
-| --- | --- | --- | --- | --- | --- |
-| `FIX-01` | Straight line | L1 | original | authored for the engine tests (#38) | loads, solvable in 6 |
-| `FIX-02` | East then south | L1 | original | authored for the engine tests (#38) | loads, solvable in 4 |
-| `FIX-03` | South then east | L1 | original | authored for the engine tests (#38) | loads, solvable in 4 |
-| `L1-01` | Plain Intro | L1 | transcribed | Coolmath Games, Bloxorz, level 1 (passcode 780464) | matches the reference exactly; solvable in 7 |
-| `L4-01` | Split into the far room | L4 | transcribed | Coolmath Games, Bloxorz, level 8 (passcode 499707) | matches the reference exactly; solvable in 10 |
-| `L1-02` | Turning Corner | L1 | claimed transcription, unsourced | cites stage 2 | **does not match any original level** |
-| `L1-03` | Narrow Corridors | L1 | claimed transcription, unsourced | cites stage 4 | **does not match any original level** |
-| `L2-01` | Fragile Crossing | L2 | claimed transcription, unsourced | cites "Fragile Bridge" | **does not match any original level** |
-| `L2-02` | Fragile Stepping Stones | L2 | claimed transcription, unsourced | cites "Fragile Stepping" | **does not match any original level** |
-| `L2-03` | Fragile Maze | L2 | claimed transcription, unsourced | cites stage 6 | **does not match any original level** |
+| ID | Name | Group | Level | Checked |
+| --- | --- | --- | --- | --- |
+| `L1-01` | Long corridor | L1 | level 1, passcode 780464 | solvable in 7 |
+| `L1-02` | Two flights | L1 | level 3, passcode 918660 | solvable in 22 |
+| `L1-03` | Side rooms | L1 | level 6, passcode 524383 | solvable in 35 |
+| `L2-01` | Fragile shelves | L2 | level 4, passcode 520967 | solvable in 28 |
+| `L2-02` | Fragile ring | L2 | level 13, passcode 448106 | solvable in 46 |
+| `L3-01` | Bridge under a heavy switch | L3 | level 7, passcode 189493 | solvable in 44 |
+| `L3-02` | A one-way bridge | L3 | level 11, passcode 291709 | solvable in 47 |
+| `L3-03` | Two heavy switches | L3 | level 12, passcode 958640 | solvable in 65 |
+| `L4-01` | Split into the far room | L4 | level 8, passcode 499707 | solvable in 10 |
+| `L4-02` | Split across the middle | L4 | level 9, passcode 74355 | solvable in 24 |
 
-Ten stages: three hand-solved `FIX` fixtures, one verified transcription, and six from #25 of which
-five are unsourced. `FIX-01` to `FIX-03` and `L4-01` are on `main`; the rest arrive with #25 or
-replace it.
+Ten stages, one file each, all transcribed from the original game and all checked: every one loads,
+every one is solvable, and every one matches the reference level cell for cell. The four groups are
+the ladder § Stage names, so the report prints one table per group.
+
+Three hand-authored boards live in `tests/fixtures/`, not here. They are inputs for the engine tests,
+they are six moves long, and counting them as benchmark stages would pad the L1 row with puzzles that
+prove nothing.
 
 ## The provenance audit
 
@@ -39,16 +43,14 @@ The original levels were extracted from the game's SWF and published as text in
 letter per mechanic (`b` floor, `e` exit, `f` fragile, `s` soft switch, `h` heavy switch, `k`/`l`/`q`/`r`
 bridge halves, `v` split). That file also settles whether a claim of transcription is true.
 
-**One of the six holds up.** `L1-01` reproduces original level 1 exactly: same 6x10 bounding box, same
-35 cells, same walls, same exit, same spawn, after mapping letters to glyphs.
+**One of the six held up.** `L1-01` reproduced original level 1 exactly. The other five matched no
+level in the set, at any size: playable boards carrying invented citations. Two also disagreed with
+their own names, `L1-03` being "Stage 03" while citing stage 4.
 
-**The other five match no level in the set**, at any size. They are playable boards with invented
-citations, and they are marked unsourced above rather than attributed to stages they do not reproduce.
-Two of them also disagree with their own names: `L1-03` is "Stage 03" and cites stage 4, and `L2-01`
-and `L2-02` name no number at all.
-
-Until those five are replaced with real transcriptions or re-labelled as original boards, the report
-may not cite a Coolmath stage for them.
+They are not repaired but replaced. The ten stages in the table are transcribed straight from the
+reference, so a claim of transcription is now the default rather than the exception, and
+`tools/transcribe_levels.py` regenerates every one of them: run it and diff the output, and any
+disagreement means the file or the tool is wrong, never the level.
 
 ## What "checked" means, and what it does not
 
@@ -64,28 +66,21 @@ level data above is the reference, and the comparison is exact: same bounding bo
 spawn, same exit. Five claims fail that check. Nothing in the table says "identical to stage N" unless
 the comparison passed.
 
-## Not in the set
+## What is not in the set
 
-Six transcribed boards from #25 are unsolvable and are excluded:
+The twelve boards that arrived in #25 are gone rather than repaired. Six of them stranded the block
+within two moves of the start; of the other six, one reproduced level 1 and five matched no level at
+all. All twelve were re-transcribed from the reference. Their ids are reused here: #25 must delete its stage files when it merges instead
+of leaving them to collide, and `test_stage_ids_are_unique` fails if both land.
 
-| Stage | Result |
-| --- | --- |
-| `L3-01` soft_switch_bridge | unsolvable, 4 nodes: the start is in a pocket |
-| `L3-02` heavy_switch_logic | unsolvable, 29 nodes |
-| `L3-03` dual_switch_coordination | does not load; 74 nodes and still unsolvable once it does |
-| `L4-01` combined_fragile_and_switches | unsolvable, 58 nodes |
-| `L4-02` split_switch_intro | unsolvable, 50 nodes |
-| `L4-03` split_remote_coordination | unsolvable, 96 nodes |
-
-Every one strands the block within two moves of the start, so this is transcription rather than
-mechanics. They are being replaced, not repaired, and the L3 and L4 groups are therefore empty until
-that work lands. A stage measured as `UNSOLVABLE` for all four algorithms would read as a result about
-the algorithms, which is the one mistake this benchmark cannot afford.
+An unsolvable board is the one mistake this benchmark cannot afford: measured as `UNSOLVABLE` for all
+four algorithms, it would read as a result about the algorithms. That is why
+`test_every_committed_stage_loads` exists, and why a board that cannot load is not committed at all.
 
 ## Adding a stage
 
-1. Write the file under `Source/bloxorz/core/stages/`, keys from the frozen schema only.
+1. For a real level, run `tools/transcribe_levels.py` rather than typing a grid: it writes the file,
+   and it refuses to write one that disagrees with the reference.
 2. Load it with `load_stage`. A `StageError` means the file, not the engine.
-3. Confirm it is solvable before committing it. An unsolvable board is not a hard benchmark, it is a
-   missing corridor.
-4. Give it a unique `id`, a `group`, and either `"source": "original"` or an entry in the table above.
+3. Confirm it is solvable before committing it, and put the number in the table above.
+4. Give it a unique `id`, a `group` from the ladder, and either `"source": "original"` or a row here.

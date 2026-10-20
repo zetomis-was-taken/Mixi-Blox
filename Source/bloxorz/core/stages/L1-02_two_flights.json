@@ -1,0 +1,20 @@
+{
+  "id": "L1-02",
+  "name": "Two flights",
+  "group": "L1",
+  "source": "Coolmath Games, Bloxorz, level 3 (passcode 918660)",
+  "grid": [
+    "...............",
+    "...............",
+    "......ooooooo..",
+    "oooo..ooo..oo..",
+    "ooooooooo..oooo",
+    "oSoo.......ooGo",
+    "oooo........ooo",
+    "...............",
+    "...............",
+    "..............."
+  ],
+  "switches": [],
+  "bridges": []
+}

@@ -1,0 +1,55 @@
+{
+  "id": "L3-02",
+  "name": "A one-way bridge",
+  "group": "L3",
+  "source": "Coolmath Games, Bloxorz, level 11 (passcode 291709)",
+  "grid": [
+    "...ooo=........",
+    "...oGo=........",
+    "...ooo.........",
+    "...o...oooooo..",
+    "...o...oo..oo..",
+    "..Soooooo..ooo.",
+    ".......o+....o.",
+    ".......oooo..o.",
+    ".......ooooooo.",
+    "..........ooo.."
+  ],
+  "switches": [
+    {
+      "type": "soft",
+      "pos": [
+        6,
+        8
+      ],
+      "action": "off",
+      "bridges": [
+        [
+          0,
+          6
+        ],
+        [
+          1,
+          6
+        ]
+      ],
+      "teleport_cubes": null
+    }
+  ],
+  "bridges": [
+    {
+      "pos": [
+        0,
+        6
+      ],
+      "initially_open": true
+    },
+    {
+      "pos": [
+        1,
+        6
+      ],
+      "initially_open": true
+    }
+  ]
+}

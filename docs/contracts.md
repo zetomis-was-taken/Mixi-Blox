@@ -433,14 +433,15 @@ Consumers: #24 tabulates `status` with no special-casing; #21 replays `path` whe
 
 ## Mechanics answered and presumed
 
-§2.5 leaves six interactions unstated. Three are answered — #11 by ADR-005, #12 by ADR-003, #16 by
-ADR-004 — and three are still presumed. None of the six changes a signature if it flips.
+§2.5 leaves six interactions unstated. Four are answered — #11 by ADR-005, #12 by ADR-003, #13 by
+ADR-006, #16 by ADR-004 — and two are still presumed. None of the six changes a signature if it
+flips.
 
 | Issue | Outcome | Where it is assumed | Status |
 | --- | --- | --- | --- |
 | #11 bridge closing under the block | the action is not generated, not lost | `successors` legality | answered, ADR-005 |
 | #12 fragile under a lone cube | safe — one unit on one tile equals a lying block's load | the `fragile` row of the passability table | answered, ADR-003 |
-| #13 cube-cube interaction | no shared cell, no cell swap in one action | `successors` legality | presumed |
+| #13 cube-cube interaction | no shared cell, no cell swap in one action | `successors` legality | answered, ADR-006 |
 | #14 merge orientation | decided by the pair's adjacency axis | `successors`, "merging" rule | presumed |
 | #15 split switch re-trigger | always fires for a full block, inert for a lone cube | the `Y` activation rule | presumed |
 | #16 one cube falls off | the move is not generated, equivalent to immediate loss | `successors` legality | answered as subsumed by #11, ADR-004 |

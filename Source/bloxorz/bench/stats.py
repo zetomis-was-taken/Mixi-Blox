@@ -3,7 +3,17 @@ import json
 from dataclasses import dataclass
 from typing import List, Optional
 
-from bloxorz.core.contracts import Stats
+from bloxorz.core.contracts import SearchResult, Stats
+
+__all__ = [
+    "SearchResult",
+    "Stats",
+    "BenchmarkRecord",
+    "stats_to_dict",
+    "export_records_csv",
+    "export_records_json",
+    "export_records_latex",
+]
 
 
 def stats_to_dict(stats: Stats) -> dict:
@@ -22,14 +32,23 @@ def stats_to_dict(stats: Stats) -> dict:
 
 @dataclass
 class BenchmarkRecord:
-    """Record linking a stage, an algorithm, and its SearchResult."""
+    """
+    Record linking a stage, an algorithm, and its SearchResult.
+
+    Note on schema design (contracts.md § Stats):
+    The harness decorates the core SearchResult with benchmarking execution metadata
+    (algorithm name, stage name, stage group). It derives `success: bool` from
+    (status == "solved") and `solution_length: int` (len(path) when solved, -1 otherwise)
+    for reporting and tabular ease, while preserving `cost: float` to match
+    step_cost and SearchResult.cost without truncation.
+    """
 
     algorithm: str
     stage_name: str
     group: str
     success: bool
     solution_length: int
-    cost: int
+    cost: float
     stats: Stats
     error_message: Optional[str] = None
 
@@ -40,7 +59,7 @@ class BenchmarkRecord:
             "group": self.group,
             "success": self.success,
             "solution_length": self.solution_length if self.success else -1,
-            "cost": self.cost if self.success else -1,
+            "cost": round(self.cost, 2) if self.success and self.cost >= 0 else -1.0,
             "error": self.error_message or "",
         }
         d.update(stats_to_dict(self.stats))

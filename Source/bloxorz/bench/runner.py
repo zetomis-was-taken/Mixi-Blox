@@ -87,7 +87,7 @@ class BenchmarkRunner:
             )
             path = raw_result.path
             moves = len(path) if path is not None else -1
-            cost = getattr(raw_result, "cost", moves)
+            cost = float(getattr(raw_result, "cost", moves))
         elif raw_result and hasattr(raw_result, "stats"):
             st = raw_result.stats
             solver_stats = Stats(
@@ -99,7 +99,7 @@ class BenchmarkRunner:
             )
             path = getattr(raw_result, "path", getattr(raw_result, "moves", None))
             moves = len(path) if path is not None else -1
-            cost = getattr(raw_result, "cost", moves)
+            cost = float(getattr(raw_result, "cost", moves))
         else:
             solver_stats = Stats(
                 expanded=0,
@@ -109,7 +109,7 @@ class BenchmarkRunner:
                 peak_mem_bytes=peak_bytes,
             )
             moves = -1
-            cost = -1
+            cost = -1.0
 
         return BenchmarkRecord(
             algorithm=algo_name,

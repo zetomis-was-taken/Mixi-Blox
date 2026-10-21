@@ -41,7 +41,7 @@ Cell = tuple[int, int]                 # (row, col), 0-indexed
 Cube = tuple[Cell, ...]                # 1 cell = a lone unit cube, 2 cells = half a lying block
 Orientation = Literal["standing", "lying_h", "lying_v", "cube"]
 Direction = Literal["U", "D", "L", "R"]
-Action = tuple[int, Direction]         # (cube_index, direction); index 0 while unsplit
+Action = tuple[int, Direction]         # (cube_index, direction); a position, 0 while unsplit
 ```
 
 `Orientation` is derived from the piece and is never stored: two cubes is `cube`; one cube of two
@@ -75,6 +75,13 @@ distinct state. The order is fixed at construction, so one board has one spellin
 `key()` cannot depend on the order the cubes were reached in. The two cubes are
 interchangeable — nothing distinguishes them but their index — and ADR-006 guarantees they
 sit on distinct cells, so the ordering is total rather than best-effort.
+
+So `Action`'s `cube_index` is a **position in that order, not a name**. It says which cube to move,
+read against the state the action is applied to. When one cube overtakes the other in the sort order,
+the position the two occupy swaps, so the same index can point at a different cube from one state to
+the next. `successors` emits the index per state and replay reads it the same way, which is why this
+costs nothing; it would cost a lot to a consumer that tracked a *physical* cube across states by
+index, and the renderer is exactly that consumer, so it renders cells rather than cubes.
 
 `bridges[i]` is open when `True`, and its cell is `stage.bridges[i].pos`. Solvers, the renderer and
 the key all read it in that order; nothing re-sorts it.

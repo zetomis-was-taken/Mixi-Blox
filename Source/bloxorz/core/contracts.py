@@ -32,6 +32,18 @@ class State:
         """The state as a hashable tuple, derived from the fields so it cannot drift."""
         return tuple(getattr(self, field.name) for field in fields(self))
 
+    def __post_init__(self) -> None:
+        """Order the cubes canonically, by their cell, so one board has one spelling.
+
+        The two cubes are interchangeable: nothing distinguishes them but their index. Without
+        this, the same pair of occupied cells is reachable with the cubes in either order, those
+        are two different ``key()`` values, and a visited set searches the position twice (#34).
+        """
+        if len(self.cubes) > 1:
+            object.__setattr__(
+                self, "cubes", tuple(sorted(self.cubes, key=lambda cube: min(cube)))
+            )
+
 
 @dataclass(frozen=True)
 class Expected:

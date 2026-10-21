@@ -142,6 +142,24 @@ def test_rule_5_rejects_a_switch_linking_an_unknown_bridge(tmp_path: Path) -> No
     assert "rule 5" in text
 
 
+def test_a_bridge_entry_must_state_whether_it_starts_open(tmp_path: Path) -> None:
+    text = message(
+        tmp_path,
+        grid=["......", ".S+..G", "..=...", "......"],
+        switches=[
+            {
+                "type": "soft",
+                "pos": [1, 2],
+                "action": "toggle",
+                "bridges": [[2, 2]],
+                "teleport_cubes": None,
+            }
+        ],
+        bridges=[{"pos": [2, 2]}],
+    )
+    assert "initially_open" in text, text
+
+
 def test_split_switch_needs_two_teleport_cells(tmp_path: Path) -> None:
     text = message(
         tmp_path,

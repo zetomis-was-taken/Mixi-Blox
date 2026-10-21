@@ -68,7 +68,7 @@ class Bridge:
     """One bridge tile. ``State.bridges[i]`` is open when ``True``."""
 
     pos: Cell
-    initially_open: bool = True
+    initially_open: bool
 
 
 @dataclass(frozen=True)

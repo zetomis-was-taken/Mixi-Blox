@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections import deque
 from pathlib import Path
 
 import pytest
@@ -79,6 +80,46 @@ def test_state_key_has_arity_two_and_covers_every_field() -> None:
     assert len(open_bridge.key()) == 2
     assert open_bridge.key() != closed_bridge.key(), "bridges are part of the key (#6)"
     assert State(cubes=(((2, 2),),), bridges=(True,)) == open_bridge
+
+
+def test_the_key_does_not_depend_on_the_order_the_cubes_were_written_in() -> None:
+    forward = State(cubes=(((1, 4),), ((1, 2),)), bridges=(True,))
+    backward = State(cubes=(((1, 2),), ((1, 4),)), bridges=(True,))
+    assert forward == backward, "one board, one spelling (#34)"
+    assert forward.key() == backward.key()
+    assert len(forward.key()) == 2
+
+
+def test_a_split_state_and_an_unsplit_state_never_collide() -> None:
+    unsplit = State(cubes=(((1, 3), (1, 4)),), bridges=(True,))
+    split = State(cubes=(((1, 3),), ((1, 4),)), bridges=(True,))
+    assert set(cells(unsplit)) == set(cells(split)), "same cells, different meaning"
+    assert unsplit.key() != split.key()
+
+
+def test_one_board_reached_two_ways_has_one_key() -> None:
+    """The regression #34 exists for.
+
+    A split stage reaches the same pair of cells with the cubes in either order. Both
+    spellings are the same board, so they are the same state and the same key.
+    """
+    board = Board(load_stage(STAGES / "L4-01_split_into_the_far_room.json"))
+
+    by_board: dict[tuple, set[tuple]] = {}
+    start = board.start()
+    seen = {start.key()}
+    queue = deque([start])
+    while queue:
+        state = queue.popleft()
+        board_id = (frozenset(cells(state)), state.bridges)
+        by_board.setdefault(board_id, set()).add(state.key())
+        for next_state, _ in board.successors(state):
+            if next_state.key() not in seen:
+                seen.add(next_state.key())
+                queue.append(next_state)
+
+    duplicated = {b: keys for b, keys in by_board.items() if len(keys) > 1}
+    assert not duplicated, f"{len(duplicated)} boards reached with two different keys"
 
 
 def test_cells_flattens_and_pivot_is_the_smaller_cell() -> None:
@@ -265,9 +306,9 @@ def test_a_switch_may_not_close_a_bridge_under_the_block(tmp_path: Path) -> None
 
 def test_a_lone_cube_does_not_fire_a_split_switch(tmp_path: Path) -> None:
     board = split_board(tmp_path)
-    lone = State(cubes=(((3, 2),), ((2, 4),)), bridges=())
-    landing = {action: state for state, action in board.successors(lone)}[(0, "D")]
-    assert landing.cubes[0] == ((4, 2),), "a lone cube may stand on Y and nothing happens"
+    lone = State(cubes=(((2, 4),), ((3, 2),)), bridges=())
+    landing = {action: state for state, action in board.successors(lone)}[(1, "D")]
+    assert (4, 2) in cells(landing), "a lone cube may stand on Y and nothing happens"
     assert len(landing.cubes) == 2
 
 
@@ -407,15 +448,15 @@ def test_a_teleport_landing_presses_a_soft_switch_once(tmp_path: Path) -> None:
     board = switch_and_split_board(tmp_path)
     lying = {action: state for state, action in board.successors(board.start())}[(0, "D")]
     split = {action: state for state, action in board.successors(lying)}[(0, "D")]
-    assert split.cubes == (((4, 6),), ((0, 8),))
+    assert split.cubes == (((0, 8),), ((4, 6),))
     assert split.bridges == (True,), "landing on a switch is a contact"
 
 
 def test_a_parked_cube_does_not_press_its_switch_again(tmp_path: Path) -> None:
     board = switch_and_split_board(tmp_path)
-    parked = State(cubes=(((4, 6),), ((0, 8),)), bridges=(True,))
+    parked = State(cubes=(((0, 8),), ((4, 6),)), bridges=(True,))
     moves = {action: state for state, action in board.successors(parked)}
-    assert moves[(1, "R")].bridges == (True,), "occupancy is not contact, so nothing fires"
+    assert moves[(0, "R")].bridges == (True,), "occupancy is not contact, so nothing fires"
 
 
 def test_a_split_switch_does_not_chain(tmp_path: Path) -> None:
@@ -441,7 +482,7 @@ def test_a_split_switch_does_not_chain(tmp_path: Path) -> None:
     )
     hovering = State(cubes=(((2, 1), (3, 1)),), bridges=())
     landed = {action: state for state, action in board.successors(hovering)}[(0, "D")]
-    assert landed.cubes == (((5, 2),), ((0, 6),)), "one landing, no second split"
+    assert landed.cubes == (((0, 6),), ((5, 2),)), "one landing, no second split"
 
 
 def test_a_split_whose_targets_are_adjacent_merges_at_once(tmp_path: Path) -> None:

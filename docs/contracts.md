@@ -44,6 +44,9 @@ Direction = Literal["U", "D", "L", "R"]
 Action = tuple[int, Direction]         # (cube_index, direction); index 0 while unsplit
 ```
 
+`Kind` is spelled as names, not as glyphs. A glyph is an input-format concern and appears only in the
+grid and the two tables that decode it, so nothing outside the loader handles a `"."`.
+
 `Orientation` is derived from the piece and is never stored: two cubes is `cube`; one cube of two
 cells is `lying_h` or `lying_v`; one cube of one cell is `standing`.
 
@@ -174,6 +177,7 @@ class Stage:
     source: str | None         # URL for transcribed stages, "original" for authored
     expected: Expected | None  # fixtures only
     index: StageIndex          # derived by load_stage, never by a consumer
+    bridges: tuple[Bridge, ...] # the one fact the grid does not carry: whether a bridge starts open
 
 @dataclass(frozen=True)
 class StageIndex:
@@ -208,6 +212,14 @@ for all four algorithms, so they belong before the measured window (see Stats) a
 
 A bridge is one tile: adjacent `==` are two bridges, not one. `bridge_state` is per cell, which is
 the only shape `passable` can be asked about.
+
+`bridge_state` is why `bridges` is the one list stored beside the grid: the glyph `=` covers an open
+bridge and a closed one alike, so the file states the initial state in `bridges[]` and nothing derives
+it. A bridge entry carries every field: `initially_open` is required, and a bridge that omits it is an
+error rather than an open bridge.
+
+`Stage` keeps no copy of the authored switch list either. `StageIndex.switch_at` is the only one, so
+the file and the lookup cannot disagree.
 
 Switch entries carry every field; unused ones are `null`, never absent:
 

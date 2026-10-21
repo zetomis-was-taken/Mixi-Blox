@@ -5,16 +5,20 @@
 - [x] Read the workspace AGENTS.md and preserve it; no replacement instructions created.
 - [x] Inspect the working tree, history, README, contract, relevant issues/comments and PR reviews.
 - [x] Apply the latest user authorization: complete, commit and push `feat/informed-search` for this task.
-- [x] Keep PR/issue/comment changes and remote PR merges outside this authorization.
+- [x] Apply the subsequent explicit authorization to create PR #60 with the prepared title/body.
+- [x] Keep issue/comment changes and remote PR merges outside this authorization.
 - [x] Preserve existing files and teammate changes; do not delete work or use destructive Git operations.
-- [x] Keep #19/#20/#24 implementations and benchmark/chart generation outside this branch.
+- [x] Keep own #19/#20/#24 implementations and benchmark/chart generation outside this contribution;
+  preserve the upstream #25 infrastructure when integrating main.
 - [x] Review the final diff and prepare only the scoped contribution for commit and push.
 
 ## Team and upstream snapshot
 
 Current branch: `feat/informed-search`; starting implementation HEAD: `ae5ace3`.
 The report preparation began with a clean tree. After the user's explicit publishing authorization,
-upstream `0f782dd` was merged without conflicts in `1462fcd`. The integrated branch passes 139 tests.
+upstream `0f782dd` was merged without conflicts in `1462fcd`. Following PR creation, main advanced to
+`19b4e4e` (merged #25) and was integrated in `4cdc192`; only requirements.txt needed resolution.
+The integrated branch passes 140 tests. PR: https://github.com/zetomis-was-taken/Mixi-Blox/pull/60.
 
 | Workstream | Owner / authority | Observed state |
 | --- | --- | --- |
@@ -22,7 +26,7 @@ upstream `0f782dd` was merged without conflicts in `1462fcd`. The integrated bra
 | #18 shared loop and #31 solver return API | aFlyingSeal | #18 open; local reusable-loop contribution exists and awaits owner review |
 | #7, #22, #23 | BinElvan3126 | Open on GitHub; implementations and tests verified for branch publication |
 | #29 Vietnamese report coordination | aFlyingSeal | Open; this session supplies only assigned UCS/A*/cost sections |
-| #24, infrastructure and LaTeX template | Alexvuong2006 | PR #25 `7ae7650` remains open; latest revision includes the requested rebase and legacy-result-branch removal; owner approval still pending |
+| #24, infrastructure and LaTeX template | Alexvuong2006 | PR #25 merged into main at `19b4e4e`; infrastructure preserved; full-team measurements remain separate |
 | GUI and demo | zetomis-was-taken | Separate workstream; not modified here |
 
 `CONTRIBUTING.md` is absent from this checkout and current main; contributing rules are in README
@@ -45,17 +49,17 @@ and `docs/contracts.md`. Do not infer that the old closed, unmerged CONTRIBUTING
 3. [x] Compile the assigned sections in an isolated local preview. First attempt timed out without
    source diagnostics; the bounded retry succeeded with the desktop editor's compiler.
 4. [x] Test the feature contribution against current main in a separate local checkout: 139 passed.
-5. [x] Rerun tests/lint and review compatibility/duplicate-definition gates: integrated feature 139 passed;
-   Ruff lint and scoped formatting clean. Relative report links/labels checked.
+5. [x] Rerun tests/lint and review compatibility/duplicate-definition gates after integrating merged #25:
+   140 passed; Ruff lint/scoped formatting and submission preflight pass. Final group PDF still absent.
 6. [x] Record per-issue status, changed files, limitations, integration notes and suggested commit/PR text.
 
 ## Integration risks to report, not silently fix
 
-- PR #25 is unmerged. Its report template still documents different weights, a separate control-change
+- PR #25 is merged. Its report template still documents different weights, a separate control-change
   action, an unsupported orientation penalty and unmeasured performance claims. Only the assigned
   subsections will be supplied as replacement inputs; other report sections need their owners' review.
-- The latest #25 revision includes the rebase and removal requested by the last review. It is still
-  unmerged; do not claim approval or modify that teammate's harness. No measurements are manufactured.
+- Merged #25 includes the rebase and removal requested by the last review. Its harness is inherited
+  unchanged; no measurements are manufactured.
 - Main's PR #59 is integrated and its strict bridge-schema regression test passes.
 - Existing feature commits change the core cost hook and clarify contract cap wording. These are
   pre-existing changes; this session will not extend frozen clauses or engine ownership without review.
@@ -74,20 +78,22 @@ deliverable was the assigned LaTeX report content, so implementation focused the
 | #18: contribution verified, owner integration pending | Existing `solvers/base.py`; new report explains FIFO/LIFO/heap, caps and Counts | Strategy tests, exact node cap, zero/expired time cap, cycles, stale entries and reopening; contract gates | aFlyingSeal owns the issue/API. No standalone BFS/DFS modules or benchmark harness added | `Provide shared search bookkeeping and cap hooks` |
 | #22: existing implementation verified | Existing `solvers/ucs.py` and shared loop; new UCS LaTeX subsection | Hand-solved fixtures, independent weighted reverse oracle, L2-02 longer/cheaper path, CLI | Optimizes cost, not moves; full experiments wait for #24 and final integration | `Implement uniform-cost search over the shared cost policy` |
 | #23: existing implementation verified | Existing `solvers/astar.py`; new heuristic/admissibility/consistency LaTeX subsections | Tiny-stage remaining-cost bounds, every edge on ten stages, UCS agreement, inconsistent-heuristic reopening | On split stages h=0; no claimed speedup or unproved orientation penalty | `Implement A star with a cost-aware admissible heuristic` |
-| #29: assigned sources compiled, owner insertion pending | `Report/sections/informed_search.tex`, `informed_search_ai_usage.tex`, integration notes; links in README/Markdown | Vietnamese prose and first-use terminology reviewed; labels/links checked; isolated preview compilation succeeded on retry | PR #25 remains open; report owner must insert sections and review surrounding contradictions. Whole report issue remains open | `Add Vietnamese LaTeX sections for informed search` |
+| #29: assigned sources compiled, owner insertion pending | `Report/sections/informed_search.tex`, `informed_search_ai_usage.tex`, integration notes; links in README/Markdown | Vietnamese prose and first-use terminology reviewed; labels/links checked; isolated preview compilation succeeded on retry | PR #25 merged; report owner must insert sections and review surrounding contradictions. Whole report issue remains open | `Add Vietnamese LaTeX sections for informed search` |
 
 The shared suggested PR description is in `docs/informed_search_handoff.md`. It references #18
 and the assigned #29 contribution rather than claiming completion of the other owners' work.
 
 ## Final session checks
 
-- Feature includes the normal upstream merge `1462fcd`; no rebase or force push is used.
+- Feature includes the normal upstream merges `1462fcd` and `4cdc192`; no rebase or force push is used.
 - The report contribution edits only owned report/checklist/handoff documentation and README links.
-  All new files in `Report/` are the two assigned source fragments and their integration notes.
+  Files added by this contribution in `Report/` are the two assigned source fragments and their
+  integration notes; the other Report files are inherited from main's merged #25.
 - The standalone preview is outside the repository at
   `output/latex/informed-search-review-20261021/`; it does not replace the group report.
 - The orientation-penalty counterexample was also checked against FIX-01: a reachable lying
   state has `h=0.5` and one legal goal move costing 1, so adding 1 would overestimate at 1.5.
 - No timing/memory measurements or performance claims were added. No existing teammate report
   content or original AGENTS.md was replaced. The only core/schema updates in this finalization
-  are the already approved upstream changes from PR #59.
+  are the already approved upstream changes from PR #59. Merged #25's infrastructure, report
+  template and dependencies are preserved.

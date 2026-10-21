@@ -7,7 +7,8 @@ Bloxorz game and solver — BFS, DFS, UCS, and A* (CSC14003, Project 1).
 The engine, stage loader, non-uniform cost policy (#7/#22), shared search loop (#18), UCS (#22),
 and A* (#23) are implemented. The CLI exposes UCS and A*. The shared loop retains FIFO/LIFO
 extension points for the BFS/DFS owner, without separate BFS/DFS solver modules in this branch.
-The GUI, benchmark harness and experiment charts remain with their respective workstreams.
+Upstream PR #25 supplies the benchmark harness and report template. GUI integration, full-team
+measurements and experiment charts remain with their respective workstreams.
 Stages live in `Source/bloxorz/core/stages/`; provenance is in [`CREDITS.md`](CREDITS.md).
 
 ## Run and verify (Python 3.11+)

@@ -3,9 +3,10 @@
 ## Final verification and publication scope
 
 On 2026-10-21 the user explicitly authorized completion, commits and pushing this feature branch.
-This supersedes the earlier local-only restriction for this task. PR/issue/comment changes,
-remote PR merges, deletion of existing work and destructive Git operations remain excluded.
-PR text below is a suggestion for the human user; no PR is created or modified automatically.
+This supersedes the earlier local-only restriction for this task. The user subsequently authorized
+creating the PR with the prepared title and description: https://github.com/zetomis-was-taken/Mixi-Blox/pull/60.
+Issue/comment changes, remote PR merges, deletion of existing work and destructive Git operations
+remain excluded. The PR description below records this contribution's scope and verification.
 
 The newly prepared #29 contribution is `Report/sections/informed_search.tex`, plus the scoped
 AI-use appendix in `Report/sections/informed_search_ai_usage.tex`. The insertion instructions
@@ -15,21 +16,24 @@ The existing report main document and teammates' implementation files are untouc
 Per-issue acceptance, dependencies and verification are tracked in
 `docs/informed_search_task_checklist.md`. Upstream `0f782dd` (PR #59), which requires an explicit
 initial state in every bridge entry, was merged into this branch without conflicts in `1462fcd`.
-The integrated feature checkout passes **139 tests**, Ruff lint and the scoped formatting check.
+After PR #25 merged, upstream `19b4e4e` was also integrated in `4cdc192`. The only conflict was
+`requirements.txt`; upstream benchmark/GUI dependencies were preserved. The integrated feature
+checkout passes **140 tests**, Ruff lint, the scoped formatting check and submission preflight.
+Preflight still warns that the final group `Report.pdf` is absent.
 No frozen signature was changed by the report contribution.
 
 The two assigned `.tex` sources compiled successfully in the isolated preview project
 `output/latex/informed-search-review-20261021/` using the desktop editor's compiler. The first
 attempt timed out; the retry succeeded. This verifies these fragments with the required packages,
-not the entire unmerged report template or its surrounding content. The original template's
+not the entire group report template or its surrounding content. The original template's
 orientation-penalty claim was checked against a reachable one-move goal state and overestimates.
 
 Commit subject for the report contribution:
 `Add Vietnamese LaTeX sections for informed search`.
 
-Suggested addition to a future PR description (do not post automatically):
+Report contribution included in PR #60:
 
-> Supply insertable Vietnamese UCS/A* report sections matching the open #25 template's
+> Supply insertable Vietnamese UCS/A* report sections matching the #25 template's
 > subsection structure, including the implemented non-uniform cost, c_min proof, Manhattan/2
 > heuristic, teleport fallback, correctness evidence and scoped AI-use disclosure. Preserve
 > the report owner's main document and list the template discrepancies needing owner review.
@@ -40,13 +44,13 @@ Suggested addition to a future PR description (do not post automatically):
 
 ## Branch handoff
 
-Branch: `feat/informed-search`, including main at `0f782dd`.
+Branch: `feat/informed-search`, including main at `19b4e4e` (merged PR #25).
 The changes cover #7, #22, #23, the reusable-loop contribution to shared issue #18, and the
 assigned Vietnamese report sections under #29. Commits use the repository's configured
 BinElvan3126 author identity. The authorized publication target is this feature branch;
 the remote SHA is verified after pushing and reported in the final handoff.
 
-For review, open a PR into `main` using the description below. FIFO/LIFO remain shared-loop extension
+PR #60 targets `main` with the description below. FIFO/LIFO remain shared-loop extension
 points under #18; the separate BFS/DFS solvers and all benchmark/chart work have been removed.
 The #18 owner, aFlyingSeal, should review that integration. This PR does not automatically close
 their issue or claim the GUI/video and full-team experiments work.
@@ -65,6 +69,8 @@ arguments, shared-loop semantics and correctness evidence; it has no premature p
 tables or plots. The former full implementation is preserved on local branch
 `backup/informed-search-full-20261021`; generated results/figures have been moved outside this
 repository to the workspace's `output/archives/informed-search-full-20261021/` directory.
+The benchmark, chart generator and report template now present are inherited from merged #25;
+this contribution does not restore its earlier standalone benchmark implementation.
 
 ## Proposed PR title
 
@@ -83,7 +89,8 @@ occupied-cell Manhattan/2 and a safe zero
 fallback on split/teleport stages, with admissibility/consistency arguments in the Vietnamese
 report. The CLI now invokes actual solvers and returns JSON results.
 
-Validation: 139 pytest tests, Ruff lint and scoped formatting checks pass. The Vietnamese
+Validation: 140 pytest tests, Ruff lint, scoped formatting and submission preflight checks pass
+after integrating main at `19b4e4e`; preflight warns that the final group PDF is still absent. The Vietnamese
 LaTeX fragments compile in an isolated preview. Tests compare UCS/A*
 against independent exact weighted remaining costs over all 2,946 reachable states of ten
 official stages, replay returned paths, and cover weighted route tradeoffs, reopening, stale
@@ -91,9 +98,10 @@ entries, caps, invalid costs, the shared FIFO/LIFO extension points and the UCS/
 
 Integration notes: the cap wording now distinguishes time-before-pop from node-cap-after-goal,
 matching the existing contract pseudocode. No frozen signature changes. Benchmark harness,
-charts, separate BFS/DFS solvers and full-team performance analysis are outside this branch.
+charts, separate BFS/DFS solvers and full-team performance analysis are outside this contribution.
+The upstream harness and template from merged #25 are preserved.
 The assigned report fragments are insertable inputs; the report owner retains responsibility
-for inserting them into the unmerged #25 template and reviewing surrounding inconsistencies.
+for inserting them into the merged #25 template and reviewing surrounding inconsistencies.
 
 Closes #7
 

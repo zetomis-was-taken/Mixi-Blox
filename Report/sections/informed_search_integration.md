@@ -1,7 +1,7 @@
 # Integration of the assigned Vietnamese report sections (#29)
 
-Reference: the existing LaTeX structure in open PR #25 at `7ae7650`, checked on 2026-10-21. It is a reference,
-not a merged main document. These files add only BinElvan3126's assigned content and
+Reference: the LaTeX structure from PR #25 at `7ae7650`, merged into main in `19b4e4e`
+on 2026-10-21. These files add only BinElvan3126's assigned content and
 do not copy, replace or edit the other members' `Report/main.tex`.
 
 ## Insertion points for the report owner
@@ -26,7 +26,7 @@ do not copy, replace or edit the other members' `Report/main.tex`.
 
 The isolated project at `output/latex/informed-search-review-20261021/` compiled successfully
 with the desktop editor's compiler. Its source inputs are copies of these exact two fragments.
-This does not certify compilation of the surrounding, unmerged group template.
+This does not certify compilation of the surrounding group template.
 
 Do not append the new content while leaving the old UCS/A* subsections in place: that
 would leave contradictory weights and two different heuristics in the same report.

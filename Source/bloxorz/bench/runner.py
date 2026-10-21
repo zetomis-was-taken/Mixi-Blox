@@ -88,18 +88,6 @@ class BenchmarkRunner:
             path = raw_result.path
             moves = len(path) if path is not None else -1
             cost = float(getattr(raw_result, "cost", moves))
-        elif raw_result and hasattr(raw_result, "stats"):
-            st = raw_result.stats
-            solver_stats = Stats(
-                expanded=getattr(st, "expanded", 0),
-                generated=getattr(st, "generated", 0),
-                frontier_peak=getattr(st, "frontier_peak", 0),
-                time_s=elapsed_seconds,
-                peak_mem_bytes=peak_bytes,
-            )
-            path = getattr(raw_result, "path", getattr(raw_result, "moves", None))
-            moves = len(path) if path is not None else -1
-            cost = float(getattr(raw_result, "cost", moves))
         else:
             solver_stats = Stats(
                 expanded=0,

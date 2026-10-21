@@ -31,6 +31,8 @@ The engine/search CLI needs only the standard library. Development dependencies 
 
 - [Cost/search design and integration notes](docs/informed_search_design.md)
 - [Vietnamese UCS/A* report section](docs/report_ucs_astar_vi.md)
+- [Insertable LaTeX sections and template integration notes](Report/sections/informed_search_integration.md)
+- [Local issue checklist and ownership boundaries](docs/informed_search_task_checklist.md)
 - [Handoff and proposed PR description](docs/informed_search_handoff.md)
 
 The Vietnamese report covers the cost policy, UCS/A*, heuristic proofs and shared-loop semantics.

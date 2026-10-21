@@ -1,5 +1,11 @@
 # Tìm kiếm chi phí đồng nhất và A* trong Bloxorz
 
+Bản LaTeX dành cho các mục được phân công ở #29 nằm tại
+[phần UCS/A*](../Report/sections/informed_search.tex), kèm
+[phần công bố hỗ trợ AI](../Report/sections/informed_search_ai_usage.tex).
+Các đoạn này được soạn theo cấu trúc mẫu báo cáo của nhóm; việc chèn vào tài liệu chung cần
+người phụ trách báo cáo xem xét.
+
 Phần nội dung này phục vụ #7, #22, #23 và hạ tầng tìm kiếm chung #18. Đo hiệu năng, biểu đồ và
 phân tích thực nghiệm toàn nhóm thuộc giai đoạn tích hợp sau, không nằm trong phần bàn giao này.
 

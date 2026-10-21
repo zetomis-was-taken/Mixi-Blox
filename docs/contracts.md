@@ -151,8 +151,10 @@ Rules:
   rather than passable-then-detect-the-loss. A **switch** action is filtered the same way:
   `bridges` is updated first, and if the result leaves an occupied cell over a closed bridge, the
   action is not generated (ADR-005: a switch may not close a bridge under the block).
-- `step_cost` defaults to `1.0` for every action (#7); non-uniform weights are policy, so tuning
-  them never edits engine code.
+- `step_cost` delegates to `core.costs.action_cost` (#7/#22): one roll costs `1.0`, plus `1.0`
+  for each newly contacted fragile tile. Continued occupancy is not charged again. The minimum
+  action cost is `1.0`; no separate control-change action exists. Weights live in the cost policy,
+  so tuning them never edits movement or search code.
 - `passable` is the only place passability is decided. A cell declares exactly one kind, so it
   never has to reconcile two.
 - The block starts **standing upright on `S`** — `AI - Project 1.pdf` §2.1, and standing occupies a
@@ -409,8 +411,9 @@ def solve(stage: Stage, caps: Caps = Caps()) -> SearchResult:
 
 Three things fall out of the ordering rather than out of a rule:
 
-- The goal test runs before the cap check, so a solution found exactly at the cap still reports
-  `solved`.
+- The goal test runs before the **node-cap** check, so a solution found exactly at the node cap
+  still reports `solved`. The **time cap** is checked before pop, as the loop above specifies:
+  once the deadline is reached it returns `cap`, even if a goal is waiting in the frontier.
 - The cap check runs before the increment, so `expanded` counts only nodes whose successors were
   evaluated, which is the definition #30 gives. `node_cap` is therefore the number of completed
   expansions.
@@ -472,8 +475,10 @@ Consumers: #24 tabulates `status` with no special-casing; #21 replays `path` whe
 What the two consumer issues must implement. None of these is a pending decision.
 
 **#18 — the solver loop.** `Board(stage)` performs no per-cell work. `Counts` is incremented only
-at the points in the table above, and the cap check sits between the goal test and the increment.
-`successors` emits `(state, (cube_index, direction))` and never a control-change action. Fragile
+at the points in the table above, and the node-cap check sits between the goal test and the increment.
+The time-cap check precedes pop; the node-cap check follows the goal test. This clarifies the
+existing pseudocode without changing its ordering (#18). `successors` emits
+`(state, (cube_index, direction))` and never a control-change action. Fragile
 and void are impassable rather than generated-and-lost.
 
 **#24 — the harness.** Loads each stage once, outside the window. Runs each pair three times,

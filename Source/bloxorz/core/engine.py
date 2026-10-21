@@ -7,6 +7,7 @@ Transitions need stage data a state does not carry, so they hang off a board bui
 from __future__ import annotations
 
 from bloxorz.core.contracts import Action, Cell, Cube, Direction, Kind, Orientation, Stage, State
+from bloxorz.core.costs import action_cost
 
 DIRECTIONS: tuple[Direction, ...] = ("U", "D", "L", "R")
 
@@ -116,8 +117,8 @@ class Board:
         return found
 
     def step_cost(self, state: State, action: Action, next_state: State) -> float:
-        """One action costs one move. Weights are policy, not engine code (#7)."""
-        return 1.0
+        """Delegate to the shared cost policy; movement rules do not set weights (#7/#22)."""
+        return action_cost(self._stage, state, action, next_state)
 
     def passable(
         self, cell: Cell, orientation: Orientation, bridge_state: tuple[bool, ...]

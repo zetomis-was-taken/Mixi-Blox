@@ -21,3 +21,9 @@ dist/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Archives & Packaging
+*.zip
+*.rar
+temp_packaging/
+

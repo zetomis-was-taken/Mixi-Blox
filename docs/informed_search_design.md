@@ -6,9 +6,11 @@
 remain independent. `solvers.base.solve_search` owns the single loop, canonical discovery or
 improvement, caps, parent reconstruction and all counts. UCS/A* keep the frozen public API.
 
-FIFO/LIFO adapters demonstrate #18 integration for BFS/DFS. Coordinate their adoption with the
-#19/#20 owner; they do not claim that member's allocated work. `bench.informed_search` is a
-separate handoff measurement tool, not a replacement for #24. No existing harness is overwritten.
+FIFO/LIFO ordering remains available through the #18 loop for the BFS/DFS owner to specialize.
+There are no separate BFS/DFS solver modules, benchmark harness or chart generation in this branch.
+The CLI exposes only the two cost-aware solvers. Tests exercise the generic FIFO/LIFO strategies
+without shipping the #19/#20 implementations. The current #18 owner is aFlyingSeal; retain that
+issue for their integration review rather than automatically closing it from this handoff.
 
 ## Cost and heuristic
 
@@ -36,19 +38,29 @@ the node cap. The time cap follows the existing frozen pseudocode and precedes p
 prose now explicitly qualifies its goal-before-cap rule as the node cap, without changing API
 or pseudocode. The search clock implements a deadline only; measurements live in bench.
 
-## Verification and measurements
+## Verification
 
 Tests enumerate 2,946 reachable states across ten official stages, independently compute exact
 weighted remaining costs on the reverse graph, check every edge's consistency and all finite
 remaining costs for admissibility. Separate graphs force stale entries and reopening under an
 admissible inconsistent heuristic; real boards cover weighted path tradeoffs and teleport costs.
 
-Load once outside measurement. Each pair has three isolated calls with GC and a fresh/reset
-tracer; time surrounds solve only, cleanup is in finally, replay follows measurement. Require
-identical full results across repetitions. Time and peak bytes have independent medians. Caps
-and unsolvable keep measured work but print no solution cost/length. Exceptions keep an error
-message and missing metrics. Raw samples and environment/source fingerprints accompany CSV.
+The solver returns `Counts`; the future shared harness owns timing, memory and aggregate `Stats`.
+No solver reports its own performance. The `perf_counter` in the loop only enforces its deadline.
+Run `python -m Source.main` from the root; see README for the exact PowerShell commands.
 
-Run `python -m Source.main` from the root. Set `PYTHONPATH=Source` for
-`python -m bloxorz.bench.informed_search`. See README for exact PowerShell commands. Generated
-raw files/plots are ignored and never go in the assignment-document directory.
+## Acceptance check
+
+- #7: `c_min=1`, every legal movement has a defined weight, and the heuristic proof uses that
+  lower bound. The frozen contract has no separate cube-control action; older issue proposals
+  that charge switching are superseded by the cube-indexed action model.
+- #22: UCS is heap-ordered by accumulated cost; total cost and path length are distinct.
+  Weights live only in `core.costs`, with rationale in the Vietnamese report.
+- #23: Manhattan/2 on non-teleport stages, a safe zero fallback for split stages, written
+  admissibility/consistency arguments, and exact-remaining-cost tests on the tiny fixtures.
+- #18: one generic loop owns discovery/improvement, frontier ordering, counts and caps;
+  frozen result records are returned on solved/cap/unsolvable, with no timing/memory metrics.
+
+All four issues are still open on GitHub as of this review. Local implementation evidence is
+not a merged delivery. Only #7/#22/#23 are proposed for automatic closure by the eventual PR;
+#18 remains a reference for the owner's review.

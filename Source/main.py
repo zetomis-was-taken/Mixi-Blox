@@ -17,9 +17,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="main.py", description="Mixi-Blox: inspect a stage or run a search algorithm."
     )
     parser.add_argument("--stage", metavar="FILE", help="path to a stage JSON file")
-    parser.add_argument(
-        "--solver", choices=("bfs", "dfs", "ucs", "astar"), help="algorithm to run (#18-#23)"
-    )
+    parser.add_argument("--solver", choices=("ucs", "astar"), help="algorithm to run (#22/#23)")
     parser.add_argument("--node-cap", type=int, help="maximum completed expansions")
     parser.add_argument("--time-cap", type=float, help="search deadline in seconds")
     return parser
@@ -39,12 +37,12 @@ def main(argv: list[str] | None = None) -> int:
     from bloxorz.core.contracts import Caps
     from bloxorz.core.engine import Board, cells
     from bloxorz.core.stage import StageError, load_stage
-    from bloxorz.solvers import astar, bfs, dfs, ucs
+    from bloxorz.solvers import astar, ucs
 
     try:
         stage = load_stage(args.stage)
         if args.solver:
-            solvers = {"bfs": bfs.solve, "dfs": dfs.solve, "ucs": ucs.solve, "astar": astar.solve}
+            solvers = {"ucs": ucs.solve, "astar": astar.solve}
             result = solvers[args.solver](stage, Caps(args.node_cap, args.time_cap))
             print(json.dumps(asdict(result), ensure_ascii=True))
             return 0 if result.status == "solved" else 1

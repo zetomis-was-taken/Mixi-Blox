@@ -8,10 +8,6 @@ venv/
 .mypy_cache/
 .ruff_cache/
 
-# Reproducible measurements: source tools and report tables are versioned, raw output is not.
-/Report/data/informed_search/
-/Report/figures/informed_search/
-
 # Node (if the 3D GUI takes the web route)
 node_modules/
 dist/

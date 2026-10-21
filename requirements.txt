@@ -1,2 +1,2 @@
 # The engine, shared search loop and CLI use only the Python 3.11+ standard library.
-# Install requirements-dev.txt to test, lint and regenerate the measured report figures.
+# Install requirements-dev.txt to run tests and lint checks.

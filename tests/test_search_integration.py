@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import heapq
-from collections import defaultdict
+from collections import defaultdict, deque
+from functools import partial
 from itertools import count
 from pathlib import Path
 
@@ -12,11 +13,14 @@ import pytest
 from bloxorz.core.contracts import Caps, State
 from bloxorz.core.engine import Board
 from bloxorz.core.stage import load_stage
-from bloxorz.solvers import astar, base, bfs, dfs, ucs
+from bloxorz.solvers import astar, base, ucs
 
 ROOT = Path(__file__).resolve().parents[1]
 STAGES = ROOT / "Source/bloxorz/core/stages"
-SOLVERS = [bfs.solve, dfs.solve, ucs.solve, astar.solve]
+# Test the #18 extension points without shipping the #19/#20 solver modules.
+FIFO_SEARCH = partial(base.solve_search, ordering="fifo")
+LIFO_SEARCH = partial(base.solve_search, ordering="lifo")
+SOLVERS = [FIFO_SEARCH, LIFO_SEARCH, ucs.solve, astar.solve]
 FIXTURE = ROOT / "tests/fixtures/FIX-01_straight_line.json"
 
 
@@ -125,9 +129,27 @@ def test_weighted_solutions_and_heuristic_match_an_independent_reverse_oracle(pa
 
 def test_ucs_prefers_a_longer_but_less_fragile_route_on_a_real_board() -> None:
     stage = load_stage(next(STAGES.glob("L2-02_*.json")))
-    shortest, cheapest = bfs.solve(stage), ucs.solve(stage)
-    assert len(shortest.path) < len(cheapest.path)
-    assert cheapest.cost < shortest.cost
+    # A test-only, minimum-move oracle independently establishes the tradeoff.
+    board = Board(stage)
+    queue = deque([(board.start(), ())])
+    seen = {board.start()}
+    while queue:
+        state, path = queue.popleft()
+        if board.is_goal(state):
+            shortest_path = path
+            break
+        for child, action in board.successors(state):
+            if child not in seen:
+                seen.add(child)
+                queue.append((child, path + (action,)))
+    else:
+        pytest.fail("the reference board must be solvable")
+    _, shortest_cost = replay(board, shortest_path)
+    cheapest = ucs.solve(stage)
+    assert len(shortest_path) == 46 and shortest_cost == 64
+    assert len(cheapest.path) == 49 and cheapest.cost == 58
+    assert len(shortest_path) < len(cheapest.path)
+    assert cheapest.cost < shortest_cost
     assert astar.solve(stage).cost == cheapest.cost
 
 
@@ -151,7 +173,7 @@ def test_stale_heap_entries_are_not_counted_as_expansions(monkeypatch) -> None:
     assert result.counts.frontier_peak == 3
 
 
-@pytest.mark.parametrize("solver", [bfs.solve, dfs.solve])
+@pytest.mark.parametrize("solver", [FIFO_SEARCH, LIFO_SEARCH])
 def test_queue_and_stack_exhaust_cycles_without_revisiting_keys(monkeypatch, solver) -> None:
     from test_cost_search import _GraphBoard
 

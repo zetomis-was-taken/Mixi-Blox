@@ -243,11 +243,12 @@ def _bridges(
         unknown = set(entry) - BRIDGE_KEYS
         if unknown:
             _fail(path, text, f"schema: bridge has undeclared keys {sorted(unknown)}", '"bridges"')
-        if "pos" not in entry:
-            _fail(path, text, "schema: bridge is missing ['pos']", '"bridges"')
+        missing = BRIDGE_KEYS - set(entry)
+        if missing:
+            _fail(path, text, f"schema: bridge is missing {sorted(missing)}", '"bridges"')
         pos = _cell(path, text, entry["pos"], f"bridge pos {entry['pos']!r}")
         _on_glyph(path, text, pos, "=", grid, "bridge")
-        open_at_start = entry.get("initially_open", True)
+        open_at_start = entry["initially_open"]
         if not isinstance(open_at_start, bool):
             _fail(path, text, "schema: initially_open must be true or false", '"initially_open"')
         bridges.append(Bridge(pos=pos, initially_open=open_at_start))

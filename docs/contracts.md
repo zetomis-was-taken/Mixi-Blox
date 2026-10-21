@@ -70,6 +70,12 @@ The field set never depends on the value: `cubes` is always a tuple and `bridges
 tuple. Length varies with the position, shape does not. This keeps `key()` arity constant, as #6
 requires — arity 2, asserted by #6's staleness test.
 
+`cubes` is canonical: two cubes are ordered by their cell, so relabelling them is not a
+distinct state. The order is fixed at construction, so one board has one spelling and
+`key()` cannot depend on the order the cubes were reached in. The two cubes are
+interchangeable — nothing distinguishes them but their index — and ADR-006 guarantees they
+sit on distinct cells, so the ordering is total rather than best-effort.
+
 `bridges[i]` is open when `True`, and its cell is `stage.bridges[i].pos`. Solvers, the renderer and
 the key all read it in that order; nothing re-sorts it.
 
@@ -430,6 +436,7 @@ Consumers: #24 tabulates `status` with no special-casing; #21 replays `path` whe
 | Compile point | `load_stage` builds the lookup tables | `Board.__init__` builds them | the tables are input preparation, identical for every algorithm, so they must sit outside the measured window |
 | Measurement split | solver returns `Counts`, harness builds `Stats` | solver returns all five fields | a solver cannot measure its own wall clock or peak without a tracer started elsewhere; a frozen `Stats` cannot be filled in after the fact |
 | Cost type | `float` | `int` | `step_cost` returns `float` (#7's weights), so an `int` field freezes a type error |
+| Cube order | canonical at construction, ordered by cell | the tuple order is part of the value | two spellings of one board are two states, so the visited set searches the position twice; sorting inside `key()` instead would leave `State.__eq__` and `key()` disagreeing |
 
 ## Non-goals
 

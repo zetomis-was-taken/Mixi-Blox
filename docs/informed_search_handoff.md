@@ -2,7 +2,7 @@
 
 ## Ready to upload
 
-Branch: `feat/issue-22-23-informed-search`, based on the latest main fetched during this task.
+Branch: `feat/informed-search`, based on the latest main fetched during this task.
 The changes cover #7, #22, #23 and the reusable-loop contribution to shared issue #18.
 The local commit uses the repository's configured BinElvan3126 author identity. Nothing has
 been pushed and no issue/PR has been modified remotely.
@@ -12,7 +12,7 @@ From the repository root:
 ```powershell
 git status --short
 git log -1 --oneline
-git push -u origin feat/issue-22-23-informed-search
+git push -u origin feat/informed-search
 ```
 
 Then open a PR into `main` using the description below. Coordinate adoption of the FIFO/LIFO

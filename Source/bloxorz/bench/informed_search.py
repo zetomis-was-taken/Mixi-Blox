@@ -89,19 +89,21 @@ def source_digest(root: Path) -> str:
 
 def markdown(records: list[dict], metadata: dict) -> str:
     lines = [
-        "# Kết quả đo UCS/A* và các adapter đối chứng",
+        "# Kết quả đo UCS/A* và các thuật toán đối chứng",
         "",
         "Kết quả thực đo trên máy cục bộ, trung vị của ba lần chạy độc lập mỗi cặp.",
-        "BFS/DFS ở đây là các adapter mỏng của vòng lặp chung #18; số liệu chưa thay thế",
-        "bảng thí nghiệm toàn nhóm do harness #24 quản lý.",
+        "BFS/DFS ở đây là các phiên bản dùng vòng lặp chung #18; số liệu chưa thay thế",
+        "bảng thí nghiệm toàn nhóm do bộ công cụ đo đạc #24 quản lý.",
         "",
         f"- Thời điểm UTC: `{metadata['created_at_utc']}`.",
         f"- Python: `{metadata['python']}`; nền tảng: `{metadata['platform']}`.",
-        f"- Commit nền: `{metadata['base_commit']}`.",
+        f"- Mã phiên bản nền: `{metadata['base_commit']}`.",
         f"- SHA-256 mã và màn chơi: `{metadata['source_sha256']}`.",
-        "- Cost: 1 + số ô dễ vỡ mới tiếp xúc trong hành động.",
-        "- Time chỉ đo lời gọi `solve(stage, caps)`; không gồm load, replay, I/O hay vẽ hình.",
-        "- Bộ nhớ là peak heap Python do `tracemalloc` ghi nhận, không phải RAM toàn tiến trình.",
+        "- Chi phí: 1 + số ô dễ vỡ mới tiếp xúc trong hành động.",
+        "- Thời gian chỉ đo lời gọi `solve(stage, caps)`; "
+        "không gồm nạp dữ liệu, phát lại lời giải, đọc/ghi hay vẽ hình.",
+        "- Bộ nhớ là mức cấp phát Python lớn nhất do `tracemalloc` ghi nhận, "
+        "không phải RAM toàn tiến trình.",
         "- Ba lần chạy phải trùng kết quả, đường đi, chi phí và bộ đếm; "
         "không lấy trung bình bộ đếm.",
         "",
@@ -143,7 +145,7 @@ def plot(records: list[dict], directory: Path) -> None:
     stages = list(dict.fromkeys(row["stage"] for row in records))
     metrics = {
         "time_ms": ("Thời gian tìm kiếm", "Trung vị (ms)"),
-        "peak_mem_kb": ("Bộ nhớ heap đỉnh", "Trung vị (KiB)"),
+        "peak_mem_kb": ("Bộ nhớ cấp phát đỉnh", "Trung vị (KiB)"),
         "expanded": ("Số nút mở rộng", "Nút"),
         "moves": ("Độ dài lời giải", "Bước"),
         "cost": ("Tổng chi phí lời giải", "Chi phí"),

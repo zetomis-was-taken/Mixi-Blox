@@ -1,7 +1,7 @@
 """Entry point. Puts ``Source/`` on ``sys.path`` (§ Layout, rule 1) and reports a stage.
 
-The GUI (#28) and the four solvers (#18-#23) are not here yet, so this loads a stage, prints what
-the loader derived, and lists the legal moves from the start. No stand-in algorithm is registered.
+``--gui`` launches the Ursina prototype (#28), booting straight into ``L1-01`` when no ``--stage``
+is given. The four solvers (#18-#23) are not here yet, so ``--solver`` still reports that.
 """
 
 from __future__ import annotations
@@ -14,6 +14,9 @@ SOURCE = Path(__file__).resolve().parent
 if str(SOURCE) not in sys.path:
     sys.path.insert(0, str(SOURCE))
 
+# The prototype's boot level (#28). The GUI loads it when no --stage is given.
+DEFAULT_GUI_STAGE = SOURCE / "bloxorz" / "core" / "stages" / "L1-01_long_corridor.json"
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -23,12 +26,23 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--solver", choices=("bfs", "dfs", "ucs", "astar"), help="algorithm to run (#18-#23)"
     )
+    parser.add_argument(
+        "--gui",
+        action="store_true",
+        help="launch the Ursina prototype (L1-01 unless --stage is given)",
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+
+    if args.gui:
+        from bloxorz.gui.app import run
+
+        return run(args.stage or DEFAULT_GUI_STAGE)
+
     if args.stage is None:
         parser.print_help()
         return 0

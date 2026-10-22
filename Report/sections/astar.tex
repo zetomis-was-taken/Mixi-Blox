@@ -1,0 +1,70 @@
+\subsection{Tìm kiếm A* (A-star Search)}
+\label{sec:bloxorz-astar}
+
+A* sử dụng cùng chi phí tại Công thức~\eqref{eq:bloxorz-action-cost}, ưu tiên
+$f(s)=g(s)+h(s)$, với $h$ là hàm ước lượng (heuristic). Lớp \texttt{AStarFrontier} kế thừa frontier chi phí của UCS và chỉ đổi
+hàm ưu tiên; cơ chế cải thiện đường đi và mở lại trạng thái được dùng chung, bảo đảm một trạng thái từng gặp vẫn có thể
+nhận đường rẻ hơn. Các bộ giải giữ nguyên giao diện
+\texttt{solve(stage, caps)} và kiểu kết quả đã đóng băng.
+
+\subsubsection{Thiết kế hàm ước lượng}
+Trên màn không có công tắc tách, đặt:
+\begin{align}
+  d(s)&=\min_{(r,c)\in O(s)}\bigl(|r-r_G|+|c-c_G|\bigr),\\
+  h(s)&=\frac{c_{\min}\,d(s)}{2}.
+  \label{eq:bloxorz-heuristic}
+\end{align}
+Khoảng cách được lấy từ ô bị chiếm gần đích nhất, không từ một tọa độ tham
+chiếu có thể làm quá cận. Dữ liệu tĩnh được kiểm tra một lần để tạo hàm ước
+lượng, không quét lưới trên từng nút.
+
+\subsubsection{Không đánh giá quá cao và tính nhất quán}
+\textbf{Không đánh giá quá cao (admissibility).}
+Một lần lăn giảm $d$ nhiều nhất hai ô. Bỏ qua hướng khối, vật cản, cầu và ô dễ
+vỡ chỉ làm bài toán dễ hơn, nên cần ít nhất $d(s)/2$ bước để tới đích. Mỗi bước
+tốn ít nhất $c_{\min}$, suy ra $h(s)\leq h^*(s)$, với $h^*$ là chi phí tối ưu
+còn lại. Lập luận dùng cận chi phí của chính mô hình không đồng nhất đang chạy.
+
+\textbf{Nhất quán (consistency).}
+Với mỗi cạnh không dịch chuyển, $d(s)\leq d(s')+2$, do đó:
+\begin{equation}
+  h(s)\leq h(s')+c_{\min}\leq h(s')+c(s,a,s').
+\end{equation}
+Tại đích, $h=0$. Mọi phụ phí đều không âm nên bất đẳng thức vẫn đúng trên
+các bước có tiếp xúc ô dễ vỡ.
+
+\subsubsection{Giới hạn do dịch chuyển và hướng khối}
+Công tắc tách có thể dịch chuyển xa tùy ý, phá vỡ giới hạn hai ô. Vì vậy dùng
+$h=0$ trên \emph{mọi trạng thái của màn có công tắc tách}, kể cả trước khi tách.
+Phương án này không đánh giá quá cao và nhất quán, nhưng làm A* trở thành UCS.
+Chỉ tắt hàm ước lượng sau khi khối đã tách là không đủ vì chính cạnh kích hoạt
+dịch chuyển cũng có thể làm giảm khoảng cách rất lớn.
+
+Không cộng tùy ý một đơn vị phạt khi khối nằm. Nếu khối nằm ngay cạnh đích và
+có thể đứng lên đích trong một bước chi phí $1$, khoảng cách ô gần nhất là $1$,
+nên $h=1/2$. Cộng thêm $1$ cho hướng nằm tạo ước lượng $3/2>1$, vượt chi phí
+thật. Vì vậy phần cài đặt không sử dụng hạng phạt hướng chưa được chứng minh.
+
+\subsubsection{Kiểm chứng và phạm vi kết luận}
+Kiểm thử phát lại đường đi, so sánh chi phí UCS/A*, kiểm tra giới hạn, trường
+hợp không có nghiệm, bản ghi cũ và mở lại nút đã mở rộng dưới một hàm ước lượng
+không đánh giá quá cao nhưng không nhất quán. Trên ba màn nhỏ có đáp án tính
+tay, chi phí còn lại được tính độc lập ở mọi trạng thái có đường tới đích và
+đối chiếu với $h$. Kiểm tra mở rộng trên mười màn chính thức duyệt $2\,946$
+trạng thái đạt được, tạo đồ thị cạnh ngược để tính chi phí tối ưu còn lại và
+kiểm tra tính nhất quán trên mọi cạnh.
+
+Ví dụ kiểm tra tính đúng trên L2-02: phép duyệt ít bước nhất chỉ nằm trong
+kiểm thử tìm đường $46$ bước, chi phí $64$; UCS/A* chọn đường $49$ bước, chi
+phí $58$. Đây là bằng chứng cho sự khác nhau giữa mục tiêu số bước và mục tiêu
+chi phí, không phải số liệu đo thời gian hoặc bộ nhớ. Các chứng minh ở trên
+áp dụng cho mô hình đã nêu; phép duyệt hữu hạn là kiểm chứng bổ sung, không
+thay thế chứng minh cho mọi màn có thể được tạo.
+
+Với hàm ước lượng nhất quán đang dùng, mỗi trạng thái được mở rộng nhiều nhất
+một lần hợp lệ. Gọi $V,E$ là số trạng thái/cạnh đạt được, thời gian dùng hàng
+đợi ưu tiên là $O((V+E)\log(V+E))$, bộ nhớ $O(V+E)$ kể cả bản ghi thay thế.
+Không suy ra A* luôn nhanh hơn UCS: độ chặt của cận và chi phí tính hàm ước
+lượng đều ảnh hưởng kết quả. Trên màn tách, hai thuật toán có cùng chiến lược
+vì $h=0$. Đánh giá hiệu năng toàn nhóm chờ bộ công cụ đo đạc và phiên bản tích
+hợp cuối; phần này không đưa số đo chưa được thực hiện.

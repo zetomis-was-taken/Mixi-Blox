@@ -150,7 +150,8 @@ class Outcome:
   no state, because nothing happened.
 - `fatal` is a fall: a fragile tile giving way under a standing block (§2.5), or a switch closing
   the bridge under the block (ADR-005). Its state is a rendering prop, not a state of play — it is
-  precisely a state `successors` refuses to generate, so expanding it reaches nothing.
+  precisely a state `successors` refuses to generate, so expanding it reaches nothing. Both readings
+  are ADR-010's decision.
 
 Neither the generated actions nor the reachable state set change: a fatal action is still absent
 from `successors`, which ignores the verdict and keeps only `moves`.
@@ -179,9 +180,9 @@ Rules:
   rather than passable-then-detect-the-loss. A **switch** action is filtered the same way:
   `bridges` is updated first, and if the result leaves an occupied cell over a closed bridge, the
   action is not generated (ADR-005: a switch may not close a bridge under the block).
-- Absence is the **search-side** reading, not the whole story. A player does not see two of those
-  refusals as walls: a fragile tile breaks under a standing block (§2.5), and a switch that closes
-  the bridge under the block drops it (ADR-005). `outcome` reports which of the three things a
+- Absence is the **search-side** reading, not the whole story (ADR-010). A player does not see two
+  of those refusals as walls: a fragile tile breaks under a standing block (§2.5), and a switch that
+  closes the bridge under the block drops it (ADR-005). `outcome` reports which of the three things a
   pressed action does, so a renderer can tell a wall from a fall without re-deriving the transition.
 - `step_cost` defaults to `1.0` for every action (#7); non-uniform weights are policy, so tuning
   them never edits engine code.

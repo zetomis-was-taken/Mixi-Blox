@@ -142,6 +142,8 @@ class Board:
 
         That state is a rendering prop, not a state of play. It is exactly one ``successors``
         refuses to generate, so expanding it reaches nothing. Search never calls this.
+
+        Fatality is a render-side reading of a search-side absence, which is ADR-010's decision.
         """
         verdict, next_state = self._resolve(state, *action)
         return Outcome(kind=verdict, state=next_state)

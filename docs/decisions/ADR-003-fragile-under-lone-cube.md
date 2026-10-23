@@ -2,8 +2,9 @@
 
 ## Status
 
-Accepted — answers #12. Confirms `docs/contracts.md` § Board. Amended by #58: the absent move is
-the search-side reading, and the fall §2.5 describes is the render-side one.
+Accepted — answers #12. Confirms `docs/contracts.md` § Board. Superseded in part by ADR-010, which
+separates the search-side absence from the render-side fall; the fragile decision below is
+unchanged.
 
 ## Date
 
@@ -30,13 +31,7 @@ question, not an inference from §2.5.
 ## Decision
 
 Fragile is passable for a lone cube — `passable(f, "cube", …)` is `True`, and nothing is consumed.
-For `standing` the move is absent from `successors`, which is the **search-side** reading: no
-successor, no edge, and no change to the reachable state set.
-
-The **render-side** reading is §2.5's fall, and `Board.outcome` reports that same action as `fatal`
-so interactive play can animate it (#58). These are two readings of one transition, not two rules:
-search must never generate a losing edge, and a player must still see the tile break. The decision
-this ADR records — a lone cube is safe — is untouched by the amendment.
+For `standing` the move is absent, not losing.
 
 ## Alternatives Considered
 
@@ -53,10 +48,6 @@ this ADR records — a lone cube is safe — is untouched by the amendment.
 ## Consequences
 
 - #12's test: a cube steps onto `f` and survives; a standing block on `f` yields no successor.
-- #58: `outcome(state, action).kind` reads `refused` for void and `fatal` for this case, while the
-  action stays absent from `successors`. Nothing a solver sees changes, so #21's hand-solved
-  stage results stand.
-- No contract change was needed for the rule itself — § Board already carried it, and the
-  "presumed" entry flips to answered. (#58 later added `outcome` to § Board; the rule did not move.)
+- No contract change — § Board already carries the rule, and the "presumed" entry flips to answered.
 - Stages may combine `f` with `Y`: not a shortcut, because the merged block must still stand
   somewhere and fragile refuses it.

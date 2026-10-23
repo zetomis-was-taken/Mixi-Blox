@@ -51,5 +51,13 @@ TILE_CAP_HEIGHT = 0.03
 TRIM_HEIGHT = 0.04
 TRIM_LIFT = 0.005
 
+# Mechanism reactions. A switch plate sinks while the block bears on it, a fragile crack opens as
+# the panel takes weight, and a bridge eases between its two heights — its tint follows the height,
+# so a moving bridge is one moving object rather than a colour and a body that disagree.
+PRESS_DEPTH = 0.03  # how far a plate sinks under the block, in world units
+PRESS_SECONDS = 0.08  # travel time for a plate, pressed or released
+BRIDGE_SECONDS = 0.18  # travel time for a bridge between open and closed
+CRACK_OPEN = 0.8  # extra crack depth at full load, as a fraction of the slot's depth
+
 # One quarter-turn per action, at a constant angular speed so the block visibly rolls.
 ROLL_SECONDS = 0.22

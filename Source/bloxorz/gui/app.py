@@ -70,7 +70,7 @@ class PrototypeScene(Entity):
         )
 
         self.block_view.sync(self.controller.state)
-        self.board_view.refresh(self.controller.state.bridges)
+        self.board_view.refresh(self.controller.state)
         # The load animation owns the first moments of the level: it starts from the pieces'
         # resting poses and ends just before input is accepted. Travelling one camera distance
         # leaves every piece outside the window before it starts moving, however large the board.
@@ -164,7 +164,8 @@ class PrototypeScene(Entity):
             self.intro.advance(time.dt)
             self.board_view.update_intro(self.intro)
             self.block_view.update_intro(self.intro)
-        self.board_view.refresh(self.controller.state.bridges)
+        self.board_view.refresh(self.controller.state)
+        self.board_view.update(time.dt)
         # The game only takes input once the whole load animation has played.
         if not self.intro.finished or self.controller.animating:
             return

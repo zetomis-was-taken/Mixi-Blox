@@ -13,6 +13,9 @@ direction ([`theme.md`](theme.md)).
   translucent teal grid line, on a dark base that gives the platform visible thickness, a raised
   detail piece on fragile and switch cells, no tile at the goal, and no mark on the start (see
   [`theme.md`](theme.md)).
+- Reacts to the block: switch plates sink while it bears on them, a fragile crack opens under the
+  weight, and a bridge eases between its open and closed height with its tint following it
+  ([`theme.md`](theme.md#reactions)).
 - Rolls the block on every move: the animation is a real quarter-turn about the tile edge, driven by
   the translation, not a canned loop.
 - Closes the process as soon as the block lands on the goal.
@@ -38,8 +41,9 @@ it, the GUI uses `DEFAULT_GUI_STAGE` in `Source/main.py`, which points at `L1-01
 | `Source/bloxorz/gui/controller.py` | Current `State`, input → `Board.successors`, goal callback |
 | `Source/bloxorz/gui/intro.py` | Load-animation timeline: tile stagger, detail phase, then the block drop (no Ursina) |
 | `Source/bloxorz/gui/layout.py` | Grid ↔ world geometry and pose derivation (no Ursina) |
-| `Source/bloxorz/gui/theme.py` | Palette (mapped in [`theme.md`](theme.md)) and roll timing |
-| `tests/test_gui_layout.py`, `tests/test_gui_controller.py`, `tests/test_gui_intro.py` | Headless pose, controller and load-timeline checks |
+| `Source/bloxorz/gui/reaction.py` | Which mechanisms the block loads, and how their value eases there (no Ursina) |
+| `Source/bloxorz/gui/theme.py` | Palette (mapped in [`theme.md`](theme.md)), reaction timing and roll timing |
+| `tests/test_gui_layout.py`, `tests/test_gui_controller.py`, `tests/test_gui_intro.py`, `tests/test_gui_reaction.py` | Headless pose, controller, load-timeline and mechanism checks |
 
 The controller never builds a `State` and never re-implements a transition: it asks the engine for
 legal successors and only picks the matching direction. The GUI layer imports `bloxorz.core` only,
@@ -98,6 +102,29 @@ detail pieces. Input is held for all of it.
 
 Timing lives in `intro.py` rather than `theme.py` because that module must stay importable without
 Ursina: the sequence is covered headless by `tests/test_gui_intro.py`.
+
+## Mechanism reactions
+
+`gui/reaction.py` answers one question — which cells is the block bearing on — and the board view
+draws the answer. The rule is read off the same `State` the controller already holds, so the view
+never derives a transition of its own:
+
+| Mechanism | Reaction |
+| --- | --- |
+| soft / heavy / split plate | sinks by `theme.PRESS_DEPTH` while loaded, rises when the block steps off |
+| fragile crack | opens to `1 + theme.CRACK_OPEN` of its depth under weight |
+| bridge | eases between its open and closed height; its tint follows the height (`TILE_FLOOR` → `TILE_BRIDGE`) |
+
+A heavy plate only answers to the full standing block, which is the weight rule the engine fires it
+by — a lone split cube on it leaves the plate up, because the switch has not fired. `load_per_cell`
+returns a value for *every* reactive cell, not only the loaded ones, so a released plate is always
+told to rise.
+
+`reaction.approach` moves a value by a constant step per frame (`PRESS_SECONDS`,
+`BRIDGE_SECONDS`), not by a fraction of the gap: travel time is then independent of frame rate, and
+a mechanism retargeted mid-move keeps a sane speed instead of slowing to a crawl near its target.
+Colour is blended from the bridge's current height, so no entity ever shows a tint that disagrees
+with its body. Geometry and reasoning are in [`theme.md`](theme.md#reactions).
 
 ## Camera
 
@@ -163,17 +190,22 @@ flow is easy to find.
 
 - No menu, level select, solver panel, replay, or stats display.
 - Split/merge/teleport changes snap instead of rolling.
-- Fragile panels and switches have distinct colours and plates but no reaction yet: no press,
-  crack or fall animation when the block lands on them.
+- A fragile panel never breaks on screen. A standing block on fragile is an illegal move
+  (ADR-003), so no state exists in which the panel has given way; the crack only opens and shuts
+  with the weight.
 - The HUD is only the level name and a key hint, and it shows during the load animation.
 
 ## Verification
 
-- `pytest tests/ -q` — 99 passed.
+- `pytest tests/ -q` — 108 passed.
 - `ruff check .` — clean.
 - Offscreen Ursina smoke run — scene builds, tiles and their detail pieces start below the board
   and the block above it, keys are ignored until `LoadIntro.finished`, tiles and details land on
   their resting heights, and the first legal move is accepted afterwards.
+- Offscreen reaction probe — a heavy plate measured at `0.0250 → -0.0050` (`PRESS_DEPTH`) while
+  the standing block is on it and back to `0.0250` after it leaves, an opened bridge at its floor
+  height and fully cyan, and a fragile crack measured at `0.1200 → 0.2160` (`×1.8`, `CRACK_OPEN`)
+  under a lying block.
 - A pivot-roll sweep across all stage files found a valid roll plan for every reachable unsplit
   transition (3,550 checked at the time).
 

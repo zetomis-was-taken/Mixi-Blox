@@ -38,15 +38,18 @@ python -m ruff check .
 python -m Source.main --stage Source/bloxorz/core/stages/L2-02_fragile_ring.json --solver astar
 ```
 
-Ghép báo cáo: thay hai mục UCS/A* cũ bằng hai dòng sau, theo thứ tự:
+`Report/main.tex` đã ghép hai mục UCS/A* bằng các dòng sau, theo thứ tự:
 
 ```tex
 \input{sections/ucs}
 \input{sections/astar}
 ```
 
-`ucs.tex` đã chèn `action_cost.tex`; không chèn chi phí lần nữa. Trong phụ lục
-công bố AI, chèn `\input{sections/informed_search_ai_usage}`. Cần `amsmath` và
+`ucs.tex` đã chèn `action_cost.tex`; không chèn chi phí lần nữa. Phụ lục công bố
+AI đã chèn `\input{sections/informed_search_ai_usage}`. Cần `amsmath` và
 `hyperref` như mẫu nhóm. Các đoạn mới thay nội dung cũ để tránh hai bộ trọng số
 và hai heuristic khác nhau. Người phụ trách báo cáo cần rà soát phần mô hình,
 nhận xét hiệu năng và GUI xung quanh; phần này không sửa nội dung của đồng đội.
+
+Trạng thái tích hợp và lỗi có sẵn ngoài phạm vi các mục được giao nằm ở
+[ghi chú tích hợp báo cáo](report_integration_status.md).

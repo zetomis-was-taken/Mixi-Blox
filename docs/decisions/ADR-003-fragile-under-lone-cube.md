@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted — answers #12. Confirms `docs/contracts.md` § Board.
+Accepted — answers #12. Confirms `docs/contracts.md` § Board. Superseded in part by ADR-010, which
+separates the search-side absence from the render-side fall; the fragile decision below is
+unchanged.
 
 ## Date
 

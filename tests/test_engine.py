@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from bloxorz.core.contracts import State
-from bloxorz.core.engine import Board, cells, orientation, pivot, roll
+from bloxorz.core.engine import DIRECTIONS, Board, cells, orientation, pivot, roll
 from bloxorz.core.stage import load_stage
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -173,6 +173,75 @@ def test_standing_on_fragile_is_not_generated(tmp_path: Path) -> None:
     assert "L" in onwards
 
 
+def test_a_move_reports_the_cells_it_reaches(tmp_path: Path) -> None:
+    board = board_for(tmp_path, LINE)
+    start = board.start()
+    (moved, action), = board.successors(start)
+    reported = board.outcome(start, action)
+    assert reported.kind == "moves"
+    assert reported.state == moved, "the same transition, spelled once"
+
+
+def test_a_move_into_void_is_refused_and_carries_no_state(tmp_path: Path) -> None:
+    board = board_for(tmp_path, LINE)
+    blocked = board.outcome(board.start(), (0, "L"))
+    assert blocked.kind == "refused", "void is a wall, not a fall (ADR-004)"
+    assert blocked.state is None, "a refused action changed nothing to render"
+
+
+def test_a_standing_block_that_breaks_a_fragile_tile_is_fatal(tmp_path: Path) -> None:
+    board = board_for(tmp_path, ["......", ".Soff.", "......", ".....G"])
+    (lying, _), = board.successors(board.start())
+    fell = board.outcome(lying, (0, "R"))
+    assert fell.kind == "fatal", "§2.5 breaks the tile under a standing block (ADR-003)"
+    assert cells(fell.state) == ((1, 4),), "the renderer animates the fall from here"
+    assert fell.state.bridges == lying.bridges
+
+
+def test_a_fatal_action_is_absent_from_successors(tmp_path: Path) -> None:
+    board = board_for(tmp_path, ["......", ".Soff.", "......", ".....G"])
+    (lying, _), = board.successors(board.start())
+    assert board.outcome(lying, (0, "R")).kind == "fatal"
+    reachable = {action[1] for _, action in board.successors(lying)}
+    assert "R" not in reachable, "a fatal action still yields no successor"
+
+
+def test_successors_and_outcome_never_disagree(tmp_path: Path) -> None:
+    board = board_for(
+        tmp_path,
+        ["......", ".S+=G.", ".oooo.", ".oooo.", "......"],
+        switches=[
+            {
+                "type": "soft",
+                "pos": [1, 2],
+                "action": "toggle",
+                "bridges": [[1, 3]],
+                "teleport_cubes": None,
+            }
+        ],
+        bridges=[{"pos": [1, 3], "initially_open": True}],
+    )
+    seen = {board.start().key()}
+    frontier = [board.start()]
+    while frontier:
+        state = frontier.pop()
+        legal = {action: next_state for next_state, action in board.successors(state)}
+        for action, next_state in legal.items():
+            reported = board.outcome(state, action)
+            assert reported.kind == "moves", f"{action} is legal, so it cannot be refused or fatal"
+            assert reported.state == next_state, "the two answers must agree on the result"
+            if next_state.key() not in seen:
+                seen.add(next_state.key())
+                frontier.append(next_state)
+        every = [
+            (index, direction) for index in range(len(state.cubes)) for direction in DIRECTIONS
+        ]
+        for action in every:
+            if action not in legal:
+                assert board.outcome(state, action).kind != "moves", f"{action} is absent"
+    assert len(seen) > 2, "the walk has to branch for the agreement to mean anything"
+
+
 def test_a_closed_bridge_is_impassable(tmp_path: Path) -> None:
     board = board_for(
         tmp_path,
@@ -300,8 +369,10 @@ def test_a_switch_may_not_close_a_bridge_under_the_block(tmp_path: Path) -> None
     moves = {action[1] for _, action in board.successors(start)}
     assert "R" not in moves, "the action is not generated (ADR-005)"
     assert "D" in moves
-    assert board.is_fatal(start, (0, "R"))
-    assert not board.is_fatal(start, (0, "D"))
+    fell = board.outcome(start, (0, "R"))
+    assert fell.kind == "fatal", "the switch closes the bridge the block now spans (ADR-005)"
+    assert fell.state == State(cubes=(((1, 2), (1, 3)),), bridges=(False,))
+    assert board.outcome(start, (0, "D")).kind == "moves"
 
 
 def test_a_lone_cube_does_not_fire_a_split_switch(tmp_path: Path) -> None:

@@ -9,7 +9,7 @@ from pathlib import Path
 
 from bloxorz.core.engine import Board
 from bloxorz.core.stage import load_stage
-from bloxorz.gui.layout import DIRECTION_VECTORS, cell_to_world, poses_for_state
+from bloxorz.gui.layout import DIRECTION_VECTORS, board_center, cell_to_world, poses_for_state
 
 ROOT = Path(__file__).resolve().parents[1]
 STAGES = ROOT / "Source" / "bloxorz" / "core" / "stages"
@@ -23,6 +23,13 @@ def test_cell_to_world_is_centred_and_flips_rows() -> None:
     rows, cols = 4, 5
     assert cell_to_world((0, 0), rows, cols) == (-2.0, 1.5)
     assert cell_to_world((3, 4), rows, cols) == (2.0, -1.5)
+
+
+def test_board_center_follows_the_walkable_footprint() -> None:
+    # L1-01 leaves two empty columns on the left of its 15-wide grid, so the tiles sit half a
+    # tile left of the grid centre. L1-02 is offset in depth instead.
+    assert board_center(_stage("L1-01_long_corridor")) == (-0.5, 0.0)
+    assert board_center(_stage("L1-02_two_flights")) == (0.0, 0.5)
 
 
 def test_direction_vectors_match_grid_movement() -> None:

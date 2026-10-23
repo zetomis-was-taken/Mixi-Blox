@@ -53,29 +53,40 @@ transitions currently snap to the destination pose; polishing those is still par
 
 ## Camera
 
-The camera is placed on a sphere around the board centre and its rotation is set explicitly.
-`camera.look_at()` was avoided because it introduced about 6.7° of unwanted roll on this rig.
+The camera orbits the centre of the **walkable footprint**, not the centre of the grid. Stages do
+not have to fill their grid: `L1-01` leaves two columns empty on the left, so a grid-centred camera
+made the platform look shifted left with extra space on the right. `layout.board_center` supplies
+the point to frame.
+
+The rotation is set explicitly. `camera.look_at()` was avoided because it introduced about 6.7° of
+unwanted roll on this rig.
 
 Current values in `app.py`:
 
 | Constant | Current | Effect |
 | --- | --- | --- |
-| `CAMERA_PITCH_DEGREES` | `45.0` | Higher = more top-down; lower = closer to eye level |
+| `CAMERA_PITCH_DEGREES` | `40.0` | Higher = more top-down; lower = closer to eye level |
 | `CAMERA_YAW_DEGREES` | `25.0` | Side rotation; 0° is straight-on, 45° is full diagonal |
-| `CAMERA_DISTANCE_FACTOR` | `1.25` | Multiplier on `max(rows, cols)`; higher = zoom out |
+| `CAMERA_DISTANCE_FACTOR` | `1.5` | Multiplier on `max(rows, cols)`; higher = zoom out |
 | `CAMERA_FOV` | `45.0` | Perspective strength; higher = wider and more distorted |
 
 ```python
 distance = max(rows, cols) * TILE_SIZE * CAMERA_DISTANCE_FACTOR
 pitch, yaw = radians(CAMERA_PITCH_DEGREES), radians(CAMERA_YAW_DEGREES)
+target_x, target_z = board_center(stage)
 
 camera.position = (
-    -sin(yaw) * cos(pitch) * distance,
+    target_x - sin(yaw) * cos(pitch) * distance,
     0.5 + sin(pitch) * distance,
-    -cos(yaw) * cos(pitch) * distance,
+    target_z - cos(yaw) * cos(pitch) * distance,
 )
 camera.rotation = (CAMERA_PITCH_DEGREES, CAMERA_YAW_DEGREES, 0.0)
 ```
+
+After positioning, `_align_camera_lens` projects every tile corner and nudges the lens by the
+residual: the yawed view makes the near edge project wider than the far edge, so orbiting the
+footprint centre alone would still leave the outline a few pixels off-centre. The shift uses the
+3D lens, not the UI camera, so the HUD does not move.
 
 The negative X offset views the board from its left side. To mirror the view, flip the sign of
 `sin(yaw)` and the sign of the yaw component in `camera.rotation`. Keeping the last rotation
@@ -109,7 +120,7 @@ flow is easy to find.
 
 ## Verification
 
-- `pytest tests/ -q` — 87 passed.
+- `pytest tests/ -q` — 88 passed.
 - `ruff check .` — clean.
 - Offscreen Ursina smoke run — scene builds and a roll lands in the expected pose.
 - A pivot-roll sweep across all stage files found a valid roll plan for every reachable unsplit

@@ -10,6 +10,7 @@ from __future__ import annotations
 from math import cos, radians, sin
 from pathlib import Path
 
+from panda3d.core import Point2, Point3
 from ursina import Entity, Text, Ursina, application, camera, held_keys, time, window
 from ursina.shaders import unlit_shader
 
@@ -21,13 +22,13 @@ from . import theme
 from .block_view import BlockView
 from .board_view import BoardView
 from .controller import PlayerController
-from .layout import TILE_SIZE
+from .layout import TILE_SIZE, board_center, cell_to_world
 
 # Low three-quarter camera matching the original game's framing: a shallow pitch,
 # a small side offset, and a close enough distance to keep the platform sides visible.
-CAMERA_PITCH_DEGREES = 45.0
+CAMERA_PITCH_DEGREES = 40.0
 CAMERA_YAW_DEGREES = 25.0
-CAMERA_DISTANCE_FACTOR = 1.25
+CAMERA_DISTANCE_FACTOR = 1.5
 CAMERA_FOV = 45.0
 
 KEY_BINDINGS: tuple[tuple[str, str], ...] = (
@@ -66,16 +67,57 @@ class PrototypeScene(Entity):
         distance = span * CAMERA_DISTANCE_FACTOR
         pitch = radians(CAMERA_PITCH_DEGREES)
         yaw = radians(CAMERA_YAW_DEGREES)
-        target = (0, 0.5, 0)
+        # Frame the tiles that exist, not the full grid: empty grid margins would otherwise push
+        # the visible platform off to one side.
+        board_x, board_z = board_center(stage)
+        target = (board_x, 0.5, board_z)
 
         camera.fov = CAMERA_FOV
         camera.position = (
-            -sin(yaw) * cos(pitch) * distance,
+            target[0] - sin(yaw) * cos(pitch) * distance,
             target[1] + sin(pitch) * distance,
-            -cos(yaw) * cos(pitch) * distance,
+            target[2] - cos(yaw) * cos(pitch) * distance,
         )
         # Set the pose directly: look_at() introduced a small roll on this rig.
         camera.rotation = (CAMERA_PITCH_DEGREES, CAMERA_YAW_DEGREES, 0.0)
+        self._align_camera_lens(stage)
+
+    @staticmethod
+    def _align_camera_lens(stage: Stage) -> None:
+        """Shift the lens until the board's projected outline is centred.
+
+        Aiming at the walkable centre removes the empty-grid margin, but the yawed perspective
+        still projects the near edge wider than the far edge. A small lens shift removes that
+        remaining bias without changing the camera's position or angle.
+        """
+        base = application.base
+        cam, lens = base.cam, base.camLens
+        if cam is None or lens is None:
+            return
+
+        rows, cols = stage.index.rows, stage.index.cols
+        half = TILE_SIZE / 2.0
+        projected_x: list[float] = []
+        for row in range(rows):
+            for col in range(cols):
+                if stage.index.kind[row * cols + col] == "void":
+                    continue
+                x, z = cell_to_world((row, col), rows, cols)
+                for dx in (-half, half):
+                    for dz in (-half, half):
+                        for y in (0.0, -theme.TILE_HEIGHT):
+                            relative = cam.getRelativePoint(base.render, Point3(x + dx, y, z + dz))
+                            point = Point2()
+                            lens.project(relative, point)
+                            projected_x.append(point.x)
+
+        if not projected_x:
+            return
+        # Projection space is [-1, 1], so 0 is the window's horizontal centre. Film offset and
+        # projected position move in opposite directions, so ``shift * width / 2`` cancels it.
+        shift = (min(projected_x) + max(projected_x)) / 2.0
+        film_x = lens.getFilmOffset().x
+        lens.setFilmOffset(film_x + shift * lens.getFilmSize().x / 2.0, lens.getFilmOffset().y)
 
     def _build_hud(self, stage: Stage) -> None:
         Text(

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from bloxorz.core.contracts import State
+from bloxorz.core.contracts import Stage, State
 from bloxorz.core.engine import orientation
 
 TILE_SIZE = 1.0
@@ -36,6 +36,27 @@ def cell_to_world(cell: tuple[int, int], rows: int, cols: int) -> tuple[float, f
     x = (col - (cols - 1) / 2.0) * TILE_SIZE
     z = ((rows - 1 - row) - (rows - 1) / 2.0) * TILE_SIZE
     return x, z
+
+
+def board_center(stage: Stage) -> tuple[float, float]:
+    """The (x, z) centre of the stage's walkable footprint, ignoring empty grid margins.
+
+    Stages do not have to fill their grid: ``L1-01`` occupies column 2 onwards of a 15-column
+    grid, so the grid origin sits half a tile to the left of the platform the player sees. Framing
+    the camera on the full grid therefore leaves extra space on one side.
+    """
+    rows, cols = stage.index.rows, stage.index.cols
+    occupied = [
+        cell_to_world((row, col), rows, cols)
+        for row in range(rows)
+        for col in range(cols)
+        if stage.index.kind[row * cols + col] != "void"
+    ]
+    if not occupied:
+        return 0.0, 0.0
+
+    xs, zs = zip(*occupied)
+    return (min(xs) + max(xs)) / 2.0, (min(zs) + max(zs)) / 2.0
 
 
 def poses_for_state(state: State, rows: int, cols: int) -> tuple[Pose, ...]:

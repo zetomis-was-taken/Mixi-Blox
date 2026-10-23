@@ -499,6 +499,8 @@ Consumers: #24 tabulates `status` with no special-casing; #21 replays `path` whe
 
 §2.5 leaves six interactions unstated. All six now have an answer: #11 by ADR-005, #12 by ADR-003,
 #13 by ADR-006, #14 by ADR-007, #15 by ADR-008, #16 by ADR-004. None of them changes a signature.
+#65 asks the same question of a teleport that cannot land, and needs no new rule: the block is never
+placed, so it is void contact, which ADR-004 already covers.
 
 | Issue | Outcome | Where it is assumed | Status |
 | --- | --- | --- | --- |
@@ -508,6 +510,7 @@ Consumers: #24 tabulates `status` with no special-casing; #21 replays `path` whe
 | #14 merge orientation | decided by the pair's adjacency axis | `successors`, "merging" rule | answered, ADR-007 |
 | #15 split switch re-trigger | always fires for a full block, inert for a lone cube | the `Y` activation rule | answered, ADR-008 |
 | #16 one cube falls off | the move is not generated, equivalent to immediate loss | `successors` legality | answered as subsumed by #11, ADR-004 |
+| #65 a split's teleport cannot land | the move is not generated, and there is no fall to animate | `successors` legality | answered as subsumed by ADR-004 |
 
 ## Obligations
 

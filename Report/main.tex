@@ -256,13 +256,7 @@ Nằm dọc $V(r, c)$ & $S(r-1, c)$ & $S(r+2, c)$ & $V(r, c-1)$ & $V(r, c+1)$ \\
     \item \textbf{Tối ưu hóa IDS}: Do DFS chuẩn có thể bị kẹt ở nhánh sâu vô tận hoặc tìm ra đường đi rất dài, nhóm đã cài đặt \textbf{IDS (Iterative Deepening Search)} bằng cách kết hợp ưu điểm tiết kiệm bộ nhớ của DFS với tính tối ưu độ sâu của BFS.
 \end{itemize}
 
-\subsection{Uniform-Cost Search (UCS)}
-\begin{itemize}
-    \item \textbf{Nguyên lý}: Sử dụng hàng đợi ưu tiên Min-Heap (\texttt{heapq}) mở rộng nút có chi phí đường đi tích lũy $g(n)$ nhỏ nhất trước.
-    \item \textbf{Ý nghĩa trực giác}: Hàm chi phí ưu tiên khối đi qua các con đường an toàn, tránh mạo hiểm qua các ô dễ vỡ nếu có lộ trình thay thế ít rủi ro hơn.
-\end{itemize}
-
-\input{sections/action_cost}
+\input{sections/ucs}
 
 \subsection{A* Search}
 \begin{itemize}

@@ -28,7 +28,7 @@ python -m ruff check .
 python -m Source.main --stage Source/bloxorz/core/stages/L2-02_fragile_ring.json --solver ucs
 ```
 
-Báo cáo: chèn `\input{sections/ucs}` thay mục UCS cũ. Tệp đó chèn tiếp
+Báo cáo: `Report/main.tex` đã dùng `\input{sections/ucs}` thay mục UCS cũ. Tệp đó chèn tiếp
 `sections/action_cost` từ #7; không chèn chi phí lần thứ hai. Cần `amsmath`
 và `hyperref` trong preamble. Không sửa các mục của thành viên khác.
 

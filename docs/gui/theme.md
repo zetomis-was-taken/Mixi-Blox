@@ -37,7 +37,7 @@ mechanisms.
 | # | Hex | Constant(s) | Used for | Why |
 | --- | --- | --- | --- | --- |
 | 1 | `#46425e` | `TILE_FLOOR`, `TILE_SIDE`, `TEXT`, `TILE_MARK_DARK` | Every walkable tile (floor, start and tile sides), HUD text, fragile crack | The dark base of the board: it contrasts with the cream background and keeps the coral player and the accent-coloured mechanisms readable. |
-| 2 | `#15788c` | `TILE_HEAVY`, `GRID_LINE` | Heavy switch base; the faint line between tiles | Deep teal is the darker of the two mechanism accents, matching the heavy switch's "weight"; at ~35% opacity it also gives the gapless board its grid without becoming a stripe. |
+| 2 | `#15788c` | `TILE_HEAVY`, `GRID_LINE`, `PARALLAX_SQUARE` | Heavy switch base; the faint line between tiles; the parallax backdrop squares | Deep teal is the darker of the two mechanism accents, matching the heavy switch's "weight"; at ~35% opacity it also gives the gapless board its grid without becoming a stripe. The same hue, at a lower opacity, keeps the parallax squares behind the board. |
 | 3 | `#00b9be` | `TILE_BRIDGE`, `TILE_SOFT`, `TILE_SPLIT` | Open bridge, soft switch, split switch | Bright cyan is the "mechanism" accent; together with the detail shape it separates these cells from ordinary dark floor. |
 | 4 | `#ffeecc` | `BACKGROUND`, `TILE_MARK` | Window clear colour; switch plates | The light background the board sits on, and the light plates that mark interactive cells. |
 | 5 | `#ffb0a3` | `TILE_FRAGILE` | Fragile panel base | Soft peach is the one warning tint: clearly warmer than the dark floor without competing with the coral player. |
@@ -141,5 +141,6 @@ has given way. The crack opens and shuts with the weight.
 - `Source/bloxorz/gui/board_view.py` — tile base colours and detail geometry.
 - `Source/bloxorz/gui/block_view.py` — the player's block.
 - `Source/bloxorz/gui/app.py` — window background and HUD text.
+- `Source/bloxorz/gui/parallax.py` — the parallax square colour and per-layer opacity.
 
 No other module contains a colour value.

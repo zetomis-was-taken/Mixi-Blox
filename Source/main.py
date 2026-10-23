@@ -24,7 +24,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--stage", metavar="FILE", help="path to a stage JSON file")
     parser.add_argument(
-        "--solver", choices=("bfs", "dfs", "ucs", "astar"), help="algorithm to run (#18-#23)"
+        "--solver",
+        choices=("bfs", "dfs", "ucs", "astar"),
+        help="algorithm to run (#18-#23)",
     )
     parser.add_argument(
         "--gui",
@@ -54,7 +56,9 @@ def main(argv: list[str] | None = None) -> int:
     board = Board(stage)
     start = board.start()
     moves = board.successors(start)
-    print(f"{stage.id} {stage.name} [{stage.group}] {stage.index.rows}x{stage.index.cols}")
+    print(
+        f"{stage.id} {stage.name} [{stage.group}] {stage.index.rows}x{stage.index.cols}"
+    )
     print(f"start {cells(start)[0]}  goal {stage.index.goal}  legal moves {len(moves)}")
     for state, action in moves:
         print(f"  {action[1]} -> {cells(state)}")

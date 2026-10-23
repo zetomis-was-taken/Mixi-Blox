@@ -34,6 +34,9 @@ TILE_SIDE = color.rgb32(70, 66, 94)  # #46425e, the same as TILE_FLOOR
 TILE_MARK = color.rgb32(255, 238, 204)  # #ffeecc
 TILE_MARK_DARK = color.rgb32(70, 66, 94)  # #46425e
 
+# Parallax background squares: the deep teal, drawn at a low opacity by ``parallax.py``.
+PARALLAX_SQUARE = color.rgb32(21, 120, 140)  # #15788c
+
 # Grid separator: a faint translucent line where two tiles meet. Tiles butt against each other,
 # so this line — not a gap — is what separates them.
 GRID_LINE = color.rgba32(21, 120, 140, 90)  # #15788c at ~35% opacity

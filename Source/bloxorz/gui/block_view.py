@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from panda3d.core import Quat, Vec3
-from ursina import Entity, destroy
+from ursina import Entity, Shader, destroy
 
 from bloxorz.core.contracts import Action, State
 
@@ -32,9 +32,10 @@ class _Roll:
 class BlockView:
     """Owns the block entities and animates one action at a time."""
 
-    def __init__(self, rows: int, cols: int) -> None:
+    def __init__(self, rows: int, cols: int, shader: Shader | None = None) -> None:
         self.rows = rows
         self.cols = cols
+        self.shader = shader
         self.pieces: list[Entity] = []
         self._rest_positions: list[tuple[float, float, float]] = []
         self._roll: _Roll | None = None
@@ -57,6 +58,7 @@ class BlockView:
                 color=theme.BLOCK,
                 scale=pose.scale,
                 position=pose.center,
+                shader=self.shader,
             )
             for number, pose in enumerate(poses_for_state(state, self.rows, self.cols))
         ]

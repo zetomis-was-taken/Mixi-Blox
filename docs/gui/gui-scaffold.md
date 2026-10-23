@@ -18,6 +18,9 @@ direction ([`theme.md`](theme.md)).
   ([`theme.md`](theme.md#reactions)).
 - Rolls the block on every move: the animation is a real quarter-turn about the tile edge, driven by
   the translation, not a canned loop.
+- Draws an optional parallax backdrop: two regular grids of filled and outlined `#15788c` squares,
+  scrolling top-left → bottom-right at different speeds (`parallax.py`).
+- Can apply an optional dotted halftone shader to the tiles and the player only (`dot_shader.py`).
 - Closes the process as soon as the block lands on the goal.
 - Keeps all colour values in `theme.py`, following the palette documented in `theme.md`.
 
@@ -35,12 +38,14 @@ it, the GUI uses `DEFAULT_GUI_STAGE` in `Source/main.py`, which points at `L1-01
 
 | File | Responsibility |
 | --- | --- |
-| `Source/bloxorz/gui/app.py` | Window, scene, camera, HUD, input loop, launch helper |
+| `Source/bloxorz/gui/app.py` | Window, scene, camera, HUD, input loop, launch helper; enables both optional effects |
 | `Source/bloxorz/gui/board_view.py` | One flat tile per non-void cell, plus per-kind detail pieces; bridge tint/height |
 | `Source/bloxorz/gui/block_view.py` | Player boxes and pivot-based roll animation |
 | `Source/bloxorz/gui/controller.py` | Current `State`, input → `Board.successors`, goal callback |
+| `Source/bloxorz/gui/dot_shader.py` | Screen-space halftone shader applied to tiles and player only |
 | `Source/bloxorz/gui/intro.py` | Load-animation timeline: tile stagger, detail phase, then the block drop (no Ursina) |
 | `Source/bloxorz/gui/layout.py` | Grid ↔ world geometry and pose derivation (no Ursina) |
+| `Source/bloxorz/gui/parallax.py` | Scrolling tiled square backdrop in two depth layers |
 | `Source/bloxorz/gui/reaction.py` | Which mechanisms the block loads, and how their value eases there (no Ursina) |
 | `Source/bloxorz/gui/theme.py` | Palette (mapped in [`theme.md`](theme.md)), reaction timing and roll timing |
 | `tests/test_gui_layout.py`, `tests/test_gui_controller.py`, `tests/test_gui_intro.py`, `tests/test_gui_reaction.py` | Headless pose, controller, load-timeline and mechanism checks |
@@ -126,6 +131,41 @@ a mechanism retargeted mid-move keeps a sane speed instead of slowing to a crawl
 Colour is blended from the bridge's current height, so no entity ever shows a tint that disagrees
 with its body. Geometry and reasoning are in [`theme.md`](theme.md#reactions).
 
+## Optional presentation effects
+
+Both extras are independent modules and are switched on by one call each in
+`PrototypeScene.__init__`:
+
+```python
+self.parallax = parallax.ParallaxBackground()      # square parallax backdrop
+dot_shader.apply(self.board_view, self.block_view)  # halftone dots on objects
+```
+
+Delete either line to turn that effect off; nothing else depends on it.
+
+### Parallax background
+
+`parallax.py` attaches two large quads to the camera, at depths of 60 and 120 world units (both
+well behind the board). A small fragment shader paints a regular checkerboard of squares on each
+quad: filled and outlined cells alternate, all in `theme.PARALLAX_SQUARE` (`#15788c`) at low
+opacity. Both layers drift right and down; the near layer has larger cells and moves faster, so
+the layers read as parallax.
+
+The pattern is computed in screen space from `gl_FragCoord`, with cell size and scroll passed as
+shader inputs, so a window resize only refits the quads and never rebuilds anything. Because the
+quads sit behind the board, the depth buffer lets the board occlude them.
+
+### Dotted shader
+
+`dot_shader.py` defines a flat-colour GLSL shader based on `unlit_shader`. It keeps each entity's
+own colour and multiplies in a regular screen-space dot grid (`DOT_SPACING_PIXELS`,
+`DOT_RADIUS_PIXELS`, `DOT_DARKNESS`), so the dots stay the same pixel size on every surface.
+
+`dot_shader.apply` gives it to `BoardView.object_entities()` — tile caps, tile bases and detail
+pieces — and to the player. Grid separator lines, the HUD and the parallax backdrop keep the
+plain `unlit_shader`. `BlockView` stores the shader because it rebuilds its boxes after every
+move, so the dots survive the first roll.
+
 ## Camera
 
 The camera orbits the centre of the **walkable footprint**, not the centre of the grid. Stages do
@@ -175,9 +215,10 @@ only when the amount of perspective distortion also needs to change.
 `theme.py` holds the palette and the mapping is documented in [`theme.md`](theme.md): flat tile
 colours plus a raised detail piece for fragile and switch cells. The goal cell has no tile, so the
 cream background shows through as a hole, and the start is an ordinary tile. Rendering stays
-deliberately simple — no lights, shadows, fog, gradients or textures — and entities use the
-`unlit_shader`. Values are written with `color.rgb32(...)` because Ursina's `color.rgb()` expects
-floats in `0–1`; passing `0–255` values there clamps every colour to white.
+deliberately simple — no lights, shadows, fog, gradients or textures. Entities use the
+`unlit_shader`, except the board objects and player when the optional dotted shader is enabled.
+Values are written with `color.rgb32(...)` because Ursina's `color.rgb()` expects floats in `0–1`;
+passing `0–255` values there clamps every colour to white.
 
 ## Level completion
 

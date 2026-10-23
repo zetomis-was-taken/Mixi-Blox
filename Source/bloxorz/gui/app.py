@@ -19,7 +19,7 @@ from bloxorz.core.contracts import Stage
 from bloxorz.core.engine import Board
 from bloxorz.core.stage import load_stage
 
-from . import theme
+from . import dot_shader, parallax, theme
 from .block_view import BlockView
 from .board_view import BoardView
 from .controller import PlayerController
@@ -86,6 +86,10 @@ class PrototypeScene(Entity):
         )
         self._frame_camera(stage)
         self._build_hud(stage)
+
+        # Optional presentation effects: remove either call to switch that effect off.
+        self.parallax = parallax.ParallaxBackground()
+        dot_shader.apply(self.board_view, self.block_view)
 
     def _frame_camera(self, stage: Stage) -> None:
         distance = _camera_distance(stage)

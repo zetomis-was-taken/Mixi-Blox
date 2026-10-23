@@ -311,6 +311,17 @@ class BoardView:
         for view, offset in zip(self.details, self._detail_intro_offsets):
             self._place_detail(view, self._load.get(view.cell, 0.0), offset)
 
+    def object_entities(self) -> list[Entity]:
+        """Every entity that draws a physical object: tiles, their bases and detail pieces.
+
+        The grid lines are left out; they are a seam between tiles rather than an object.
+        """
+        return [
+            *self.tiles.values(),
+            *self._tile_bases.values(),
+            *(detail.entity for detail in self.details),
+        ]
+
     @staticmethod
     def _place_detail(view: _DetailView, load: float, offset: float) -> None:
         """Put one piece at its resting height, deformed by however hard it is being pressed."""

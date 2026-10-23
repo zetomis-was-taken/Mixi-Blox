@@ -70,6 +70,10 @@ python tools/package.py [student_id ...]    # builds the submission ZIP
 
 # Conventions
 
+- Changes must be minimal: touch only what the task needs, do not rewrite or reformat unrelated
+  code, and leave no scratch files, dead code, or commented-out blocks behind.
+- Code must be clean and well-structured: small single-purpose functions, clear names, no
+  duplication, and no magic numbers — keep the existing layering and module boundaries intact.
 - `Source/` is the package root. Only `Source/main.py` and `pytest.ini` put it on `sys.path`;
   library modules must not do it themselves.
 - `docs/contracts.md` is the spec. Names and signatures there are frozen v1: change one only

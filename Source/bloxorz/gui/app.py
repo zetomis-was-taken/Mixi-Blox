@@ -1,9 +1,9 @@
 """Ursina prototype scene for ``L1-01``.
 
-Deliberately bare: no title screen, menu or theme. The stage is loaded before the scene is built
-and the window opens straight into it, playing the load animation (tiles rise, then the block
-drops in) before it accepts any input. A later ``theme.md`` replaces the palette in ``theme.py``;
-nothing here guesses an art direction.
+Deliberately bare: no title screen, menu or theme switching. The stage is loaded before the scene
+is built and the window opens straight into it, playing the load animation (tiles rise, details
+land on them, then the block drops in) before it accepts any input. The palette lives in
+``theme.py`` and is documented in ``docs/gui/theme.md``.
 """
 
 from __future__ import annotations
@@ -77,7 +77,12 @@ class PrototypeScene(Entity):
         clearance = _camera_distance(stage)
         self.intro = LoadIntro(
             len(self.board_view.tiles),
-            IntroTiming(tile_rise=clearance, player_drop=clearance),
+            IntroTiming(
+                tile_rise=clearance,
+                obstacle_rise=clearance,
+                player_drop=clearance,
+            ),
+            obstacle_count=len(self.board_view.details),
         )
         self._frame_camera(stage)
         self._build_hud(stage)

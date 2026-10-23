@@ -1,0 +1,11 @@
+;paint.net Palette File
+;Downloaded from Lospec.com/palette-list
+;Palette Name: curiosities
+;Description: A soft palette, small but with some variation across hues.
+;Colors: 6
+FF46425e
+FF15788c
+FF00b9be
+FFffeecc
+FFffb0a3
+FFff6973

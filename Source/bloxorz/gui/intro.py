@@ -1,8 +1,8 @@
 """Timeline for the stage-load animation.
 
 The sequence is: every tile floats up from below the board (each with its own random delay), then
-the player's block drops in from above. Only once the whole timeline has played may the game take
-input.
+the detail pieces sitting on those tiles (switch plates and fragile cracks), then the player's
+block drops in from above. Only once the whole timeline has played may the game take input.
 
 Pure Python on purpose: the Ursina views ask this object how far along each piece is, so the
 ordering and the input gate can be tested headless (``tests/test_gui_intro.py``) instead of by
@@ -20,15 +20,19 @@ from dataclasses import dataclass
 class IntroTiming:
     """Durations (seconds) and travel distances (world units) of the load animation.
 
-    ``tile_rise`` and ``player_drop`` are how far a piece travels before it lands. The scene passes
-    one camera distance for both, so pieces start outside the window; the small defaults here are
-    only what a headless test gets when it does not care about the visual travel.
+    ``tile_rise``, ``obstacle_rise`` and ``player_drop`` are how far a piece travels before it
+    lands. The scene passes one camera distance for all three, so pieces start outside the window;
+    the small defaults here are only what a headless test gets when it does not care about the
+    visual travel.
     """
 
     tile_float_seconds: float = 1.0
     tile_delay_max_seconds: float = 0.55
+    obstacle_float_seconds: float = 0.45
+    obstacle_delay_max_seconds: float = 0.25
     player_float_seconds: float = 1.0
     tile_rise: float = 3.0
+    obstacle_rise: float = 3.0
     player_drop: float = 4.0
 
 
@@ -56,22 +60,36 @@ class LoadIntro:
         tile_count: int,
         timing: IntroTiming | None = None,
         seed: int | None = None,
+        obstacle_count: int = 0,
     ) -> None:
         self.timing = timing or IntroTiming()
         rng = random.Random(seed)
         self._tile_delays = tuple(
             rng.uniform(0.0, self.timing.tile_delay_max_seconds) for _ in range(tile_count)
         )
+        self._obstacle_delays = tuple(
+            rng.uniform(0.0, self.timing.obstacle_delay_max_seconds)
+            for _ in range(obstacle_count)
+        )
         self._elapsed = 0.0
 
-        # TODO(load-animation): obstacles (fragile panels, switches, teleporters, ...) get their
-        # own phase between the last tile and the player once BoardView has dedicated entities for
-        # them. For now the player follows the tiles directly.
         self._tiles_end = max(
             (delay + self.timing.tile_float_seconds for delay in self._tile_delays),
             default=0.0,
         )
-        self._player_start = self._tiles_end
+        # Details only get a phase of their own when there are any, so a board without switches or
+        # markers keeps the original tiles-then-player timing.
+        self._obstacles_start = self._tiles_end
+        self._obstacles_end = (
+            max(
+                delay + self.timing.obstacle_float_seconds
+                for delay in self._obstacle_delays
+            )
+            + self._obstacles_start
+            if self._obstacle_delays
+            else self._tiles_end
+        )
+        self._player_start = self._obstacles_end
         self._duration = self._player_start + self.timing.player_float_seconds
 
     @property
@@ -95,6 +113,14 @@ class LoadIntro:
         """Eased 0..1 float-up progress of tile ``index``, in build order."""
         return _progress(self._elapsed, self._tile_delays[index], self.timing.tile_float_seconds)
 
+    def obstacle_progress(self, index: int) -> float:
+        """Eased 0..1 float-up of detail piece ``index``; stays 0 until the tiles have landed."""
+        return _progress(
+            self._elapsed,
+            self._obstacles_start + self._obstacle_delays[index],
+            self.timing.obstacle_float_seconds,
+        )
+
     def player_progress(self) -> float:
-        """Eased 0..1 drop-in of the player's block; stays 0 until the tiles have landed."""
+        """Eased 0..1 drop-in of the block; stays 0 until the tiles and details have landed."""
         return _progress(self._elapsed, self._player_start, self.timing.player_float_seconds)

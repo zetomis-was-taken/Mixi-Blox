@@ -36,7 +36,7 @@ app = Ursina(
 )
 
 Entity.default_shader = unlit_shader  # flat silhouettes: no lights, no fog, no shadows
-window.color = theme.BACKGROUND       # rgb32(24, 25, 27)
+window.color = theme.BACKGROUND       # rgb32(255, 238, 204)
 ```
 
 | Argument | Value | What it actually does | Ursina default |
@@ -88,7 +88,7 @@ Measured window state for `L1-01` after `build(...)`:
 | Fullscreen flag | `False` |
 | Position | (320, 140) — centred on the 1920×1080 primary monitor by `window.center_on_screen()` |
 | Title | `Mixi-Blox  \|  L1-01 Long corridor` |
-| Clear colour | `Color(0.094, 0.098, 0.106, 1.0)` = `rgb32(24, 25, 27)` |
+| Clear colour | `Color(1.0, 0.9333, 0.8, 1.0)` = `rgb32(255, 238, 204)` |
 | `window.editor_ui.enabled` | `False` |
 | `application.hot_reloader.enabled` | `False` |
 
@@ -205,7 +205,7 @@ from validated data.
 
 ## 9. Verification
 
-- `pytest tests/ -q` — 95 passed (Ursina is never imported in tests).
+- `pytest tests/ -q` — 99 passed (Ursina is never imported in tests).
 - `ruff check .` — clean.
 - On-screen probe (`build(..., window_type="onscreen")`, then read `base.win.getProperties()`):
   1280×800, not fullscreen, decorated, position (320, 140), stage-derived title, palette clear colour,

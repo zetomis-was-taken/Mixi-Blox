@@ -11,8 +11,11 @@ from bloxorz.gui.intro import IntroTiming, LoadIntro
 TIMING = IntroTiming(
     tile_float_seconds=0.2,
     tile_delay_max_seconds=0.4,
+    obstacle_float_seconds=0.3,
+    obstacle_delay_max_seconds=0.2,
     player_float_seconds=0.3,
     tile_rise=3.0,
+    obstacle_rise=3.0,
     player_drop=4.0,
 )
 
@@ -111,3 +114,50 @@ def test_elapsed_is_capped_at_the_duration() -> None:
     intro = LoadIntro(3, timing=TIMING, seed=6)
     _run(intro, intro.duration * 4.0, steps=40)
     assert intro.elapsed == intro.duration
+
+
+def test_detail_phase_runs_between_the_tiles_and_the_player() -> None:
+    tiles_only = LoadIntro(10, timing=TIMING, seed=1)
+    with_details = LoadIntro(10, timing=TIMING, seed=1, obstacle_count=4)
+    # Tile delays are drawn first, so the seeded tiles-only run ends where the details begin.
+    tiles_end = tiles_only.duration - TIMING.player_float_seconds
+
+    with_details.advance(tiles_end - 1e-6)
+    assert all(with_details.obstacle_progress(index) == 0.0 for index in range(4))
+    assert with_details.player_progress() == 0.0
+
+    # The added phase is bounded by one detail's delay plus its float, not by the tile timing.
+    extra = with_details.duration - tiles_only.duration
+    assert 0.0 < extra <= TIMING.obstacle_delay_max_seconds + TIMING.obstacle_float_seconds + 1e-9
+
+
+def test_details_finish_before_the_block_starts_falling() -> None:
+    intro = LoadIntro(6, timing=TIMING, seed=2, obstacle_count=3)
+    player_start = intro.duration - TIMING.player_float_seconds
+
+    intro.advance(player_start)
+    assert all(intro.obstacle_progress(index) > 0.999 for index in range(3))
+    assert intro.player_progress() < 1e-6
+
+    intro.advance(TIMING.player_float_seconds / 2.0)
+    assert 0.0 < intro.player_progress() < 1.0
+
+
+def test_block_does_not_fall_while_details_are_still_rising() -> None:
+    intro = LoadIntro(4, timing=TIMING, seed=3, obstacle_count=2)
+    remaining = TIMING.player_float_seconds + TIMING.obstacle_float_seconds / 2.0
+
+    intro.advance(intro.duration - remaining)
+    assert any(0.0 < intro.obstacle_progress(index) < 1.0 for index in range(2))
+    assert intro.player_progress() == 0.0
+
+
+def test_detail_progress_is_monotonic() -> None:
+    intro = LoadIntro(2, timing=TIMING, seed=5, obstacle_count=3)
+    previous = [0.0] * 3
+    for _ in range(80):
+        intro.advance(intro.duration / 80.0)
+        for index in range(3):
+            current = intro.obstacle_progress(index)
+            assert previous[index] <= current <= 1.0
+            previous[index] = current

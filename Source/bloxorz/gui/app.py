@@ -1,8 +1,9 @@
 """Ursina prototype scene for ``L1-01``.
 
-Deliberately bare: no title screen, menu, loading state or theme. The stage is loaded before the
-scene is built and the window opens straight into it. A later ``theme.md`` replaces the palette in
-``theme.py``; nothing here guesses an art direction.
+Deliberately bare: no title screen, menu or theme. The stage is loaded before the scene is built
+and the window opens straight into it, playing the load animation (tiles rise, then the block
+drops in) before it accepts any input. A later ``theme.md`` replaces the palette in ``theme.py``;
+nothing here guesses an art direction.
 """
 
 from __future__ import annotations
@@ -22,6 +23,7 @@ from . import theme
 from .block_view import BlockView
 from .board_view import BoardView
 from .controller import PlayerController
+from .intro import IntroTiming, LoadIntro
 from .layout import TILE_SIZE, board_center, cell_to_world
 
 # Low three-quarter camera matching the original game's framing: a shallow pitch,
@@ -43,6 +45,16 @@ KEY_BINDINGS: tuple[tuple[str, str], ...] = (
 )
 
 
+def _camera_distance(stage: Stage) -> float:
+    """Distance from the framed board centre out to the camera.
+
+    The load animation reuses it as its clearance: a piece travelling that far vertically starts
+    well outside the viewport, and the value scales with the board instead of being a fixed guess.
+    """
+    span = max(stage.index.rows, stage.index.cols) * TILE_SIZE
+    return span * CAMERA_DISTANCE_FACTOR
+
+
 class PrototypeScene(Entity):
     """The scene's update owner. ``Ursina`` itself is a singleton and cannot be subclassed."""
 
@@ -59,12 +71,19 @@ class PrototypeScene(Entity):
 
         self.block_view.sync(self.controller.state)
         self.board_view.refresh(self.controller.state.bridges)
+        # The load animation owns the first moments of the level: it starts from the pieces'
+        # resting poses and ends just before input is accepted. Travelling one camera distance
+        # leaves every piece outside the window before it starts moving, however large the board.
+        clearance = _camera_distance(stage)
+        self.intro = LoadIntro(
+            len(self.board_view.tiles),
+            IntroTiming(tile_rise=clearance, player_drop=clearance),
+        )
         self._frame_camera(stage)
         self._build_hud(stage)
 
     def _frame_camera(self, stage: Stage) -> None:
-        span = max(stage.index.rows, stage.index.cols) * TILE_SIZE
-        distance = span * CAMERA_DISTANCE_FACTOR
+        distance = _camera_distance(stage)
         pitch = radians(CAMERA_PITCH_DEGREES)
         yaw = radians(CAMERA_YAW_DEGREES)
         # Frame the tiles that exist, not the full grid: empty grid margins would otherwise push
@@ -136,8 +155,13 @@ class PrototypeScene(Entity):
 
     def update(self) -> None:
         self.block_view.update(time.dt)
+        if not self.intro.finished:
+            self.intro.advance(time.dt)
+            self.board_view.update_intro(self.intro)
+            self.block_view.update_intro(self.intro)
         self.board_view.refresh(self.controller.state.bridges)
-        if self.controller.animating:
+        # The game only takes input once the whole load animation has played.
+        if not self.intro.finished or self.controller.animating:
             return
 
         for key, direction in KEY_BINDINGS:

@@ -16,6 +16,7 @@ from ursina import Entity, destroy
 from bloxorz.core.contracts import Action, State
 
 from . import theme
+from .intro import LoadIntro
 from .layout import DIRECTION_VECTORS, Pose, poses_for_state
 
 
@@ -35,6 +36,7 @@ class BlockView:
         self.rows = rows
         self.cols = cols
         self.pieces: list[Entity] = []
+        self._rest_positions: list[tuple[float, float, float]] = []
         self._roll: _Roll | None = None
         self._elapsed = 0.0
         self._next_state: State | None = None
@@ -58,7 +60,14 @@ class BlockView:
             )
             for number, pose in enumerate(poses_for_state(state, self.rows, self.cols))
         ]
+        self._rest_positions = [tuple(piece.position) for piece in self.pieces]
         self._roll = None
+
+    def update_intro(self, intro: LoadIntro) -> None:
+        """Drop the block in from above the board, once the tiles have finished loading."""
+        drop = (1.0 - intro.player_progress()) * intro.timing.player_drop
+        for piece, (x, y, z) in zip(self.pieces, self._rest_positions):
+            piece.position = (x, y + drop, z)
 
     def animate(
         self,

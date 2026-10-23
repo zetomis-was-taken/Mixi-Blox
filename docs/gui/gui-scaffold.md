@@ -5,7 +5,9 @@ game: no menu, no solver panel, and no art direction yet.
 
 ## What it does
 
-- Boots straight into `L1-01_long_corridor.json` — no title screen, menu, or loading UI.
+- Boots straight into `L1-01_long_corridor.json` — no title screen or menu.
+- Plays a load animation on entry: tiles float up from below with randomised delays, then the block
+  drops in from above. Input is blocked until the animation has fully played.
 - Renders the board as flat, near-monochrome tiles and the player as a `1x1x2` block.
 - Rolls the block on every move: the animation is a real quarter-turn about the tile edge, driven by
   the translation, not a canned loop.
@@ -30,9 +32,10 @@ it, the GUI uses `DEFAULT_GUI_STAGE` in `Source/main.py`, which points at `L1-01
 | `Source/bloxorz/gui/board_view.py` | One flat tile per non-void cell; bridge tint/height |
 | `Source/bloxorz/gui/block_view.py` | Player boxes and pivot-based roll animation |
 | `Source/bloxorz/gui/controller.py` | Current `State`, input → `Board.successors`, goal callback |
+| `Source/bloxorz/gui/intro.py` | Load-animation timeline: tile stagger, then the block drop (no Ursina) |
 | `Source/bloxorz/gui/layout.py` | Grid ↔ world geometry and pose derivation (no Ursina) |
 | `Source/bloxorz/gui/theme.py` | Neutral greyscale palette and animation timing |
-| `tests/test_gui_layout.py`, `tests/test_gui_controller.py` | Headless pose and controller checks |
+| `tests/test_gui_layout.py`, `tests/test_gui_controller.py`, `tests/test_gui_intro.py` | Headless pose, controller and load-timeline checks |
 
 The controller never builds a `State` and never re-implements a transition: it asks the engine for
 legal successors and only picks the matching direction. The GUI layer imports `bloxorz.core` only,
@@ -50,6 +53,42 @@ bottom edge it tips over:
 
 Unsplit moves and a split cube's own move use this path. Split-switch, merge, and teleport
 transitions currently snap to the destination pose; polishing those is still part of #28.
+
+## Load animation
+
+`gui/intro.py` owns the sequence as an absolute-time timeline, and the scene reads progress from it
+each frame; no view keeps its own clock.
+
+1. every non-void tile floats up from below the board (`intro.tile_progress(index)`), each with its
+   own random delay inside `IntroTiming.tile_delay_max_seconds`, so the platform assembles instead
+   of popping in at once;
+2. *other obstacles* — a gap in the timeline marked with `TODO(load-animation)` in `intro.py`, to be
+   filled once `BoardView` gives fragile panels, switches and teleporters their own entities;
+3. the player's block drops in from above (`intro.player_progress()`), starting only after the last
+   tile has landed;
+4. input: `PrototypeScene.update` returns early until `LoadIntro.finished`, so keys pressed during
+   the animation are ignored rather than buffered.
+
+Progress is eased out (cubic). Tiles start below the board and the block above it, both by
+`_camera_distance(stage)` — the same distance the camera sits from the board centre, so each piece
+begins outside the viewport on any board size (verified by projecting every piece through the lens:
+`|screen y| > 1` at t = 0 on all ten stages). `BoardView` stacks that offset on top of each tile's
+bridge height, so a bridge sinking or rising never fights the animation.
+
+| `IntroTiming` field | Value in the scene | Effect |
+| --- | --- | --- |
+| `tile_float_seconds` | `1.0` | How long one tile takes to rise |
+| `tile_delay_max_seconds` | `0.55` | Upper bound of each tile's random start delay |
+| `player_float_seconds` | `1.0` | How long the block takes to drop in |
+| `tile_rise` | camera distance | Travel of a tile, from off-screen to its resting height |
+| `player_drop` | camera distance | Travel of the block, from off-screen down into its start pose |
+
+One tile therefore rises for a full second and the block then falls for a second; with the random
+stagger the whole sequence runs roughly 2.5 s (`max delay + 1.0 + 1.0`), and input is held for all
+of it.
+
+Timing lives in `intro.py` rather than `theme.py` because that module must stay importable without
+Ursina: the sequence is covered headless by `tests/test_gui_intro.py`.
 
 ## Camera
 
@@ -115,18 +154,22 @@ flow is easy to find.
 
 - No menu, level select, solver panel, replay, or stats display.
 - Split/merge/teleport changes snap instead of rolling.
-- Fragile and switch cells are drawn from the palette but have no dedicated effects.
-- The HUD is only the level name and a key hint.
+- Fragile and switch cells are drawn from the palette but have no dedicated effects, so the load
+  animation has no obstacle phase yet (marked `TODO(load-animation)`).
+- The HUD is only the level name and a key hint, and it shows during the load animation.
 
 ## Verification
 
-- `pytest tests/ -q` — 88 passed.
+- `pytest tests/ -q` — 95 passed.
 - `ruff check .` — clean.
-- Offscreen Ursina smoke run — scene builds and a roll lands in the expected pose.
+- Offscreen Ursina smoke run — scene builds, tiles start below the board and the block above it,
+  keys are ignored until `LoadIntro.finished`, both land on their resting heights, and the first
+  legal move is accepted afterwards.
 - A pivot-roll sweep across all stage files found a valid roll plan for every reachable unsplit
   transition (3,550 checked at the time).
 
 ## Related documents
 
-- [`contracts.md`](contracts.md) — frozen core API and layer rules.
-- [`decisions/ADR-002-gui-stack.md`](decisions/ADR-002-gui-stack.md) — why Ursina.
+- [`window.md`](window.md) — how the game window is created and configured (Ursina/Panda3D).
+- [`contracts.md`](../contracts.md) — frozen core API and layer rules.
+- [`decisions/ADR-002-gui-stack.md`](../decisions/ADR-002-gui-stack.md) — why Ursina.

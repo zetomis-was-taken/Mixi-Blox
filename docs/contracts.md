@@ -184,8 +184,9 @@ Rules:
   of those refusals as walls: a fragile tile breaks under a standing block (§2.5), and a switch that
   closes the bridge under the block drops it (ADR-005). `outcome` reports which of the three things a
   pressed action does, so a renderer can tell a wall from a fall without re-deriving the transition.
-- `step_cost` defaults to `1.0` for every action (#7); non-uniform weights are policy, so tuning
-  them never edits engine code.
+- `step_cost` is the only place a transition is priced (#7). The policy in `core/costs.py` charges
+  `1` per roll plus `1` per newly contacted fragile tile, so a price lies in `{1, 2, 3}` and
+  `c_min = 1`. Non-uniform weights are policy: tuning them never edits engine code.
 - `passable` is the only place passability is decided. A cell declares exactly one kind, so it
   never has to reconcile two.
 - The block starts **standing upright on `S`** — `AI - Project 1.pdf` §2.1, and standing occupies a

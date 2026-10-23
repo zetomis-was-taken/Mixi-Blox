@@ -136,7 +136,7 @@ def test_is_goal_needs_a_standing_block_on_the_goal_cell(tmp_path: Path) -> None
     assert not board.is_goal(State(cubes=(((1, 1),),), bridges=()))
 
 
-def test_step_cost_is_one_move(tmp_path: Path) -> None:
+def test_step_cost_is_one_move_on_a_plain_floor(tmp_path: Path) -> None:
     board = board_for(tmp_path, LINE)
     start = board.start()
     next_state, action = board.successors(start)[0]

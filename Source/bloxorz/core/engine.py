@@ -18,6 +18,7 @@ from bloxorz.core.contracts import (
     State,
     Verdict,
 )
+from bloxorz.core.costs import action_cost
 
 DIRECTIONS: tuple[Direction, ...] = ("U", "D", "L", "R")
 
@@ -149,8 +150,8 @@ class Board:
         return Outcome(kind=verdict, state=next_state)
 
     def step_cost(self, state: State, action: Action, next_state: State) -> float:
-        """One action costs one move. Weights are policy, not engine code (#7)."""
-        return 1.0
+        """Delegate legal transition prices to the cost policy (#7)."""
+        return action_cost(self._stage, state, action, next_state)
 
     def passable(
         self, cell: Cell, orientation: Orientation, bridge_state: tuple[bool, ...]

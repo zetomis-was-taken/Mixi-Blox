@@ -16,6 +16,8 @@ Chính sách nằm duy nhất tại `Source/bloxorz/core/costs.py`; `Board.step_
 chính sách này. Các luật chuyển trạng thái, kiểu dữ liệu và giao diện đóng băng
 được giữ nguyên. Không tính lại phí cho lập phương đứng yên hoặc ô vẫn bị chiếm.
 Đích dịch chuyển được xét như tiếp xúc mới; cầu và công tắc không có phụ phí riêng.
+Hàm nhận cạnh hợp lệ từ engine, với các ô bị chiếm nằm trong bàn; đây không phải
+giao diện định giá tọa độ tùy ý do bên gọi cung cấp.
 
 Theo hợp đồng hiện hành, chọn lập phương đã nằm trong `(cube_index, direction)`.
 Không có cạnh đổi điều khiển riêng để gán chi phí. Mọi cạnh di chuyển thực sự
@@ -28,13 +30,20 @@ lần lăn, nên `c_min * d / 2` là cận dưới. Khi có dịch chuyển, ph�
 Nhân với `c_min` là phép đổi từ đơn vị bước sang chi phí; chia cho `c_min` không
 cho lập luận tổng quát đúng khi thay đổi trọng số.
 
+Trong mười màn chính thức hiện tại, phụ phí chỉ xuất hiện trên L2-01 và L2-02.
+Tám màn còn lại có mọi cạnh giá 1, nên UCS có cùng thứ tự tìm kiếm với FIFO khi
+dùng cách phá hòa hiện tại. Chính sách không bảo đảm UCS tìm đường rẻ hơn FIFO
+trên mọi màn; tính không đồng nhất và đánh đổi số bước/chi phí phải được xét
+theo từng màn. Đây là giới hạn của bộ dữ liệu, không phải kết luận về hiệu năng.
+
 Kiểm thử gồm tiếp xúc mới, tiếp tục chiếm ô, lập phương đứng yên, đích dịch chuyển
 và mọi cạnh đạt được trên mười màn chính thức. PR này không thêm thuật toán,
 frontier ưu tiên, công cụ đo hay số liệu hiệu năng.
 
-Đoạn báo cáo LaTeX: [action_cost.tex](../Report/sections/action_cost.tex). Người
-phụ trách báo cáo có thể chèn `\input{sections/action_cost}` trong mục UCS sau
-phần biểu diễn trạng thái. Đoạn này dùng `amsmath` và `hyperref` như mẫu nhóm.
+Đoạn báo cáo LaTeX: [action_cost.tex](../Report/sections/action_cost.tex), đã được
+chèn trong mục UCS của `Report/main.tex` thay cho bảng trọng số cũ. Đoạn này dùng
+`amsmath` và `hyperref` như mẫu nhóm. Khi mục UCS đầy đủ được ghép ở PR #63,
+`ucs.tex` sẽ chèn chi phí này; không chèn thêm lần thứ hai.
 
 Codex hỗ trợ tách phần triển khai, rà soát lập luận và kiểm thử. Nội dung được
 đối chiếu với mã thực tế; người nộp cần hiểu và giải thích được trọng số đã chọn.

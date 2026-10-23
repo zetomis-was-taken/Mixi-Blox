@@ -14,7 +14,8 @@ def action_cost(stage: Stage, state: State, action: Action, next_state: State) -
     Entry is charged, not continued occupancy: an unmoved cube on fragile does
     not make the other cube's move expensive. Teleport destinations count as
     contacts too. Control selection is already encoded in ``action`` and has
-    no separate edge or charge. Callers supply a legal engine transition.
+    no separate edge or charge. Callers supply a legal engine transition;
+    both states must occupy in-bounds cells validated by the engine.
     """
     before = {cell for cube in state.cubes for cell in cube}
     after = {cell for cube in next_state.cubes for cell in cube}

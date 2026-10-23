@@ -259,18 +259,10 @@ Nằm dọc $V(r, c)$ & $S(r-1, c)$ & $S(r+2, c)$ & $V(r, c-1)$ & $V(r, c+1)$ \\
 \subsection{Uniform-Cost Search (UCS)}
 \begin{itemize}
     \item \textbf{Nguyên lý}: Sử dụng hàng đợi ưu tiên Min-Heap (\texttt{heapq}) mở rộng nút có chi phí đường đi tích lũy $g(n)$ nhỏ nhất trước.
-    \item \textbf{Thiết kế hàm chi phí (Cost Function)}: Để tránh việc UCS suy biến thành BFS khi gán mọi bước đi chi phí bằng 1, nhóm đã thiết kế hàm chi phí phi đồng nhất có ý nghĩa thực tế:
-    \begin{equation}
-        c(s, a, s') = 
-        \begin{cases}
-            1.0 & \text{Bước lăn trên sàn bình thường} \\
-            3.0 & \text{Bước lăn nằm qua ô dễ vỡ (Fragile tile) - do mức độ rủi ro cao} \\
-            1.5 & \text{Bước lăn đè lên công tắc (Switch) - chi phí cơ chế kích hoạt} \\
-            2.0 & \text{Bước lăn khi đang ở trạng thái phân tách 2 khối nhỏ}
-        \end{cases}
-    \end{equation}
     \item \textbf{Ý nghĩa trực giác}: Hàm chi phí ưu tiên khối đi qua các con đường an toàn, tránh mạo hiểm qua các ô dễ vỡ nếu có lộ trình thay thế ít rủi ro hơn.
 \end{itemize}
+
+\input{sections/action_cost}
 
 \subsection{A* Search}
 \begin{itemize}

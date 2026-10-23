@@ -13,6 +13,10 @@ from bloxorz.core.engine import Board
 from bloxorz.core.stage import load_stage
 
 
+def test_the_recorded_minimum_is_one() -> None:
+    assert MINIMUM_ACTION_COST == 1.0
+
+
 def test_only_new_fragile_contacts_are_charged(tmp_path) -> None:
     path = tmp_path / "cost.json"
     path.write_text(
@@ -85,16 +89,20 @@ def test_teleport_destinations_count_as_fragile_contacts(tmp_path) -> None:
     ids=lambda path: path.stem,
 )
 def test_every_reachable_transition_respects_the_recorded_minimum(path) -> None:
-    board = Board(load_stage(path))
+    stage = load_stage(path)
+    board = Board(stage)
     seen = {board.start()}
     pending = list(seen)
+    prices = set()
     while pending:
         state = pending.pop()
         for child, action in board.successors(state):
             price = board.step_cost(state, action, child)
-            assert MINIMUM_ACTION_COST == 1.0
             assert price >= MINIMUM_ACTION_COST
             assert price in (1.0, 2.0, 3.0)
+            prices.add(price)
             if child not in seen:
                 seen.add(child)
                 pending.append(child)
+    if "fragile" not in stage.index.kind:
+        assert prices == {MINIMUM_ACTION_COST}

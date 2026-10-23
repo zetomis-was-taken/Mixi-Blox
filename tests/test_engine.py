@@ -415,6 +415,39 @@ def test_a_split_switch_sends_two_cubes_to_its_targets(tmp_path: Path) -> None:
     assert len(split.cubes) == 2
 
 
+@pytest.mark.parametrize(
+    ("landing", "bridges"),
+    [
+        (".", []),
+        ("=", [{"pos": [1, 5], "initially_open": False}]),
+    ],
+)
+def test_a_split_whose_landing_cannot_be_occupied_is_refused(
+    tmp_path: Path, landing: str, bridges: list[dict[str, object]]
+) -> None:
+    row = list("..S.....")
+    row[5] = landing
+    board = board_for(
+        tmp_path,
+        ["........", "".join(row), "..o.of..", "..o.o...", "..Y.ooG.", "........"],
+        switches=[
+            {
+                "type": "split",
+                "pos": [4, 2],
+                "action": None,
+                "bridges": None,
+                "teleport_cubes": [[2, 4], [1, 5]],
+            }
+        ],
+        bridges=bridges,
+    )
+    (hovering, _), = board.successors(board.start())
+    pressed = board.outcome(hovering, (0, "D"))
+    assert pressed.kind == "refused", "a teleport that cannot place the cubes is a wall (ADR-004)"
+    assert pressed.state is None, "nothing was placed, so there is no fall to animate"
+    assert "D" not in {action[1] for _, action in board.successors(hovering)}
+
+
 def test_a_split_switch_fires_again_after_a_merge(tmp_path: Path) -> None:
     board = split_board(tmp_path)
     hovering = State(cubes=(((2, 2), (3, 2)),), bridges=())

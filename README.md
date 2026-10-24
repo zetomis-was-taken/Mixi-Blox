@@ -4,9 +4,10 @@ Bloxorz game and solver — BFS, DFS, UCS, and A* (CSC14003, Project 1).
 
 ## Status
 
-The core, shared base, UCS, A* and BFS are available in this branch. UCS/A* use the #7
-non-uniform cost policy and the owner-provided #18 loop; BFS uses the same loop with a FIFO
-frontier and optimises move count rather than cost. Other solver adapters and GUI remain separate.
+The core, shared base, BFS, DFS, UCS and A* are available in this branch. UCS/A* use the #7
+non-uniform cost policy and the owner-provided #18 loop; BFS and DFS use the same loop with a
+FIFO or LIFO frontier, so BFS minimises move count while DFS only returns the first goal it
+reaches. Other solver adapters and GUI remain separate.
 Stages live in
 `Source/bloxorz/core/stages/`, and their provenance is in [`CREDITS.md`](CREDITS.md).
 
@@ -16,6 +17,7 @@ Stages live in
 python -m Source.main --stage Source/bloxorz/core/stages/L2-02_fragile_ring.json --solver ucs
 python -m Source.main --stage Source/bloxorz/core/stages/L2-02_fragile_ring.json --solver astar
 python -m Source.main --stage Source/bloxorz/core/stages/L2-02_fragile_ring.json --solver bfs
+python -m Source.main --stage Source/bloxorz/core/stages/L1-02_two_flights.json --solver dfs
 python -m pytest -q
 python -m ruff check .
 ```
@@ -26,6 +28,7 @@ Exit codes: 0 solved, 1 cap/unsolvable, 2 invalid input or unregistered solver.
 See the [UCS report and integration notes](docs/ucs_vi.md) and [cost policy](docs/action_cost_vi.md).
 The [A* report and proofs](docs/astar_vi.md) cover admissibility, consistency and the teleport fallback.
 The [BFS notes](docs/bfs_vi.md) record the move/cost split and the frontier tests.
+The [DFS notes](docs/dfs_vi.md) record the DFS-vs-IDS decision and the cycle test.
 
 ## Contributing
 

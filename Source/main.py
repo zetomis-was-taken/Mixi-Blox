@@ -20,7 +20,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--solver",
         choices=("bfs", "dfs", "ucs", "astar"),
-        help="algorithm to run (currently ucs, astar, bfs)",
+        help="algorithm to run (currently ucs, astar, bfs, dfs)",
     )
     parser.add_argument("--node-cap", type=int, help="maximum completed expansions")
     parser.add_argument("--time-cap", type=float, help="search deadline in seconds")

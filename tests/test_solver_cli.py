@@ -1,4 +1,4 @@
-"""The public UCS/A* CLI and its result/cap/error boundary."""
+"""The public solver CLI and its result/cap/error boundary."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.mark.parametrize("algorithm", ["bfs", "dfs", "ucs", "astar"])
-def test_module_cli_runs_the_cost_solvers(algorithm) -> None:
+def test_module_cli_runs_every_registered_solver(algorithm) -> None:
     completed = subprocess.run(
         [
             sys.executable,

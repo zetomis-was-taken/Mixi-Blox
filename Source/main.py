@@ -18,7 +18,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--stage", metavar="FILE", help="path to a stage JSON file")
     parser.add_argument(
-        "--solver", choices=("bfs", "dfs", "ucs", "astar"), help="algorithm to run (currently ucs)"
+        "--solver",
+        choices=("bfs", "dfs", "ucs", "astar"),
+        help="algorithm to run (currently ucs, astar)",
     )
     parser.add_argument("--node-cap", type=int, help="maximum completed expansions")
     parser.add_argument("--time-cap", type=float, help="search deadline in seconds")
@@ -39,12 +41,12 @@ def main(argv: list[str] | None = None) -> int:
     from bloxorz.core.contracts import Caps
     from bloxorz.core.engine import Board, cells
     from bloxorz.core.stage import StageError, load_stage
-    from bloxorz.solvers import ucs
+    from bloxorz.solvers import astar, ucs
 
     try:
         stage = load_stage(args.stage)
         if args.solver:
-            solvers = {"ucs": ucs.solve}
+            solvers = {"ucs": ucs.solve, "astar": astar.solve}
             if args.solver not in solvers:
                 parser.error(f"{args.solver} is not registered yet")
             result = solvers[args.solver](stage, Caps(args.node_cap, args.time_cap))

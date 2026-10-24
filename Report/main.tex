@@ -258,25 +258,7 @@ Nằm dọc $V(r, c)$ & $S(r-1, c)$ & $S(r+2, c)$ & $V(r, c-1)$ & $V(r, c+1)$ \\
 
 \input{sections/ucs}
 
-\subsection{A* Search}
-\begin{itemize}
-    \item \textbf{Nguyên lý}: Đánh giá nút theo hàm $f(n) = g(n) + h(n)$, trong đó $g(n)$ là chi phí thực tế từ nút gốc đến $n$, và $h(n)$ là hàm Heuristic ước lượng chi phí còn lại từ $n$ đến đích.
-    \item \textbf{Thiết kế hàm Heuristic $h(n)$}:
-    \begin{enumerate}
-        \item \textbf{Heuristic 1 (Manhattan chia 2)}:
-        \begin{equation}
-            h_1(n) = \frac{|r_{\text{block}} - r_{\text{goal}}| + |c_{\text{block}} - c_{\text{goal}}|}{2}
-        \end{equation}
-        Do mỗi bước lăn khối có thể tiến tối đa 2 ô trên lưới, khoảng cách Manhattan chia 2 luôn là một cận dưới hợp lệ (Lower bound). Do đó $h_1(n)$ luôn \textbf{Admissible} ($0 \le h_1(n) \le h^*(n)$).
-        
-        \item \textbf{Heuristic 2 (Orientation-Aware Heuristic)}:
-        Nếu khối đang ở trạng thái Nằm ($H$ hoặc $V$), chắc chắn cần thêm ít nhất 1 bước lăn nữa để dựng đứng vào ô mục tiêu. Vì vậy:
-        \begin{equation}
-            h_2(n) = h_1(n) + \begin{cases} 0 & \text{nếu } O = S \\ 1 & \text{nếu } O \in \{H, V\} \end{cases}
-        \end{equation}
-        $h_2(n)$ bám sát chi phí thực tế hơn $h_1(n)$ và vẫn đảm bảo tính chấp nhận được (Admissible) và nhất quán (Consistent).
-    \end{enumerate}
-\end{itemize}
+\input{sections/astar}
 
 % ==============================================================================
 % MỤC 4: THIẾT KẾ KỊCH BẢN THỰC NGHIỆM
@@ -376,7 +358,9 @@ Theo quy định về việc sử dụng AI có trách nhiệm và minh bạch c
         \item Xây dựng khung thư viện đo đạc hiệu năng (\texttt{benchmark}).
         \item Tối ưu hóa code vẽ đồ thị Matplotlib.
     \end{itemize}
-    \item \textbf{Kiểm định}: Toàn bộ logic trò chơi, các thuật toán tìm kiếm (BFS, DFS, UCS, A*) và số liệu thực nghiệm đều do các thành viên trong nhóm tự cài đặt, kiểm thử và đo lường trực tiếp trên máy tính.
+    \item \textbf{Kiểm định}: Toàn bộ logic trò chơi, phần thuật toán BFS/DFS và số liệu thực nghiệm đều do các thành viên trong nhóm tự cài đặt, kiểm thử và đo lường trực tiếp trên máy tính.
 \end{itemize}
+
+\input{sections/informed_search_ai_usage}
 
 \end{document}

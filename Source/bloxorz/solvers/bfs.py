@@ -1,4 +1,4 @@
-"""Breadth-first search through the ownder-provided shared loop (#19)."""
+"""Breadth-first search through the owner-provided shared loop (#19)."""
 
 from __future__ import annotations
 

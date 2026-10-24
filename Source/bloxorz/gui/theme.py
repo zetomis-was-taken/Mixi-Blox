@@ -45,6 +45,9 @@ GRID_LINE_HEIGHT = 0.004
 GRID_LINE_LIFT = 0.002
 
 BLOCK = color.rgb32(255, 105, 115)  # #ff6973
+# The cube that is *not* taking input after a split: the same warmth one step quieter, so the pair
+# still reads as one player while the active cube keeps the strong accent.
+BLOCK_IDLE = color.rgb32(255, 176, 163)  # #ffb0a3
 
 # Total platform thickness and the thickness of the coloured slab on top of the side base.
 TILE_HEIGHT = 0.30

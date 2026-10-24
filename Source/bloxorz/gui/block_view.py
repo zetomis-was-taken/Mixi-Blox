@@ -37,6 +37,7 @@ class BlockView:
         self.cols = cols
         self.shader = shader
         self.pieces: list[Entity] = []
+        self.active = 0
         self._rest_positions: list[tuple[float, float, float]] = []
         self._roll: _Roll | None = None
         self._elapsed = 0.0
@@ -46,6 +47,17 @@ class BlockView:
     @property
     def animating(self) -> bool:
         return self._roll is not None
+
+    def set_active(self, index: int) -> None:
+        """Tint the cubes: the one that takes the next input keeps the strong accent.
+
+        The two split cubes are interchangeable, so the player has to see which one moves next. An
+        unsplit block is always active, so the call is a no-op there.
+        """
+        if index == self.active:
+            return
+        self.active = index
+        self._paint()
 
     def sync(self, state: State) -> None:
         """Rebuild the visible boxes to match ``state`` exactly."""
@@ -63,7 +75,13 @@ class BlockView:
             for number, pose in enumerate(poses_for_state(state, self.rows, self.cols))
         ]
         self._rest_positions = [tuple(piece.position) for piece in self.pieces]
+        self._paint()
         self._roll = None
+
+    def _paint(self) -> None:
+        """Colour the pieces by which cube is active; a single block is always active."""
+        for number, piece in enumerate(self.pieces):
+            piece.color = theme.BLOCK if number == self.active else theme.BLOCK_IDLE
 
     def update_intro(self, intro: LoadIntro) -> None:
         """Drop the block in from above the board, once the tiles have finished loading."""

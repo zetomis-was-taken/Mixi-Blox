@@ -40,8 +40,8 @@ mechanisms.
 | 2 | `#15788c` | `TILE_HEAVY`, `GRID_LINE`, `PARALLAX_SQUARE` | Heavy switch base; the faint line between tiles; the parallax backdrop squares | Deep teal is the darker of the two mechanism accents, matching the heavy switch's "weight"; at ~35% opacity it also gives the gapless board its grid without becoming a stripe. The same hue, at a lower opacity, keeps the parallax squares behind the board. |
 | 3 | `#00b9be` | `TILE_BRIDGE`, `TILE_SOFT`, `TILE_SPLIT` | Open bridge, soft switch, split switch | Bright cyan is the "mechanism" accent; together with the detail shape it separates these cells from ordinary dark floor. |
 | 4 | `#ffeecc` | `BACKGROUND`, `TILE_MARK` | Window clear colour; switch plates | The light background the board sits on, and the light plates that mark interactive cells. |
-| 5 | `#ffb0a3` | `TILE_FRAGILE` | Fragile panel base | Soft peach is the one warning tint: clearly warmer than the dark floor without competing with the coral player. |
-| 6 | `#ff6973` | `BLOCK` | The player's block / split cubes | Strong coral: the moving piece is the one element that is always coral, so it never gets lost against the board. |
+| 5 | `#ffb0a3` | `TILE_FRAGILE`, `BLOCK_IDLE` | Fragile panel base; the cube that is not taking input after a split | Soft peach is the one warning tint: clearly warmer than the dark floor without competing with the coral player. It doubles as the quieter half of a split pair, so both cubes still read as the player while the active one keeps the coral. |
+| 6 | `#ff6973` | `BLOCK` | The player's block, and the active cube of a split pair | Strong coral: the moving piece is the one element that is always coral, so it never gets lost against the board. |
 
 ## Cell kinds
 
@@ -126,7 +126,8 @@ has given way. The crack opens and shuts with the weight.
 1. Edit the constant in `Source/bloxorz/gui/theme.py` (`color.rgb32(r, g, b)`).
 2. Update the tables above in the same commit.
 3. Keep these constraints, which the current assignment is built around:
-   - the player stays `#ff6973` and must remain readable on every tile it can stand on;
+   - the player stays `#ff6973` and must remain readable on every tile it can stand on; a split
+     pair keeps its idle cube one step quieter (`#ffb0a3`), so the active cube stays the accent;
    - the background stays light and the normal tile stays dark, so the board silhouette reads;
    - the goal stays empty and the start stays unmarked;
    - the grid line stays translucent and thinner than a tile detail, so it reads as a seam rather

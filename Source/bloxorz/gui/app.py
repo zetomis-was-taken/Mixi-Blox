@@ -161,6 +161,24 @@ class PrototypeScene(Entity):
             color=theme.TEXT,
             scale=0.8,
         )
+        # Only a split stage has a second cube to steer, so this line stays hidden otherwise.
+        self.cube_hud = Text(
+            position=(-0.78, 0.39),
+            origin=(-0.5, 0.5),
+            color=theme.TEXT,
+            scale=0.8,
+        )
+
+    def _refresh_hud(self) -> None:
+        """Show which cube the next input moves, matching the tint in ``BlockView``."""
+        self.cube_hud.enabled = self.controller.split
+        if self.controller.split:
+            self.cube_hud.text = f"Cube {self.controller.active + 1} of 2  |  Tab to switch"
+
+    def input(self, key: str) -> None:
+        """Tab hands the next input to the other cube; every other key is polled in ``update``."""
+        if key == "tab" and self.intro.finished:
+            self.controller.switch_cube()
 
     def update(self) -> None:
         self.block_view.update(time.dt)
@@ -170,6 +188,8 @@ class PrototypeScene(Entity):
             self.block_view.update_intro(self.intro)
         self.board_view.refresh(self.controller.state)
         self.board_view.update(time.dt)
+        self.block_view.set_active(self.controller.active)
+        self._refresh_hud()
         # The game only takes input once the whole load animation has played.
         if not self.intro.finished or self.controller.animating:
             return

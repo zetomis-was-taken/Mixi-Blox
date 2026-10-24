@@ -100,6 +100,7 @@ python tools/package.py [student_id ...]    # builds the submission ZIP
 Any related things belongs to the game space (ursina) and GUI should be follow by these docs the the folder: `docs/gui`
 
 Quick facts: run with `python Source/main.py --gui`; the prototype boots `L1-01` unless
-`--stage` is given. Keys are WASD/arrows, the block rolls a real quarter-turn, and landing on the
+`--stage` is given. Keys are WASD/arrows (`Tab` swaps the active cube on a split stage), the block
+rolls a real quarter-turn, and landing on the
 goal currently closes the process (`TODO(#28)`). Camera constants, roll geometry, and known
 limitations are documented in `docs/gui/gui-scaffold.md`; palette changes belong in `gui/theme.py`.

@@ -18,6 +18,9 @@ direction ([`theme.md`](theme.md)).
   ([`theme.md`](theme.md#reactions)).
 - Rolls the block on every move: the animation is a real quarter-turn about the tile edge, driven by
   the translation, not a canned loop.
+- Steers a split pair one cube at a time: the active cube keeps the coral `#ff6973`, the idle one is
+  peach `#ffb0a3`, `Tab` swaps them, and the HUD names the active cube. A direction key still moves
+  the other cube when the active one has no such action.
 - Draws an optional parallax backdrop: two regular grids of filled and outlined `#15788c` squares,
   scrolling top-left → bottom-right at different speeds (`parallax.py`).
 - Can apply an optional dotted halftone shader to the tiles and the player only (`dot_shader.py`).
@@ -41,7 +44,7 @@ it, the GUI uses `DEFAULT_GUI_STAGE` in `Source/main.py`, which points at `L1-01
 | `Source/bloxorz/gui/app.py` | Window, scene, camera, HUD, input loop, launch helper; enables both optional effects |
 | `Source/bloxorz/gui/board_view.py` | One flat tile per non-void cell, plus per-kind detail pieces; bridge tint/height |
 | `Source/bloxorz/gui/block_view.py` | Player boxes and pivot-based roll animation |
-| `Source/bloxorz/gui/controller.py` | Current `State`, input → `Board.successors`, goal callback |
+| `Source/bloxorz/gui/controller.py` | Current `State`, the active cube, input → one `(next_state, action)` pair, goal callback |
 | `Source/bloxorz/gui/dot_shader.py` | Screen-space halftone shader applied to tiles and player only |
 | `Source/bloxorz/gui/intro.py` | Load-animation timeline: tile stagger, detail phase, then the block drop (no Ursina) |
 | `Source/bloxorz/gui/layout.py` | Grid ↔ world geometry and pose derivation (no Ursina) |
@@ -51,8 +54,25 @@ it, the GUI uses `DEFAULT_GUI_STAGE` in `Source/main.py`, which points at `L1-01
 | `tests/test_gui_layout.py`, `tests/test_gui_controller.py`, `tests/test_gui_intro.py`, `tests/test_gui_reaction.py` | Headless pose, controller, load-timeline and mechanism checks |
 
 The controller never builds a `State` and never re-implements a transition: it asks the engine for
-legal successors and only picks the matching direction. The GUI layer imports `bloxorz.core` only,
+legal successors and turns a key into one concrete `(next_state, action)` pair, which is also the
+shape solver playback feeds through the same animation. The GUI layer imports `bloxorz.core` only,
 as required by the layering rules in `docs/contracts.md`.
+
+## Split cubes
+
+`PlayerController.active` names the cube the next input moves. An action carries its cube index, so
+the engine — not the view — decides what a split pair can do; the controller only chooses whose turn
+it is.
+
+- `Tab` calls `switch_cube`, which flips the active index (ignored while the block is unsplit or a
+  roll is playing).
+- `resolve` prefers the active cube and falls back to the other one when the active cube has no
+  action in that direction, so a direction key is never dead.
+- `State` orders its cubes by cell, so a move can swap their indices; `_active_after` finds the cube
+  by the cells it rolled onto and keeps it active. After a merge there is one cube and the index
+  resets to 0.
+- `BlockView.set_active` tints the pieces — active cube `theme.BLOCK` `#ff6973`, idle cube
+  `theme.BLOCK_IDLE` `#ffb0a3` — and the HUD shows `Cube n of 2`, hidden while the block is unsplit.
 
 ## Roll animation
 
@@ -234,11 +254,12 @@ flow is easy to find.
 - A fragile panel never breaks on screen. A standing block on fragile is an illegal move
   (ADR-003), so no state exists in which the panel has given way; the crack only opens and shuts
   with the weight.
-- The HUD is only the level name and a key hint, and it shows during the load animation.
+- The HUD is the level name, a key hint and — on a split stage — the active cube; it shows during
+  the load animation.
 
 ## Verification
 
-- `pytest tests/ -q` — 108 passed.
+- `pytest tests/ -q` — 110 passed.
 - `ruff check .` — clean.
 - Offscreen Ursina smoke run — scene builds, tiles and their detail pieces start below the board
   and the block above it, keys are ignored until `LoadIntro.finished`, tiles and details land on

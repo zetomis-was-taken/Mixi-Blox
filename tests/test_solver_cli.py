@@ -12,7 +12,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 
 
-@pytest.mark.parametrize("algorithm", ["ucs", "astar"])
+@pytest.mark.parametrize("algorithm", ["ucs", "astar", "bfs"])
 def test_module_cli_runs_the_cost_solvers(algorithm) -> None:
     completed = subprocess.run(
         [

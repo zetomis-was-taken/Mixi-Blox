@@ -26,8 +26,12 @@ Source/bloxorz/gui/            Ursina prototype (issue #28).
   board_view.py                One flat tile per non-void cell; bridge tint/height.
   block_view.py                Player boxes and pivot-based roll animation.
   controller.py                Current State; input -> Board.successors; goal callback.
+  dot_shader.py                Screen-space halftone shader for tiles and player.
+  intro.py                     Load-animation timeline (no Ursina import).
   layout.py                    Pure grid <-> world geometry (no Ursina import).
-  theme.py                     Neutral greyscale palette and animation timing.
+  parallax.py                  Camera-attached scrolling square backdrop, two depth layers.
+  reaction.py                  Which mechanisms the block loads, and how they ease (no Ursina).
+  theme.py                     Palette (mapped in docs/gui/theme.md) and animation timing.
 Source/bloxorz/bench/          Benchmark harness (issue #24).
   runner.py                    BenchmarkRunner: gc/tracemalloc isolation, 3 runs, medians.
   stats.py                     BenchmarkRecord plus CSV/JSON/LaTeX exporters.
@@ -35,14 +39,14 @@ Source/bloxorz/bench/          Benchmark harness (issue #24).
   run_all.py                   End-to-end benchmark run; writes into Report/.
 Source/bloxorz/solvers/        Planned one-module-per-algorithm package (#18-#23).
                                NOT committed yet: no solve() exists, so bench exits early.
-tests/                         pytest suite (contract, stage, engine, GUI layout/controller,
-                               bench smoke) plus tests/fixtures/*.json.
+tests/                         pytest suite (contract, stage, engine, GUI layout/controller/
+                               intro/reaction, bench smoke) plus tests/fixtures/*.json.
 tools/                         transcribe_levels.py (game data -> stage JSON),
                                verify_submission.py (rubric pre-flight, run in CI),
                                package.py (submission ZIP builder).
 docs/                          contracts.md (the frozen spec), decisions/ADR-*.md,
-                               gui/gui-scaffold.md.
-Report/                        LaTeX report; tables/ and figures/ are benchmark outputs.
+                               gui/gui-scaffold.md, gui/theme.md, gui/window.md.
+Report/                        LaTeX report; tables/, figures/ and data/ are benchmark outputs.
 ```
 
 Data flow: stage JSON -> `load_stage` validates and compiles `StageIndex` once, outside the

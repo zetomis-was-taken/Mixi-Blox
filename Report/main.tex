@@ -244,11 +244,7 @@ Nằm dọc $V(r, c)$ & $S(r-1, c)$ & $S(r+2, c)$ & $V(r, c-1)$ & $V(r, c+1)$ \\
 % ==============================================================================
 \section{Cài đặt các thuật toán tìm kiếm (Search Algorithms)}
 
-\subsection{Breadth-First Search (BFS)}
-\begin{itemize}
-    \item \textbf{Nguyên lý}: Sử dụng hàng đợi FIFO (\texttt{collections.deque}) để mở rộng các nút theo từng độ sâu tăng dần.
-    \item \textbf{Tính chất}: Với trọng số các bước đi bằng nhau, BFS đảm bảo tính tối ưu (tìm được lời giải có số bước đi ít nhất) và tính đầy đủ (luôn tìm ra lời giải nếu tồn tại).
-\end{itemize}
+\input{sections/bfs}
 
 \subsection{Depth-First Search (DFS) / Iterative Deepening Search (IDS)}
 \begin{itemize}

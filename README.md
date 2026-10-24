@@ -4,16 +4,18 @@ Bloxorz game and solver — BFS, DFS, UCS, and A* (CSC14003, Project 1).
 
 ## Status
 
-The core, shared base, UCS and A* are available in this branch. UCS/A* use the #7 non-uniform
-cost policy and the owner-provided #18 loop. Other solver adapters and GUI remain separate.
+The core, shared base, UCS, A* and BFS are available in this branch. UCS/A* use the #7
+non-uniform cost policy and the owner-provided #18 loop; BFS uses the same loop with a FIFO
+frontier and optimises move count rather than cost. Other solver adapters and GUI remain separate.
 Stages live in
 `Source/bloxorz/core/stages/`, and their provenance is in [`CREDITS.md`](CREDITS.md).
 
-## Run UCS/A* (Python 3.11+)
+## Run a solver (Python 3.11+)
 
 ```powershell
 python -m Source.main --stage Source/bloxorz/core/stages/L2-02_fragile_ring.json --solver ucs
 python -m Source.main --stage Source/bloxorz/core/stages/L2-02_fragile_ring.json --solver astar
+python -m Source.main --stage Source/bloxorz/core/stages/L2-02_fragile_ring.json --solver bfs
 python -m pytest -q
 python -m ruff check .
 ```
@@ -23,6 +25,7 @@ The CLI prints a JSON `SearchResult`; moves are `len(path)` and `cost` is weight
 Exit codes: 0 solved, 1 cap/unsolvable, 2 invalid input or unregistered solver.
 See the [UCS report and integration notes](docs/ucs_vi.md) and [cost policy](docs/action_cost_vi.md).
 The [A* report and proofs](docs/astar_vi.md) cover admissibility, consistency and the teleport fallback.
+The [BFS notes](docs/bfs_vi.md) record the move/cost split and the frontier tests.
 
 ## Contributing
 

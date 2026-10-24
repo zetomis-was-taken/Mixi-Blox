@@ -150,9 +150,13 @@ def update(self) -> None:
     if not self.intro.finished:            # load animation still playing
         self.intro.advance(time.dt)
         ...
-    self.board_view.refresh(self.controller.state.bridges)
-    if not self.intro.finished or self.controller.animating:
-        return                             # input only after loading
+    self.board_view.refresh(self.controller.state)
+    ...
+    if not self.intro.finished or self.controller.cleared:
+        return                             # input only after loading, and no more once won
+    self.controller.tick(time.dt)          # the level clock
+    if self.controller.animating:
+        return
     for key, direction in KEY_BINDINGS:    # held-key polling, not events
         if held_keys[key]:
             self.controller.move(direction)
@@ -160,18 +164,20 @@ def update(self) -> None:
 
 Input arrives through Ursina's `held_keys` map (which is fed by Panda3D's `raw-<key>` events), not
 through explicit event handlers, so holding a direction repeats the move as soon as the previous
-roll finishes.
+roll finishes. The one-shot keys — `Tab` (switch cube), `Z` (undo), `R` (retry) — come through
+`input()` instead, so holding them does not repeat.
 
-The window closes in exactly one place: `application.quit()`, called from `PrototypeScene._level_cleared`
-when the block lands on the goal (`TODO(#28)`: to be replaced by a results/next-level flow).
+The window is only closed by the player: the goal raises `WinOverlay` and stops the level's input.
+`Esc` on that card tears the level scene down and rebuilds the level select, which is also the first
+screen `build()` shows.
 
 ## 6. Entry point and window type
 
 `Source/main.py --gui [--stage FILE]` imports `bloxorz.gui.app.run` lazily and calls it with
-`args.stage` or `DEFAULT_GUI_STAGE` (`L1-01_long_corridor.json`). The stage is loaded **before** the
-window exists — `build()` calls `load_stage()` first — so a bad stage path fails as a normal
-`StageError` in the terminal instead of a broken window, and the window title and HUD can be built
-from validated data.
+`args.stage`. With no `--stage` the game boots into the level select, which `build()` fills from
+`catalog.load_catalog()`; with `--stage` the stage is loaded **before** any scene exists — `build()`
+calls `load_stage()` first — so a bad stage path fails as a normal `StageError` in the terminal
+instead of a broken window, and the window title and HUD can be built from validated data.
 
 `build()` exposes `window_type`, which is the only seam the tests need:
 
@@ -186,17 +192,15 @@ from validated data.
 | Different resolution / aspect | `build()`, `size=` | Aspect drives the camera's vertical fov and the HUD margins; the lens shift rescales automatically. |
 | Fullscreen | `build()`, `fullscreen=True` **and** a prc `fullscreen true` | `development_mode=False` alone does not do it (§3). |
 | Bordered / borderless | `build()`, `borderless=` | `borderless=True` also enables Ursina's in-window "x" exit button. |
-| Title | `build()`, `title=` | Currently derived from the stage, so it changes per level. |
+| Title | `window.title` in each scene | `Mixi-Blox | levels` on the select screen, `Mixi-Blox | <stage id> <name>` in a level. |
 | Background colour | `gui/theme.py`, `BACKGROUND` | Applied via `window.color` in `build()`. |
 | HUD placement / size | `app.py`, `_build_hud` | UI space is `[-0.8, 0.8] × [-0.5, 0.5]` at 16:10. |
 | Hide Ursina's F10/F11/F12 hotkeys | `build()` | They live on `window.input_entity`; disabling that entity removes them. |
 
 ## 8. Known limitations
 
-- The window closes abruptly when the level is solved (`application.quit()`), with no fade, dialog or
-  next-level transition (`TODO(#28)`).
 - No custom window icon; Ursina's default icon is used.
-- Ursina's F10/F11/F12 hotkeys remain active in the prototype (§3).
+- Ursina's F10/F11/F12 hotkeys remain active in the game (§3).
 - vsync is fixed on (Ursina applies it once, before entities exist) and is not exposed as a setting.
 - The window is a fixed size at startup: no remembered size/position between runs, and no
   `forced_aspect_ratio`.

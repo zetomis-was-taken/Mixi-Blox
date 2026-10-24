@@ -39,7 +39,7 @@ mechanisms.
 | 1 | `#46425e` | `TILE_FLOOR`, `TILE_SIDE`, `TEXT`, `TILE_MARK_DARK` | Every walkable tile (floor, start and tile sides), HUD text, fragile crack | The dark base of the board: it contrasts with the cream background and keeps the coral player and the accent-coloured mechanisms readable. |
 | 2 | `#15788c` | `TILE_HEAVY`, `GRID_LINE`, `PARALLAX_SQUARE` | Heavy switch base; the faint line between tiles; the parallax backdrop squares | Deep teal is the darker of the two mechanism accents, matching the heavy switch's "weight"; at ~35% opacity it also gives the gapless board its grid without becoming a stripe. The same hue, at a lower opacity, keeps the parallax squares behind the board. |
 | 3 | `#00b9be` | `TILE_BRIDGE`, `TILE_SOFT`, `TILE_SPLIT` | Open bridge, soft switch, split switch | Bright cyan is the "mechanism" accent; together with the detail shape it separates these cells from ordinary dark floor. |
-| 4 | `#ffeecc` | `BACKGROUND`, `TILE_MARK` | Window clear colour; switch plates | The light background the board sits on, and the light plates that mark interactive cells. |
+| 4 | `#ffeecc` | `BACKGROUND`, `TILE_MARK`, `OVERLAY_PANEL` | Window clear colour; switch plates; the win overlay's card | The light background the board sits on, the light plates that mark interactive cells, and the results card — nearly opaque so the solved board still shows at its edges. |
 | 5 | `#ffb0a3` | `TILE_FRAGILE`, `BLOCK_IDLE` | Fragile panel base; the cube that is not taking input after a split | Soft peach is the one warning tint: clearly warmer than the dark floor without competing with the coral player. It doubles as the quieter half of a split pair, so both cubes still read as the player while the active one keeps the coral. |
 | 6 | `#ff6973` | `BLOCK` | The player's block, and the active cube of a split pair | Strong coral: the moving piece is the one element that is always coral, so it never gets lost against the board. |
 
@@ -140,8 +140,10 @@ has given way. The crack opens and shuts with the weight.
 ## Where colours are read
 
 - `Source/bloxorz/gui/board_view.py` — tile base colours and detail geometry.
-- `Source/bloxorz/gui/block_view.py` — the player's block.
+- `Source/bloxorz/gui/block_view.py` — the player's block, and which of a split pair is active.
 - `Source/bloxorz/gui/app.py` — window background and HUD text.
+- `Source/bloxorz/gui/level_select.py`, `Source/bloxorz/gui/win_overlay.py` — menu cards and the
+  results panel (via `widgets.py`, which holds no colours of its own).
 - `Source/bloxorz/gui/parallax.py` — the parallax square colour and per-layer opacity.
 
 No other module contains a colour value.

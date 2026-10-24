@@ -1,12 +1,14 @@
 # GUI Scaffold (Ursina)
 
-A short report on the current Ursina prototype (#28). This is a runnable scaffold, not the finished
-game: there is no menu and no solver panel yet, and the palette is a first pass at the art
-direction ([`theme.md`](theme.md)).
+A short report on the current Ursina prototype (#28). This is a runnable game, not the finished one:
+it boots into a level select and ends a level on a results card, but there is still no solver panel
+and the palette is a first pass at the art direction ([`theme.md`](theme.md)).
 
 ## What it does
 
-- Boots straight into `L1-01_long_corridor.json` — no title screen or menu.
+- Boots into a level select: one card per stage, one row per stage group (L1-L4), with cleared
+  levels tinted the mechanism cyan for the rest of the session. Clicking a card starts that level,
+  and `--stage FILE` skips the menu and opens that level directly.
 - Plays a load animation on entry: tiles float up from below with randomised delays, then the block
   drops in from above. Input is blocked until the animation has fully played.
 - Renders the board as flat tiles: a dark tile per walkable cell, butted together with a faint
@@ -21,37 +23,46 @@ direction ([`theme.md`](theme.md)).
 - Steers a split pair one cube at a time: the active cube keeps the coral `#ff6973`, the idle one is
   peach `#ffb0a3`, `Tab` swaps them, and the HUD names the active cube. A direction key still moves
   the other cube when the active one has no such action.
+- Lets a puzzle be recovered from: `Z` steps back one move and `R` restarts the level, both hinted
+  on the HUD. Split switches can leave the block in a losing position, so neither is optional.
+- Ends a level on a win overlay: the move count and elapsed time, then next level, retry and back to
+  the level select — as cards or as `Enter` / `R` / `Esc`.
 - Draws an optional parallax backdrop: two regular grids of filled and outlined `#15788c` squares,
   scrolling top-left → bottom-right at different speeds (`parallax.py`).
 - Can apply an optional dotted halftone shader to the tiles and the player only (`dot_shader.py`).
-- Closes the process as soon as the block lands on the goal.
 - Keeps all colour values in `theme.py`, following the palette documented in `theme.md`.
 
 ## Run
 
 ```bash
 pip install -r requirements.txt
-python Source/main.py --gui
+python Source/main.py --gui                      # level select
+python Source/main.py --gui --stage FILE         # one level, no menu
 ```
 
-Ursina needs Python `< 3.14` (see `requirements.txt`). `--stage FILE` boots another level; without
-it, the GUI uses `DEFAULT_GUI_STAGE` in `Source/main.py`, which points at `L1-01`.
+Ursina needs Python `< 3.14` (see `requirements.txt`). The level select lists every stage under
+`Source/bloxorz/core/stages/`, in file-name order, grouped by each stage's own `group` field.
 
 ## Structure
 
 | File | Responsibility |
 | --- | --- |
-| `Source/bloxorz/gui/app.py` | Window, scene, camera, HUD, input loop, launch helper; enables both optional effects |
+| `Source/bloxorz/gui/app.py` | Window, the two scenes, `Game` (which scene is on screen, cleared levels), camera, HUD, input loop, launch helper |
 | `Source/bloxorz/gui/board_view.py` | One flat tile per non-void cell, plus per-kind detail pieces; bridge tint/height |
 | `Source/bloxorz/gui/block_view.py` | Player boxes and pivot-based roll animation |
-| `Source/bloxorz/gui/controller.py` | Current `State`, the active cube, input → one `(next_state, action)` pair, goal callback |
+| `Source/bloxorz/gui/catalog.py` | The stage catalog: play order, grouping and the next level (no Ursina) |
+| `Source/bloxorz/gui/controller.py` | Current `State`, the active cube, input → one `(next_state, action)` pair, moves/clock, undo, retry, goal callback |
 | `Source/bloxorz/gui/dot_shader.py` | Screen-space halftone shader applied to tiles and player only |
 | `Source/bloxorz/gui/intro.py` | Load-animation timeline: tile stagger, detail phase, then the block drop (no Ursina) |
 | `Source/bloxorz/gui/layout.py` | Grid ↔ world geometry and pose derivation (no Ursina) |
+| `Source/bloxorz/gui/level_select.py` | The boot screen: a card per stage, grouped by stage group, cleared ones tinted |
 | `Source/bloxorz/gui/parallax.py` | Scrolling tiled square backdrop in two depth layers |
 | `Source/bloxorz/gui/reaction.py` | Which mechanisms the block loads, and how their value eases there (no Ursina) |
+| `Source/bloxorz/gui/results.py` | The move/clock text the win overlay shows (no Ursina) |
 | `Source/bloxorz/gui/theme.py` | Palette (mapped in [`theme.md`](theme.md)), reaction timing and roll timing |
-| `tests/test_gui_layout.py`, `tests/test_gui_controller.py`, `tests/test_gui_intro.py`, `tests/test_gui_reaction.py` | Headless pose, controller, load-timeline and mechanism checks |
+| `Source/bloxorz/gui/widgets.py` | The flat card + label both menu screens are built from |
+| `Source/bloxorz/gui/win_overlay.py` | The results card: cost of the level, next/retry/levels, `Enter`/`R`/`Esc` |
+| `tests/test_gui_layout.py`, `tests/test_gui_controller.py`, `tests/test_gui_intro.py`, `tests/test_gui_reaction.py`, `tests/test_gui_catalog.py`, `tests/test_gui_results.py` | Headless pose, controller, load-timeline, mechanism, catalog and result-text checks |
 
 The controller never builds a `State` and never re-implements a transition: it asks the engine for
 legal successors and turns a key into one concrete `(next_state, action)` pair, which is also the
@@ -242,25 +253,44 @@ passing `0–255` values there clamps every colour to white.
 
 ## Level completion
 
-`PlayerController._animation_finished` checks `Board.is_goal`. On success it calls the scene's
-`_level_cleared`, which calls `application.quit()`. This hard exit is intentional for the scaffold
-and is marked with `TODO(#28)` in both `controller.py` and `app.py`, so the later results/next-level
-flow is easy to find.
+`PlayerController._animation_finished` checks `Board.is_goal`. On success the controller sets
+`cleared` — which stops it accepting moves — and calls the scene's `_level_cleared`, which records
+the level in `Game.cleared` and raises `WinOverlay`.
+
+The overlay is modal: the scene stops reading movement keys, and the overlay itself answers
+`Enter` (next level), `R` (retry) and `Esc` (level select). The same three actions are cards, so the
+flow never depends on knowing a key. Retry calls `PlayerController.retry` and dismisses the card,
+which puts the level back in play; the next level comes from `catalog.next_stage`, and a level with
+no successor — the last stage, or one loaded from an arbitrary `--stage` path — simply has no next
+card. Going back to the level select tears the level scene down (`PrototypeScene.teardown`) and
+rebuilds the grid with the cleared levels tinted.
+
+Undo lives beside it: `PlayerController.history` is a stack of the immutable `State` values each
+move started from, so `Z` pops one and re-syncs the block instead of replaying anything. The HUD
+carries the hint (`Z undo`, `R retry`); the move count and clock appear on the overlay. A retry
+zeroes both, an undo only the move count.
 
 ## Known limitations
 
-- No menu, level select, solver panel, replay, or stats display.
+- No solver panel, replay, or stats display.
+- The level select shows stage ids only: the stage names appear once a level is open.
 - Split/merge/teleport changes snap instead of rolling.
 - A fragile panel never breaks on screen. A standing block on fragile is an illegal move
   (ADR-003), so no state exists in which the panel has given way; the crack only opens and shuts
   with the weight.
-- The HUD is the level name, a key hint and — on a split stage — the active cube; it shows during
-  the load animation.
+- The HUD is the level name, the key hints and — on a split stage — the active cube; it shows during
+  the load animation, and it does not show the move count or the running clock yet.
 
 ## Verification
 
-- `pytest tests/ -q` — 110 passed.
+- `pytest tests/ -q` — 120 passed.
 - `ruff check .` — clean.
+- Offscreen menu probe — the level select lists all ten stage ids plus a group label per row,
+  cards measure 0.22 × 0.07 UI units on a plain 1 × 1 quad (no aspect fold from `Button`'s default
+  model), picking `L1-01` builds the level scene, its goal raises the overlay reading
+  `7 moves   |   0:00` with the next card tinted cyan, retry restores the start with 0 moves,
+  `Z`/`R` undo and retry, returning to the select leaves `L1-01` as the only cyan card, and
+  `Enter` on `L1-02`'s overlay chains to `L1-03`.
 - Offscreen Ursina smoke run — scene builds, tiles and their detail pieces start below the board
   and the block above it, keys are ignored until `LoadIntro.finished`, tiles and details land on
   their resting heights, and the first legal move is accepted afterwards.

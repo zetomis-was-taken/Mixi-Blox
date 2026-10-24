@@ -22,16 +22,21 @@ Source/bloxorz/core/           The frozen v1 core (stdlib only).
   stages/*.json                10 benchmark stages: L1 plain, L2 fragile, L3 switches,
                                L4 split (two-cube).
 Source/bloxorz/gui/            Ursina prototype (issue #28).
-  app.py                       Window, camera, HUD, input loop, run() entry.
+  app.py                       Window, the two scenes, Game (scene + progress), HUD, run() entry.
   board_view.py                One flat tile per non-void cell; bridge tint/height.
   block_view.py                Player boxes and pivot-based roll animation.
-  controller.py                Current State; input -> Board.successors; goal callback.
+  catalog.py                   Stage play order, groups and next level (no Ursina import).
+  controller.py                Current State, active cube, moves/clock, undo, retry, goal callback.
   dot_shader.py                Screen-space halftone shader for tiles and player.
   intro.py                     Load-animation timeline (no Ursina import).
   layout.py                    Pure grid <-> world geometry (no Ursina import).
+  level_select.py              Boot screen: a card per stage, grouped L1-L4, cleared ones tinted.
   parallax.py                  Camera-attached scrolling square backdrop, two depth layers.
   reaction.py                  Which mechanisms the block loads, and how they ease (no Ursina).
+  results.py                   Move/clock text for the win overlay (no Ursina import).
   theme.py                     Palette (mapped in docs/gui/theme.md) and animation timing.
+  widgets.py                   The flat card + label both menu screens are built from.
+  win_overlay.py               Results card: next level / retry / level select.
 Source/bloxorz/bench/          Benchmark harness (issue #24).
   runner.py                    BenchmarkRunner: gc/tracemalloc isolation, 3 runs, medians.
   stats.py                     BenchmarkRecord plus CSV/JSON/LaTeX exporters.
@@ -40,7 +45,7 @@ Source/bloxorz/bench/          Benchmark harness (issue #24).
 Source/bloxorz/solvers/        Planned one-module-per-algorithm package (#18-#23).
                                NOT committed yet: no solve() exists, so bench exits early.
 tests/                         pytest suite (contract, stage, engine, GUI layout/controller/
-                               intro/reaction, bench smoke) plus tests/fixtures/*.json.
+                               catalog/results/intro/reaction, bench smoke) plus tests/fixtures/*.json.
 tools/                         transcribe_levels.py (game data -> stage JSON),
                                verify_submission.py (rubric pre-flight, run in CI),
                                package.py (submission ZIP builder).
@@ -64,8 +69,8 @@ pytest -q                                   # full suite (pytest.ini adds Source
 ruff check .                                # lint (E, F, I; line length 100)
 
 python Source/main.py --stage Source/bloxorz/core/stages/L1-01_long_corridor.json
-python Source/main.py --gui                 # Ursina prototype, boots L1-01
-python Source/main.py --gui --stage FILE    # another stage
+python Source/main.py --gui                 # Ursina game, boots the level select
+python Source/main.py --gui --stage FILE    # one level, no menu
 
 PYTHONPATH=Source python -m bloxorz.bench.run_all   # fails until bloxorz.solvers exists
 python tools/verify_submission.py .         # CI also runs this on every push/PR
@@ -99,8 +104,9 @@ python tools/package.py [student_id ...]    # builds the submission ZIP
 
 Any related things belongs to the game space (ursina) and GUI should be follow by these docs the the folder: `docs/gui`
 
-Quick facts: run with `python Source/main.py --gui`; the prototype boots `L1-01` unless
-`--stage` is given. Keys are WASD/arrows (`Tab` swaps the active cube on a split stage), the block
-rolls a real quarter-turn, and landing on the
-goal currently closes the process (`TODO(#28)`). Camera constants, roll geometry, and known
-limitations are documented in `docs/gui/gui-scaffold.md`; palette changes belong in `gui/theme.py`.
+Quick facts: run with `python Source/main.py --gui`; the game boots into the level select, and
+`--stage FILE` opens that level directly. Keys are WASD/arrows (`Tab` swaps the active cube on a
+split stage, `Z` undoes a move, `R` retries), the block rolls a real quarter-turn, and the goal
+raises a win overlay with next level / retry / level select. Camera constants, roll geometry,
+level flow, and known limitations are documented in `docs/gui/gui-scaffold.md`; palette changes
+belong in `gui/theme.py`.

@@ -22,10 +22,15 @@ class FakeBlock:
     def __init__(self) -> None:
         self.on_done = None
         self.action = None
+        self.state = None
 
     def animate(self, start, next_state, action, on_done) -> None:
         self.action = action
         self.on_done = on_done
+
+    def sync(self, state) -> None:
+        self.state = state
+        self.on_done = None
 
     def finish(self) -> None:
         callback = self.on_done
@@ -150,3 +155,95 @@ def test_the_other_cube_moves_when_the_active_one_is_blocked() -> None:
     # The active cube (index 0) has no action east; the move is still offered to the player.
     assert controller.move("R") is True
     assert block.action == (1, "R")
+
+
+def test_moves_and_the_clock_measure_the_level() -> None:
+    stage = load_stage(STAGES / "L1-01_long_corridor.json")
+    board = Board(stage)
+    block = FakeBlock()
+    controller = PlayerController(board, block, lambda: None)
+
+    controller.tick(0.5)
+    controller.tick(0.25)
+    assert controller.elapsed == 0.75
+    assert controller.moves == 0
+
+    for _, direction in _path_to(board, board.is_goal)[:2]:
+        assert controller.move(direction) is True
+        block.finish()
+
+    assert controller.moves == 2
+    assert len(controller.history) == 2
+
+
+def test_undo_steps_back_one_move_at_a_time() -> None:
+    stage = load_stage(STAGES / "L1-01_long_corridor.json")
+    board = Board(stage)
+    block = FakeBlock()
+    controller = PlayerController(board, block, lambda: None)
+    start = controller.state
+    path = _path_to(board, board.is_goal)
+
+    assert controller.undo() is False, "nothing to take back yet"
+
+    assert controller.move(path[0][1]) is True
+    assert controller.undo() is False, "a roll in progress cannot be undone"
+    block.finish()
+    after_first = controller.state
+    assert after_first != start
+
+    assert controller.move(path[1][1]) is True
+    block.finish()
+    assert controller.moves == 2
+
+    assert controller.undo() is True
+    assert controller.state == after_first
+    assert block.state == after_first, "the view snaps to the state we went back to"
+    assert controller.moves == 1
+
+    assert controller.undo() is True
+    assert controller.state == start
+    assert controller.moves == 0
+    assert controller.undo() is False
+
+
+def test_retry_returns_to_the_start_and_forgets_the_attempt() -> None:
+    stage = load_stage(STAGES / "L1-01_long_corridor.json")
+    board = Board(stage)
+    block = FakeBlock()
+    controller = PlayerController(board, block, lambda: None)
+
+    for _, direction in _path_to(board, board.is_goal)[:2]:
+        assert controller.move(direction) is True
+        block.finish()
+    controller.tick(3.0)
+
+    assert controller.retry() is True
+    assert controller.state == board.start()
+    assert block.state == board.start()
+    assert (controller.moves, controller.elapsed) == (0, 0.0)
+    assert controller.history == []
+    assert controller.undo() is False
+
+    # Retry is refused while a roll is playing, like undo.
+    assert controller.move(_path_to(board, board.is_goal)[0][1]) is True
+    assert controller.retry() is False
+
+
+def test_a_cleared_level_takes_no_more_moves_until_undo() -> None:
+    stage = load_stage(STAGES / "L1-01_long_corridor.json")
+    board = Board(stage)
+    block = FakeBlock()
+    controller = PlayerController(board, block, lambda: None)
+
+    for _, direction in _path_to(board, board.is_goal):
+        assert controller.move(direction) is True
+        block.finish()
+
+    assert controller.cleared is True
+    assert all(controller.move(direction) is False for direction in ("U", "D", "L", "R"))
+    assert controller.switch_cube() is False
+
+    # Undo puts the level back in play, so the win overlay can be dismissed by stepping back.
+    assert controller.undo() is True
+    assert controller.cleared is False

@@ -49,6 +49,10 @@ BLOCK = color.rgb32(255, 105, 115)  # #ff6973
 # still reads as one player while the active cube keeps the strong accent.
 BLOCK_IDLE = color.rgb32(255, 176, 163)  # #ffb0a3
 
+# Menu screens: the win overlay is a nearly opaque cream card so the solved board stays visible
+# behind it at the edges, and its buttons use the same dark/cyan pairing as the level select.
+OVERLAY_PANEL = color.rgba32(255, 238, 204, 238)  # #ffeecc at ~93% opacity
+
 # Total platform thickness and the thickness of the coloured slab on top of the side base.
 TILE_HEIGHT = 0.30
 TILE_CAP_HEIGHT = 0.03

@@ -20,34 +20,36 @@ which one moves is decided by successor ordering and the player cannot steer the
 
 ## 2. End-of-level flow (#28)
 
-`controller.py` and `app.py` both carry `TODO(#28)` and call `application.quit()` on the goal.
+Done: the goal raises `gui/win_overlay.py` instead of quitting, and both `TODO(#28)` markers are
+gone.
 
-- [ ] Replace the hard exit with a win overlay: move count and elapsed time.
-- [ ] Offer next level / retry / back to level select.
-- [ ] Add a retry key — switch puzzles can leave the block in a losing position, and today the only
+- [x] Replace the hard exit with a win overlay: move count and elapsed time.
+- [x] Offer next level / retry / back to level select.
+- [x] Add a retry key — switch puzzles can leave the block in a losing position, and today the only
       recovery is restarting the process.
-- [ ] Add undo (a stack of immutable `State` values in the controller) with a visible hint.
-- [ ] Remove both `TODO(#28)` markers and update `docs/gui/gui-scaffold.md` § Level completion.
+- [x] Add undo (a stack of immutable `State` values in the controller) with a visible hint.
+- [x] Remove both `TODO(#28)` markers and update `docs/gui/gui-scaffold.md` § Level completion.
 
 ## 3. HUD
 
 Today it is the level name plus one key hint (`PrototypeScene._build_hud`).
 
 - [ ] Show move count and a running timer.
-- [ ] Show the active cube once item 1 exists.
-- [ ] Show restart/undo hints.
+- [x] Show the active cube once item 1 exists.
+- [x] Show restart/undo hints.
 - [ ] Keep all colours and timings in `gui/theme.py`; document any new values in `docs/gui/theme.md`.
 
 ## 4. Level flow: menu, level select, progression
 
-Ten stages exist across L1-L4 but can only be reached with `--stage` on the command line.
+Done: the game boots into a level select (`gui/level_select.py`) built from
+`Source/bloxorz/core/stages/`, and `--stage` still skips it.
 
 - [ ] Add a title/menu scene.
-- [ ] Add a level-select grid grouped L1-L4, using the stages under
+- [x] Add a level-select grid grouped L1-L4, using the stages under
       `Source/bloxorz/core/stages/`.
-- [ ] Chain the next level after a win.
-- [ ] Remember cleared levels for the session (or in a small save file).
-- [ ] Update `docs/gui/gui-scaffold.md` § What it does and the `README.md` status section.
+- [x] Chain the next level after a win.
+- [x] Remember cleared levels for the session (or in a small save file).
+- [x] Update `docs/gui/gui-scaffold.md` § What it does and the `README.md` status section.
 
 ## 5. Animate split, merge and teleport
 

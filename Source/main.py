@@ -1,7 +1,8 @@
 """Entry point. Puts ``Source/`` on ``sys.path`` (§ Layout, rule 1) and reports a stage.
 
-``--gui`` launches the Ursina prototype (#28), booting straight into ``L1-01`` when no ``--stage``
-is given. The four solvers (#18-#23) are not here yet, so ``--solver`` still reports that.
+``--gui`` launches the Ursina game (#28). It boots into the level select; ``--stage`` skips the
+menu and opens that level directly. The four solvers (#18-#23) are not here yet, so ``--solver``
+still reports that.
 """
 
 from __future__ import annotations
@@ -13,9 +14,6 @@ from pathlib import Path
 SOURCE = Path(__file__).resolve().parent
 if str(SOURCE) not in sys.path:
     sys.path.insert(0, str(SOURCE))
-
-# The prototype's boot level (#28). The GUI loads it when no --stage is given.
-DEFAULT_GUI_STAGE = SOURCE / "bloxorz" / "core" / "stages" / "L1-01_long_corridor.json"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -31,7 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--gui",
         action="store_true",
-        help="launch the Ursina prototype (L1-01 unless --stage is given)",
+        help="launch the Ursina game (level select, or --stage for one level)",
     )
     return parser
 
@@ -43,7 +41,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.gui:
         from bloxorz.gui.app import run
 
-        return run(args.stage or DEFAULT_GUI_STAGE)
+        return run(args.stage)
 
     if args.stage is None:
         parser.print_help()

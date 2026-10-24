@@ -32,10 +32,15 @@ class _Roll:
 class BlockView:
     """Owns the block entities and animates one action at a time."""
 
-    def __init__(self, rows: int, cols: int, shader: Shader | None = None) -> None:
+    def __init__(
+        self, rows: int, cols: int, shader: Shader | None = None, parent: Entity | None = None
+    ) -> None:
         self.rows = rows
         self.cols = cols
         self.shader = shader
+        # Pieces are parented to the scene so destroying it takes them with it; the parent sits at
+        # the origin, so a pose's world position is also its local position.
+        self.parent = parent
         self.pieces: list[Entity] = []
         self.active = 0
         self._rest_positions: list[tuple[float, float, float]] = []
@@ -65,6 +70,7 @@ class BlockView:
             destroy(piece)
         self.pieces = [
             Entity(
+                parent=self.parent,
                 name=f"block-{number}",
                 model="cube",
                 color=theme.BLOCK,

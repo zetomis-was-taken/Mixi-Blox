@@ -7,6 +7,10 @@ can be tested headless.
 An input resolves to one concrete ``(next_state, action)`` pair, and that action is what the view
 animates — the shape solver playback needs. On a split stage the two cubes are steered separately:
 ``active`` names the cube the next input moves and ``switch_cube`` hands it to the other one.
+
+It is also the level's memory: the move count, the clock the scene ticks, a stack of the states a
+move passed through (``undo``), and ``cleared`` once the block stands on the goal. Puzzle recovery —
+retry and undo — lives here rather than in the views, so both are covered headless.
 """
 
 from __future__ import annotations
@@ -24,6 +28,10 @@ class PlayerController:
         self.on_goal = on_goal
         self.state: State = board.start()
         self.animating = False
+        self.cleared = False
+        self.moves = 0
+        self.elapsed = 0.0
+        self.history: list[State] = []
         self._active = 0
 
     @property
@@ -35,6 +43,10 @@ class PlayerController:
     def split(self) -> bool:
         """Whether the block is two cubes rather than one."""
         return len(self.state.cubes) > 1
+
+    def tick(self, dt: float) -> None:
+        """Advance the level clock. The scene calls this only while the level is being played."""
+        self.elapsed += dt
 
     def switch_cube(self) -> bool:
         """Give the next input to the other cube. Returns whether the active cube changed."""
@@ -58,7 +70,7 @@ class PlayerController:
 
     def move(self, direction: Direction) -> bool:
         """Move the active cube one action in ``direction``. Returns whether one was started."""
-        if self.animating:
+        if self.animating or self.cleared:
             return False
         resolved = self.resolve(direction)
         if resolved is None:
@@ -68,8 +80,33 @@ class PlayerController:
         start = self.state
         self._active = self._active_after(start, next_state, action)
         self.state = next_state
+        self.history.append(start)
+        self.moves += 1
         self.animating = True
         self.block.animate(start, next_state, action, self._animation_finished)
+        return True
+
+    def undo(self) -> bool:
+        """Take back the last move. Returns whether there was one to take back."""
+        if self.animating or not self.history:
+            return False
+        self.state = self.history.pop()
+        self.moves -= 1
+        self.cleared = False
+        self.block.sync(self.state)
+        return True
+
+    def retry(self) -> bool:
+        """Start the level over, history and clock included. Refused while a roll is playing."""
+        if self.animating:
+            return False
+        self.state = self.board.start()
+        self.history.clear()
+        self.moves = 0
+        self.elapsed = 0.0
+        self.cleared = False
+        self._active = 0
+        self.block.sync(self.state)
         return True
 
     @staticmethod
@@ -93,6 +130,5 @@ class PlayerController:
     def _animation_finished(self) -> None:
         self.animating = False
         if self.board.is_goal(self.state):
-            # TODO(#28): replace this hard exit with the proper end-of-level flow
-            # (results screen, next level, ...). The prototype closes the window here.
+            self.cleared = True
             self.on_goal()

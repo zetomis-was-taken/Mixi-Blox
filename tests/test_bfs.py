@@ -7,10 +7,10 @@ from collections import deque
 import pytest
 from search_helpers import FIXTURES, STAGES, replay
 
-from Source.bloxorz.core.contracts import Caps, State
-from Source.bloxorz.core.engine import Board
-from Source.bloxorz.core.stage import load_stage
-from Source.bloxorz.solvers import base, bfs, ucs
+from bloxorz.core.contracts import Caps, State
+from bloxorz.core.engine import Board
+from bloxorz.core.stage import load_stage
+from bloxorz.solvers import base, bfs, ucs
 
 
 class _GraphBoard:
@@ -21,7 +21,7 @@ class _GraphBoard:
 
     def __init__(self, _stage) -> None:
         self.states = {name: State((((0, index),),), ()) for index, name in enumerate(self.nodes)}
-        self.names = {state: name for name, state in self.states.items}
+        self.names = {state: name for name, state in self.states.items()}
 
     def start(self):
         return self.states["S"]

@@ -32,12 +32,15 @@ gone.
 
 ## 3. HUD
 
-Today it is the level name plus one key hint (`PrototypeScene._build_hud`).
+Done: `gui/hud.py` owns the four corner lines, and the counter uses the same `results.py` line the
+win overlay prints.
 
-- [ ] Show move count and a running timer.
+- [x] Show move count and a running timer.
 - [x] Show the active cube once item 1 exists.
 - [x] Show restart/undo hints.
-- [ ] Keep all colours and timings in `gui/theme.py`; document any new values in `docs/gui/theme.md`.
+- [x] Keep all colours and timings in `gui/theme.py`; document any new values in `docs/gui/theme.md`.
+      (No new colour or timing was needed: every line is `theme.TEXT`, and the layout constants live
+      in `gui/hud.py`.)
 
 ## 4. Level flow: menu, level select, progression
 

@@ -20,7 +20,6 @@ from pathlib import Path
 from panda3d.core import Point2, Point3
 from ursina import (
     Entity,
-    Text,
     Ursina,
     application,
     camera,
@@ -39,6 +38,7 @@ from . import catalog, dot_shader, parallax, theme
 from .block_view import BlockView
 from .board_view import BoardView
 from .controller import PlayerController
+from .hud import Hud
 from .intro import IntroTiming, LoadIntro
 from .layout import TILE_SIZE, board_center, cell_to_world
 from .level_select import LevelSelectScene
@@ -63,9 +63,6 @@ KEY_BINDINGS: tuple[tuple[str, str], ...] = (
     ("d", "R"),
     ("right arrow", "R"),
 )
-
-ROLL_HINT = "WASD / arrow keys to roll"
-ACTION_HINT = "Z undo   |   R retry"
 
 
 def _camera_distance(stage: Stage) -> float:
@@ -137,7 +134,7 @@ class PrototypeScene(Entity):
             obstacle_count=len(self.board_view.details),
         )
         self._frame_camera(stage)
-        self.hud_texts = self._build_hud(stage)
+        self.hud = Hud(stage)
 
         # Optional presentation effects: remove either call to switch that effect off.
         self.parallax = parallax.ParallaxBackground()
@@ -202,37 +199,6 @@ class PrototypeScene(Entity):
         film_x = lens.getFilmOffset().x
         lens.setFilmOffset(film_x + shift * lens.getFilmSize().x / 2.0, lens.getFilmOffset().y)
 
-    def _build_hud(self, stage: Stage) -> tuple[Text, Text, Text]:
-        """The level name, what the keys do, and — on a split stage — which cube moves next."""
-        title = Text(
-            text=f"{stage.id}  {stage.name}",
-            position=(-0.78, 0.47),
-            origin=(-0.5, 0.5),
-            color=theme.TEXT,
-        )
-        keys = Text(
-            text=f"{ROLL_HINT}   |   {ACTION_HINT}",
-            position=(-0.78, 0.43),
-            origin=(-0.5, 0.5),
-            color=theme.TEXT,
-            scale=0.8,
-        )
-        # Only a split stage has a second cube to steer, so this line stays hidden otherwise.
-        cube = Text(
-            position=(-0.78, 0.39),
-            origin=(-0.5, 0.5),
-            color=theme.TEXT,
-            scale=0.8,
-        )
-        return title, keys, cube
-
-    def _refresh_hud(self) -> None:
-        """Show which cube the next input moves, matching the tint in ``BlockView``."""
-        cube = self.hud_texts[2]
-        cube.enabled = self.controller.split
-        if self.controller.split:
-            cube.text = f"Cube {self.controller.active + 1} of 2  |  Tab to switch"
-
     def input(self, key: str) -> None:
         """Action keys: switch cube, undo, retry. The overlay owns input once the level is won."""
         if not self.intro.finished or self.controller.cleared:
@@ -253,7 +219,12 @@ class PrototypeScene(Entity):
         self.board_view.refresh(self.controller.state)
         self.board_view.update(time.dt)
         self.block_view.set_active(self.controller.active)
-        self._refresh_hud()
+        self.hud.refresh(
+            self.controller.moves,
+            self.controller.elapsed,
+            self.controller.split,
+            self.controller.active,
+        )
         # The game only takes input once the whole load animation has played, and stops again once
         # the level is cleared: the overlay is modal from then on.
         if not self.intro.finished or self.controller.cleared:
@@ -292,7 +263,8 @@ class PrototypeScene(Entity):
 
     def teardown(self) -> None:
         """Remove everything this scene put on screen: board and block are children, UI is not."""
-        for entity in (*self.hud_texts, self.overlay, self.parallax):
+        self.hud.teardown()
+        for entity in (self.overlay, self.parallax):
             if entity is not None:
                 destroy(entity)
         destroy(self)

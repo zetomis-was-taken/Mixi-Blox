@@ -28,6 +28,7 @@ Source/bloxorz/gui/            Ursina prototype (issue #28).
   catalog.py                   Stage play order, groups and next level (no Ursina import).
   controller.py                Current State, active cube, moves/clock, undo, retry, goal callback.
   dot_shader.py                Screen-space halftone shader for tiles and player.
+  hud.py                       Corner HUD: level name, live moves/clock, key hints, active cube.
   intro.py                     Load-animation timeline (no Ursina import).
   layout.py                    Pure grid <-> world geometry (no Ursina import).
   level_select.py              Boot screen: a card per stage, grouped L1-L4, cleared ones tinted.
@@ -106,7 +107,7 @@ Any related things belongs to the game space (ursina) and GUI should be follow b
 
 Quick facts: run with `python Source/main.py --gui`; the game boots into the level select, and
 `--stage FILE` opens that level directly. Keys are WASD/arrows (`Tab` swaps the active cube on a
-split stage, `Z` undoes a move, `R` retries), the block rolls a real quarter-turn, and the goal
-raises a win overlay with next level / retry / level select. Camera constants, roll geometry,
+split stage, `Z` undoes a move, `R` retries), the block rolls a real quarter-turn, the HUD counts
+moves and time, and the goal raises a win overlay with next level / retry / level select. Camera constants, roll geometry,
 level flow, and known limitations are documented in `docs/gui/gui-scaffold.md`; palette changes
 belong in `gui/theme.py`.

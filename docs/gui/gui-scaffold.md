@@ -25,6 +25,8 @@ and the palette is a first pass at the art direction ([`theme.md`](theme.md)).
   the other cube when the active one has no such action.
 - Lets a puzzle be recovered from: `Z` steps back one move and `R` restarts the level, both hinted
   on the HUD. Split switches can leave the block in a losing position, so neither is optional.
+- Counts the run as it happens: the HUD's opposite corner shows the move count and the running
+  clock, from the same `results.py` line the win overlay prints, so both always agree.
 - Ends a level on a win overlay: the move count and elapsed time, then next level, retry and back to
   the level select — as cards or as `Enter` / `R` / `Esc`.
 - Draws an optional parallax backdrop: two regular grids of filled and outlined `#15788c` squares,
@@ -47,18 +49,19 @@ Ursina needs Python `< 3.14` (see `requirements.txt`). The level select lists ev
 
 | File | Responsibility |
 | --- | --- |
-| `Source/bloxorz/gui/app.py` | Window, the two scenes, `Game` (which scene is on screen, cleared levels), camera, HUD, input loop, launch helper |
+| `Source/bloxorz/gui/app.py` | Window, the two scenes, `Game` (which scene is on screen, cleared levels), camera, input loop, launch helper |
 | `Source/bloxorz/gui/board_view.py` | One flat tile per non-void cell, plus per-kind detail pieces; bridge tint/height |
 | `Source/bloxorz/gui/block_view.py` | Player boxes and pivot-based roll animation |
 | `Source/bloxorz/gui/catalog.py` | The stage catalog: play order, grouping and the next level (no Ursina) |
 | `Source/bloxorz/gui/controller.py` | Current `State`, the active cube, input → one `(next_state, action)` pair, moves/clock, undo, retry, goal callback |
 | `Source/bloxorz/gui/dot_shader.py` | Screen-space halftone shader applied to tiles and player only |
+| `Source/bloxorz/gui/hud.py` | The corner HUD: level name, live move count and clock, key hints, active cube |
 | `Source/bloxorz/gui/intro.py` | Load-animation timeline: tile stagger, detail phase, then the block drop (no Ursina) |
 | `Source/bloxorz/gui/layout.py` | Grid ↔ world geometry and pose derivation (no Ursina) |
 | `Source/bloxorz/gui/level_select.py` | The boot screen: a card per stage, grouped by stage group, cleared ones tinted |
 | `Source/bloxorz/gui/parallax.py` | Scrolling tiled square backdrop in two depth layers |
 | `Source/bloxorz/gui/reaction.py` | Which mechanisms the block loads, and how their value eases there (no Ursina) |
-| `Source/bloxorz/gui/results.py` | The move/clock text the win overlay shows (no Ursina) |
+| `Source/bloxorz/gui/results.py` | The move/clock line the HUD and the win overlay show (no Ursina) |
 | `Source/bloxorz/gui/theme.py` | Palette (mapped in [`theme.md`](theme.md)), reaction timing and roll timing |
 | `Source/bloxorz/gui/widgets.py` | The flat card + label both menu screens are built from |
 | `Source/bloxorz/gui/win_overlay.py` | The results card: cost of the level, next/retry/levels, `Enter`/`R`/`Esc` |
@@ -267,8 +270,8 @@ rebuilds the grid with the cleared levels tinted.
 
 Undo lives beside it: `PlayerController.history` is a stack of the immutable `State` values each
 move started from, so `Z` pops one and re-syncs the block instead of replaying anything. The HUD
-carries the hint (`Z undo`, `R retry`); the move count and clock appear on the overlay. A retry
-zeroes both, an undo only the move count.
+carries the hint (`Z undo`, `R retry`) and shows the same live counter the overlay then reports, so
+the two can never disagree. A retry zeroes both numbers, an undo only the move count.
 
 ## Known limitations
 
@@ -278,13 +281,18 @@ zeroes both, an undo only the move count.
 - A fragile panel never breaks on screen. A standing block on fragile is an illegal move
   (ADR-003), so no state exists in which the panel has given way; the crack only opens and shuts
   with the weight.
-- The HUD is the level name, the key hints and — on a split stage — the active cube; it shows during
-  the load animation, and it does not show the move count or the running clock yet.
+- The HUD shows during the load animation, where the counter reads `0 moves | 0:00` because the
+  clock only starts once input is accepted.
+- The HUD's placement and sizes are constants in `gui/hud.py`; they are not adjustable at runtime.
 
 ## Verification
 
-- `pytest tests/ -q` — 120 passed.
+- `pytest tests/ -q` — 121 passed.
 - `ruff check .` — clean.
+- Offscreen HUD probe — the counter read `0 moves | 0:00` after the load animation, `2 moves |
+  0:00` after two rolls, `2 moves | 0:01` once the clock had ticked, `1 move | 0:01` after `Z` and
+  `0 moves | 0:00` after `R`; on `L4-01` the cube line appears while the counter keeps counting,
+  and `Hud.teardown` leaves none of the four lines in `scene.entities`.
 - Offscreen menu probe — the level select lists all ten stage ids plus a group label per row,
   cards measure 0.22 × 0.07 UI units on a plain 1 × 1 quad (no aspect fold from `Button`'s default
   model), picking `L1-01` builds the level scene, its goal raises the overlay reading

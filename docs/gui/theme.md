@@ -141,7 +141,8 @@ has given way. The crack opens and shuts with the weight.
 
 - `Source/bloxorz/gui/board_view.py` — tile base colours and detail geometry.
 - `Source/bloxorz/gui/block_view.py` — the player's block, and which of a split pair is active.
-- `Source/bloxorz/gui/app.py` — window background and HUD text.
+- `Source/bloxorz/gui/app.py` — window background.
+- `Source/bloxorz/gui/hud.py` — every HUD line, all in `TEXT`.
 - `Source/bloxorz/gui/level_select.py`, `Source/bloxorz/gui/win_overlay.py` — menu cards and the
   results panel (via `widgets.py`, which holds no colours of its own).
 - `Source/bloxorz/gui/parallax.py` — the parallax square colour and per-layer opacity.

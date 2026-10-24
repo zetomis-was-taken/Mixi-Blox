@@ -118,8 +118,10 @@ space), and cancels it with a film offset — measured `-0.00954` on `L1-01`. Th
 fraction of `film_size.x`, so the correction holds when the aspect ratio changes. The shift is
 applied to the 3D lens (`base.camLens`), never to the UI camera, so the HUD does not move with it.
 
-**HUD.** `_build_hud` places two `Text` entities at fixed UI coordinates, `(-0.78, 0.47)` and
-`(-0.78, 0.43)`, with `origin=(-0.5, 0.5)` and `scale=0.8` for the key hint. Ursina's UI space is
+**HUD.** `gui/hud.py` places four `Text` entities at fixed UI coordinates: the level name at
+`(-0.78, 0.47)`, the key hints at `(-0.78, 0.43)`, the active cube at `(-0.78, 0.39)`, and the live
+move/clock counter at `(0.78, 0.47)` with `origin=(0.5, 0.5)` so it grows leftwards from the right
+edge. The small lines use `scale=0.8` of the level name's size. Ursina's UI space is
 aspect-corrected: at 16:10 the horizontal range is `[-0.8, 0.8]` and the vertical range is
 `[-0.5, 0.5]`, so `x = -0.78` sits 0.02 units inside the left edge and `y = 0.47` just below the top.
 On a wider window the same `x` leaves a proportionally larger margin; on resize Ursina's
@@ -194,7 +196,7 @@ instead of a broken window, and the window title and HUD can be built from valid
 | Bordered / borderless | `build()`, `borderless=` | `borderless=True` also enables Ursina's in-window "x" exit button. |
 | Title | `window.title` in each scene | `Mixi-Blox | levels` on the select screen, `Mixi-Blox | <stage id> <name>` in a level. |
 | Background colour | `gui/theme.py`, `BACKGROUND` | Applied via `window.color` in `build()`. |
-| HUD placement / size | `app.py`, `_build_hud` | UI space is `[-0.8, 0.8] × [-0.5, 0.5]` at 16:10. |
+| HUD placement / size | `gui/hud.py`, the layout constants | UI space is `[-0.8, 0.8] × [-0.5, 0.5]` at 16:10. |
 | Hide Ursina's F10/F11/F12 hotkeys | `build()` | They live on `window.input_entity`; disabling that entity removes them. |
 
 ## 8. Known limitations

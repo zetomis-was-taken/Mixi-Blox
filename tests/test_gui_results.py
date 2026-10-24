@@ -15,5 +15,10 @@ def test_elapsed_label_reads_as_minutes_and_seconds() -> None:
 
 
 def test_result_line_pairs_the_move_count_with_the_clock() -> None:
+    assert result_line(0, 0) == "0 moves   |   0:00"
     assert result_line(7, 0.4) == "7 moves   |   0:00"
     assert result_line(123, 95) == "123 moves   |   1:35"
+
+
+def test_a_single_move_is_not_plural() -> None:
+    assert result_line(1, 12) == "1 move   |   0:12"

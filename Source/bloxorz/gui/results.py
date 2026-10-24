@@ -13,5 +13,6 @@ def elapsed_label(seconds: float) -> str:
 
 
 def result_line(moves: int, seconds: float) -> str:
-    """The one line the overlay shows under the title: the cost of the level."""
-    return f"{moves} moves   |   {elapsed_label(seconds)}"
+    """The one line the overlay and the HUD show: the cost of the level so far."""
+    noun = "move" if moves == 1 else "moves"
+    return f"{moves} {noun}   |   {elapsed_label(seconds)}"

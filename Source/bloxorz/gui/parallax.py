@@ -33,8 +33,8 @@ class _Layer:
 
 
 LAYERS: tuple[_Layer, ...] = (
-    _Layer(depth=60.0, cell_pixels=96.0, speed_pixels=15.0, alpha=0.15),
-    _Layer(depth=120.0, cell_pixels=64.0, speed_pixels=7.5, alpha=0.10),
+    _Layer(depth=60.0, cell_pixels=220.0, speed_pixels=6.0, alpha=0.055),
+    _Layer(depth=120.0, cell_pixels=140.0, speed_pixels=3.0, alpha=0.035),
 )
 
 # Fraction of a cell taken by an outlined cell's border, and the extra quad size that keeps the

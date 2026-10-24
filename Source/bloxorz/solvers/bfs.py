@@ -8,4 +8,5 @@ from bloxorz.solvers.base import Frontier, search
 
 def solve(stage: Stage, caps: Caps = Caps()) -> SearchResult:
     """Return a shortest-move solution; its weighted cost is available separately."""
+    # Explicit FIFO for symmetry with ucs.py and astar.py; base.search already defaults to it.
     return search(stage, caps, frontier=Frontier())

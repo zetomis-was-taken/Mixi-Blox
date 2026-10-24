@@ -14,7 +14,7 @@ có số bước nhỏ nhất.
 BFS không đọc `step_cost`, vì vậy nó tối ưu số bước chứ không tối ưu chi phí.
 Trên màn chỉ có ô thường, hai mục tiêu trùng nhau; trên màn có ô dễ vỡ, chi phí
 theo #7 tách khỏi số bước. Hệ quả: BFS có thể trả đường ít bước hơn nhưng đắt hơn
-UCS. Trên L2-02, BFS cho 46 bước với chi phí 64; UCS cho 49 bước với chi phí 58.
+UCS; L2-02 là ví dụ, và số cụ thể nằm ở `Report/sections/ucs.tex`.
 
 Kiểm thử đối chiếu số bước với một phép duyệt theo chiều rộng viết độc lập trong
 `tests/test_bfs.py`, không đi qua `base.search`, trên cả mười màn chính thức. Ba

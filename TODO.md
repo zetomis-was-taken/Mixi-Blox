@@ -79,11 +79,19 @@ mid-roll are dropped, not queued.
 
 ## 7. Window and camera robustness
 
-- [ ] Recompute camera framing and lens alignment on window resize. `_frame_camera` and
+Done: `_frame_camera` fits the board to the window it is in (pushing the camera out until the
+projected outline is inside `FIT_X`/`FIT_Y`, see `gui/framing.py`), and an `aspectRatioChanged`
+handler reframes once on the frame after a resize. No per-stage tuning of `CAMERA_DISTANCE_FACTOR`
+was needed: at 16:10 the fit only moves `L2-02` (22.50 → 23.88) and `L3-01` (22.50 → 22.71), and at
+21:9 it keeps `L2-02` inside the frame at 34.82.
+
+- [x] Recompute camera framing and lens alignment on window resize. `_frame_camera` and
       `_align_camera_lens` run once at build time, so a resized window leaves the board off-centre
       while the parallax refits every frame.
-- [ ] Check framing on the largest L4 board; `CAMERA_DISTANCE_FACTOR` may need per-stage tuning or a
-      gentle camera follow.
+- [x] Check framing on the largest L4 board; `CAMERA_DISTANCE_FACTOR` may need per-stage tuning or a
+      gentle camera follow. (The L4 boards are the roomiest — 0.696 and 0.561 of the half-frame at
+      16:10, against 0.976 for `L2-02` — so the fit, not per-stage tuning, is what guarantees the
+      frame.)
 
 ## 8. Polish (only after 1-7)
 

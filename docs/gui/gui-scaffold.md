@@ -25,6 +25,8 @@ still no solver panel and the palette is a first pass at the art direction
   the translation, not a canned loop.
 - Rolls once per key press: a direction key is read as one `input()` event, so holding it down does
   not repeat the roll and a press that lands mid-roll is dropped rather than queued.
+- Keeps the board framed: the camera is pushed out until the footprint fits the window, and a
+  resize redoes that fit on the next frame.
 - Steers a split pair one cube at a time: the active cube keeps the coral `#ff6973`, the idle one is
   peach `#ffb0a3`, `Tab` swaps them, and the HUD names the active cube. A direction key still moves
   the other cube when the active one has no such action.
@@ -60,6 +62,7 @@ Ursina needs Python `< 3.14` (see `requirements.txt`). The level select lists ev
 | `Source/bloxorz/gui/catalog.py` | The stage catalog: play order, grouping and the next level (no Ursina) |
 | `Source/bloxorz/gui/controller.py` | Current `State`, the active cube, input → one `(next_state, action)` pair, moves/clock, undo, retry, goal callback |
 | `Source/bloxorz/gui/dot_shader.py` | Screen-space halftone shader applied to tiles and player only |
+| `Source/bloxorz/gui/framing.py` | How far to push the camera out so the board fits the frame (no Ursina) |
 | `Source/bloxorz/gui/hud.py` | The corner HUD: level name, live move count and clock, key hints, active cube |
 | `Source/bloxorz/gui/intro.py` | Load-animation timeline: tile stagger, detail phase, then the block drop (no Ursina) |
 | `Source/bloxorz/gui/layout.py` | Grid ↔ world geometry and pose derivation (no Ursina) |
@@ -71,7 +74,7 @@ Ursina needs Python `< 3.14` (see `requirements.txt`). The level select lists ev
 | `Source/bloxorz/gui/title.py` | The title screen: wordmark, play and quit cards, `Enter` / `Esc` |
 | `Source/bloxorz/gui/widgets.py` | The flat card + label both menu screens are built from |
 | `Source/bloxorz/gui/win_overlay.py` | The results card: cost of the level, next/retry/levels, `Enter`/`R`/`Esc` |
-| `tests/test_gui_layout.py`, `tests/test_gui_controller.py`, `tests/test_gui_intro.py`, `tests/test_gui_reaction.py`, `tests/test_gui_catalog.py`, `tests/test_gui_results.py` | Headless pose, controller, load-timeline, mechanism, catalog and result-text checks |
+| `tests/test_gui_layout.py`, `tests/test_gui_controller.py`, `tests/test_gui_intro.py`, `tests/test_gui_framing.py`, `tests/test_gui_reaction.py`, `tests/test_gui_catalog.py`, `tests/test_gui_results.py` | Headless pose, controller, load-timeline, camera-fit, mechanism, catalog and result-text checks |
 
 The controller never builds a `State` and never re-implements a transition: it asks the engine for
 legal successors and turns a key into one concrete `(next_state, action)` pair, which is also the
@@ -138,11 +141,11 @@ each frame; no view keeps its own clock.
 4. input: `PrototypeScene.input` returns early until `LoadIntro.finished`, so keys pressed during
    the animation are ignored rather than buffered.
 
-Progress is eased out (cubic). Tiles start below the board and the block above it, both by
-`_camera_distance(stage)` — the same distance the camera sits from the board centre, so each piece
-begins outside the viewport on any board size (verified by projecting every piece through the lens:
-`|screen y| > 1` at t = 0 on all ten stages). `BoardView` stacks that offset on top of each tile's
-bridge height, so a bridge sinking or rising never fights the animation.
+Progress is eased out (cubic). Tiles start below the board and the block above it, both by the
+distance the camera settled on — the same distance it sits from the board centre, so each piece
+begins outside the viewport on any board size at any aspect ratio (verified by projecting every
+piece through the lens: `|screen y| > 1` at t = 0 on all ten stages). `BoardView` stacks that offset
+on top of each tile's bridge height, so a bridge sinking or rising never fights the animation.
 
 | `IntroTiming` field | Value in the scene | Effect |
 | --- | --- | --- |
@@ -151,9 +154,9 @@ bridge height, so a bridge sinking or rising never fights the animation.
 | `obstacle_float_seconds` | `0.45` | How long one detail piece takes to rise |
 | `obstacle_delay_max_seconds` | `0.25` | Upper bound of each detail's random start delay |
 | `player_float_seconds` | `1.0` | How long the block takes to drop in |
-| `tile_rise` | camera distance | Travel of a tile, from off-screen to its resting height |
-| `obstacle_rise` | camera distance | Travel of a detail, from off-screen to its resting height |
-| `player_drop` | camera distance | Travel of the block, from off-screen down into its start pose |
+| `tile_rise` | fitted camera distance | Travel of a tile, from off-screen to its resting height |
+| `obstacle_rise` | fitted camera distance | Travel of a detail, from off-screen to its resting height |
+| `player_drop` | fitted camera distance | Travel of the block, from off-screen down into its start pose |
 
 One tile therefore rises for a full second, the details take up to 0.7 s more, and the block then
 falls for a second; with the random staggers the whole sequence runs roughly 3.25 s
@@ -231,17 +234,20 @@ the point to frame.
 The rotation is set explicitly. `camera.look_at()` was avoided because it introduced about 6.7° of
 unwanted roll on this rig.
 
-Current values in `app.py`:
+Current values in `app.py` and `framing.py`:
 
 | Constant | Current | Effect |
 | --- | --- | --- |
 | `CAMERA_PITCH_DEGREES` | `40.0` | Higher = more top-down; lower = closer to eye level |
 | `CAMERA_YAW_DEGREES` | `25.0` | Side rotation; 0° is straight-on, 45° is full diagonal |
-| `CAMERA_DISTANCE_FACTOR` | `1.5` | Multiplier on `max(rows, cols)`; higher = zoom out |
-| `CAMERA_FOV` | `45.0` | Perspective strength; higher = wider and more distorted |
+| `CAMERA_DISTANCE_FACTOR` | `1.5` | Multiplier on `max(rows, cols)`; the **nominal** distance the fit starts from |
+| `CAMERA_FOV` | `45.0` | Horizontal field of view; higher = wider and more distorted |
+| `FIT_X` | `0.86` | Fraction of the half-frame the board may fill horizontally |
+| `FIT_Y` | `0.92` | Same vertically, measured on the worse edge |
+| `MAX_STEPS` | `10` | Measurements the fit may take before it gives up |
 
 ```python
-distance = max(rows, cols) * TILE_SIZE * CAMERA_DISTANCE_FACTOR
+distance = max(rows, cols) * TILE_SIZE * CAMERA_DISTANCE_FACTOR   # nominal, then fitted
 pitch, yaw = radians(CAMERA_PITCH_DEGREES), radians(CAMERA_YAW_DEGREES)
 target_x, target_z = board_center(stage)
 
@@ -253,17 +259,47 @@ camera.position = (
 camera.rotation = (CAMERA_PITCH_DEGREES, CAMERA_YAW_DEGREES, 0.0)
 ```
 
+### Fitting the board to the window
+
+The nominal distance is only a starting point, because how much of the frame a board fills is not
+fixed by the camera alone. `PrototypeScene._frame_camera` therefore measures the board and pushes
+the camera out until it fits:
+
+1. `_camera_distance(stage)` gives the nominal distance for the grid;
+2. `_place_camera` puts the camera there, sets the pose and aligns the lens;
+3. `_projected_bounds` projects every corner of every non-void tile — at the top face and at the
+   bottom of the platform, the two extremes — and returns the outline in lens space, where the
+   frame is `[-1, 1]` on both axes;
+4. `framing.fitting_distance` multiplies the distance by the overflow,
+   `max(half_width / FIT_X, half_height / FIT_Y)`, and measures again, until the outline is inside
+   the limits or `MAX_STEPS` runs out.
+
+The camera is only ever pushed out, never pulled in, so a board that already fits keeps the framing
+its stage was built with and the levels do not change size. `framing.py` is pure Python — the
+projection needs the lens, the decision does not — so the rule is covered headless by
+`tests/test_gui_framing.py`.
+
+The fit is what makes the framing survive a **resize**. `CAMERA_FOV` is Panda3D's *horizontal* fov,
+so the vertical one is derived from the window's aspect ratio, and the board's vertical extent on
+screen scales with that ratio: at 16:10 `L2-02` already reached 0.976 of the half-frame, and a
+16:9 window would have pushed its near corner out of the picture. `PrototypeScene` accepts
+`aspectRatioChanged` and only sets a flag; the next `update()` reframes once, so dragging a window
+edge costs one reframe per frame instead of one per pixel. `teardown` ignores the event, so a scene
+that has been replaced is never called.
+
 After positioning, `_align_camera_lens` projects every tile corner and nudges the lens by the
 residual: the yawed view makes the near edge project wider than the far edge, so orbiting the
 footprint centre alone would still leave the outline a few pixels off-centre. The shift uses the
-3D lens, not the UI camera, so the HUD does not move.
+3D lens, not the UI camera, so the HUD does not move. It is a fraction of the film size, so it
+holds while the framing it was measured at holds — a resize re-measures it with everything else.
 
 The negative X offset views the board from its left side. To mirror the view, flip the sign of
 `sin(yaw)` and the sign of the yaw component in `camera.rotation`. Keeping the last rotation
 component at `0.0` keeps the horizon level.
 
-If the board touches the window edges, raise `CAMERA_DISTANCE_FACTOR` first; adjust `CAMERA_FOV`
-only when the amount of perspective distortion also needs to change.
+The fit is the knob for "the board is too close to the edge": lower `FIT_X` / `FIT_Y` to budget more
+air, which zooms out as much as that board needs rather than moving the nominal framing of every
+stage. Adjust `CAMERA_FOV` only when the amount of perspective distortion also needs to change.
 
 ## Visual style
 
@@ -307,10 +343,12 @@ the two can never disagree. A retry zeroes both numbers, an undo only the move c
 - The HUD shows during the load animation, where the counter reads `0 moves | 0:00` because the
   clock only starts once input is accepted.
 - The HUD's placement and sizes are constants in `gui/hud.py`; they are not adjustable at runtime.
+- The camera fit only ever pushes out, so a very wide window shows a smaller board rather than
+  cropping it; the vertical framing is not re-centred, so a wide window leaves it sitting low.
 
 ## Verification
 
-- `pytest tests/ -q` — 121 passed.
+- `pytest tests/ -q` — 130 passed.
 - `ruff check .` — clean.
 - Offscreen HUD probe — the counter read `0 moves | 0:00` after the load animation, `2 moves |
   0:00` after two rolls, `2 moves | 0:01` once the clock had ticked, `1 move | 0:01` after `Z` and
@@ -330,6 +368,15 @@ the two can never disagree. A retry zeroes both numbers, an undo only the move c
 - Offscreen Ursina smoke run — scene builds, tiles and their detail pieces start below the board
   and the block above it, keys are ignored until `LoadIntro.finished`, tiles and details land on
   their resting heights, and the first legal move is accepted afterwards.
+- Offscreen camera-fit probe — the projected outline of every stage was measured at 16:10, 16:9,
+  21:9 and 4:3. At 16:10 only `L2-02` (22.50 → 23.88) and `L3-01` (22.50 → 22.71) needed pushing
+  out, `L1-01` and `L4-01` kept their nominal distance, and every stage ended inside `FIT_X` /
+  `FIT_Y`. At 21:9 `L2-02` went out to 34.82 with the outline at `y ∈ [-0.850, +0.578]`; at 4:3 no
+  stage needed pushing out, which is the vertical field of view growing as the window narrows. The
+  fit took one or two measurements per stage; the load animation's clearance always equalled the
+  distance the camera settled on. Sending `aspectRatioChanged` after `camLens.setAspectRatio(21/9)`
+  set the pending flag, one `update()` reframed, and the rebuilt scene fitted identically; sending
+  it again after the scene was replaced left the level select untouched.
 - Offscreen input probe — on `L1-01` a `s` press before `LoadIntro.finished` left the counter at
   0 moves, the first press after loading moved it to 1 (animating), a press plus `s hold` plus `s up`
   mid-roll left it at 1, 40 frames of `s hold` left it at 1 again, the next press after the roll

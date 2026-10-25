@@ -34,7 +34,7 @@ from bloxorz.core.contracts import Direction, Stage
 from bloxorz.core.engine import Board
 from bloxorz.core.stage import load_stage
 
-from . import catalog, dot_shader, parallax, theme
+from . import catalog, dot_shader, framing, parallax, theme
 from .block_view import BlockView
 from .board_view import BoardView
 from .controller import PlayerController
@@ -70,13 +70,50 @@ KEY_BINDINGS: dict[str, Direction] = {
 
 
 def _camera_distance(stage: Stage) -> float:
-    """Distance from the framed board centre out to the camera.
+    """The nominal distance from the framed board centre out to the camera.
 
-    The load animation reuses it as its clearance: a piece travelling that far vertically starts
-    well outside the viewport, and the value scales with the board instead of being a fixed guess.
+    A board is sized by its grid; ``_frame_camera`` starts here and pushes further out when the
+    footprint would not fit the window. The load animation uses whatever distance the camera
+    settled on as its clearance, so a piece travelling that far vertically starts outside the
+    viewport, and the value scales with the board instead of being a fixed guess.
     """
     span = max(stage.index.rows, stage.index.cols) * TILE_SIZE
     return span * CAMERA_DISTANCE_FACTOR
+
+
+def _projected_bounds(stage: Stage) -> tuple[float, float, float, float] | None:
+    """The board footprint's ``(min_x, max_x, min_y, max_y)`` in lens space, or ``None``.
+
+    Lens space is ``[-1, 1]`` on both axes, so 0 is the window's centre. Every corner of every
+    non-void tile is projected, at the top face and at the bottom of the platform, which is the
+    widest the board ever looks.
+    """
+    base = application.base
+    cam, lens = base.cam, base.camLens
+    if cam is None or lens is None:
+        return None
+
+    rows, cols = stage.index.rows, stage.index.cols
+    half = TILE_SIZE / 2.0
+    projected_x: list[float] = []
+    projected_y: list[float] = []
+    for row in range(rows):
+        for col in range(cols):
+            if stage.index.kind[row * cols + col] == "void":
+                continue
+            x, z = cell_to_world((row, col), rows, cols)
+            for dx in (-half, half):
+                for dz in (-half, half):
+                    for y in (0.0, -theme.TILE_HEIGHT):
+                        relative = cam.getRelativePoint(base.render, Point3(x + dx, y, z + dz))
+                        point = Point2()
+                        lens.project(relative, point)
+                        projected_x.append(point.x)
+                        projected_y.append(point.y)
+
+    if not projected_x:
+        return None
+    return min(projected_x), max(projected_x), min(projected_y), max(projected_y)
 
 
 class Game:
@@ -123,14 +160,15 @@ class PrototypeScene(Entity):
             self.board, self.block_view, self._level_cleared
         )
         self.overlay: WinOverlay | None = None
+        self._reframe_pending = False
         window.title = f"{WINDOW_TITLE}  |  {stage.id} {stage.name}"
 
         self.block_view.sync(self.controller.state)
         self.board_view.refresh(self.controller.state)
-        # The load animation owns the first moments of the level: it starts from the pieces'
-        # resting poses and ends just before input is accepted. Travelling one camera distance
-        # leaves every piece outside the window before it starts moving, however large the board.
-        clearance = _camera_distance(stage)
+        # The camera is fitted before the load animation is built, so both use the same distance:
+        # a piece travelling one camera distance starts outside the viewport, whatever the board
+        # size and whatever the window's aspect ratio.
+        clearance = self._frame_camera(stage)
         self.intro = LoadIntro(
             len(self.board_view.tiles),
             IntroTiming(
@@ -140,15 +178,40 @@ class PrototypeScene(Entity):
             ),
             obstacle_count=len(self.board_view.details),
         )
-        self._frame_camera(stage)
+        # A resize changes the vertical field of view (the horizontal one is fixed), which is what
+        # decides how much of the frame the board fills, so the framing is redone when it happens.
+        application.base.accept("aspectRatioChanged", self._mark_reframe)
         self.hud = Hud(stage)
 
         # Optional presentation effects: remove either call to switch that effect off.
         self.parallax = parallax.ParallaxBackground()
         dot_shader.apply(self.board_view, self.block_view)
 
-    def _frame_camera(self, stage: Stage) -> None:
-        distance = _camera_distance(stage)
+    def _frame_camera(self, stage: Stage) -> float:
+        """Frame the board for the window as it is now, and return the distance that took.
+
+        The nominal distance comes from the grid, but a grid says nothing about how tightly the
+        walkable footprint fills it, and the frame's vertical budget depends on the window's aspect
+        ratio. So the camera is pushed out until ``framing`` accepts the projected outline.
+        """
+
+        def measure(distance: float) -> tuple[float, float]:
+            bounds = self._place_camera(stage, distance)
+            if bounds is None:
+                return (0.0, 0.0)
+            min_x, max_x, min_y, max_y = bounds
+            # The outline is centred horizontally by the lens, so its half-width is half the span;
+            # vertically it is not, so the larger of the two edges is what has to fit.
+            return ((max_x - min_x) / 2.0, max(abs(min_y), abs(max_y)))
+
+        distance = framing.fitting_distance(measure, _camera_distance(stage))
+        self._place_camera(stage, distance)
+        return distance
+
+    def _place_camera(
+        self, stage: Stage, distance: float
+    ) -> tuple[float, float, float, float] | None:
+        """Put the camera at ``distance`` and centre the outline; return the outline it sees."""
         pitch = radians(CAMERA_PITCH_DEGREES)
         yaw = radians(CAMERA_YAW_DEGREES)
         # Frame the tiles that exist, not the full grid: empty grid margins would otherwise push
@@ -164,47 +227,40 @@ class PrototypeScene(Entity):
         )
         # Set the pose directly: look_at() introduced a small roll on this rig.
         camera.rotation = (CAMERA_PITCH_DEGREES, CAMERA_YAW_DEGREES, 0.0)
-        self._align_camera_lens(stage)
+        return self._align_camera_lens(stage)
 
     @staticmethod
-    def _align_camera_lens(stage: Stage) -> None:
+    def _align_camera_lens(stage: Stage) -> tuple[float, float, float, float] | None:
         """Shift the lens until the board's projected outline is centred.
 
         Aiming at the walkable centre removes the empty-grid margin, but the yawed perspective
         still projects the near edge wider than the far edge. A small lens shift removes that
-        remaining bias without changing the camera's position or angle.
+        remaining bias without changing the camera's position or angle. The shift is a fraction of
+        the film size, so it stays valid for the framing it was measured at — a resize re-measures
+        it along with everything else.
         """
-        base = application.base
-        cam, lens = base.cam, base.camLens
-        if cam is None or lens is None:
-            return
+        lens = application.base.camLens
+        if lens is None:
+            return None
 
         # A level visited earlier already shifted the lens; this one is framed from a clean lens.
         lens.setFilmOffset(0.0, lens.getFilmOffset().y)
 
-        rows, cols = stage.index.rows, stage.index.cols
-        half = TILE_SIZE / 2.0
-        projected_x: list[float] = []
-        for row in range(rows):
-            for col in range(cols):
-                if stage.index.kind[row * cols + col] == "void":
-                    continue
-                x, z = cell_to_world((row, col), rows, cols)
-                for dx in (-half, half):
-                    for dz in (-half, half):
-                        for y in (0.0, -theme.TILE_HEIGHT):
-                            relative = cam.getRelativePoint(base.render, Point3(x + dx, y, z + dz))
-                            point = Point2()
-                            lens.project(relative, point)
-                            projected_x.append(point.x)
-
-        if not projected_x:
-            return
+        bounds = _projected_bounds(stage)
+        if bounds is None:
+            return None
+        min_x, max_x, *_ = bounds
         # Projection space is [-1, 1], so 0 is the window's horizontal centre. Film offset and
         # projected position move in opposite directions, so ``shift * width / 2`` cancels it.
-        shift = (min(projected_x) + max(projected_x)) / 2.0
+        shift = (min_x + max_x) / 2.0
         film_x = lens.getFilmOffset().x
         lens.setFilmOffset(film_x + shift * lens.getFilmSize().x / 2.0, lens.getFilmOffset().y)
+        # Re-measure rather than offset the numbers: the caller wants what the lens shows now.
+        return _projected_bounds(stage)
+
+    def _mark_reframe(self) -> None:
+        """Ask for a reframe on the next frame; a drag-resize sends a burst of these events."""
+        self._reframe_pending = True
 
     def input(self, key: str) -> None:
         """Every action the level takes: roll, switch cube, undo, retry.
@@ -226,6 +282,10 @@ class PrototypeScene(Entity):
             self.controller.retry()
 
     def update(self) -> None:
+        if self._reframe_pending:
+            # One reframe per frame at most: dragging a window edge fires an event per pixel.
+            self._reframe_pending = False
+            self._frame_camera(self.stage)
         self.block_view.update(time.dt)
         if not self.intro.finished:
             self.intro.advance(time.dt)
@@ -271,6 +331,7 @@ class PrototypeScene(Entity):
 
     def teardown(self) -> None:
         """Remove everything this scene put on screen: board and block are children, UI is not."""
+        application.base.ignore("aspectRatioChanged")
         self.hud.teardown()
         for entity in (self.overlay, self.parallax):
             if entity is not None:

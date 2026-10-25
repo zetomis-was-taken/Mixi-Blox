@@ -97,8 +97,8 @@ Measured window state for `L1-01` after `build(...)`:
 The window is the frame the camera has to fit into, and everything visual is derived from its aspect
 ratio.
 
-**Camera framing** (`PrototypeScene._frame_camera`) is computed from the board, not from the window,
-except through the aspect ratio:
+**Camera framing** (`PrototypeScene._frame_camera`) starts from the board rather than the window,
+and ends by measuring the window it is in:
 
 ```python
 distance = max(rows, cols) * TILE_SIZE * CAMERA_DISTANCE_FACTOR   # 15 * 1.0 * 1.5 = 22.5 for L1-01
@@ -112,10 +112,25 @@ Measured for `L1-01` (10 × 15 grid): camera at `(-7.784, 14.963, -15.621)`, rot
 **horizontal** field of view in Panda3D terms; the vertical fov is derived from the aspect ratio
 (29.03° at 16:10). A narrower window therefore sees *more* vertically, and a wider window sees less.
 
+**Fit.** The nominal distance is a starting point: `_projected_bounds` projects every non-void tile
+corner and `framing.fitting_distance` pushes the camera out until that outline is inside `FIT_X` /
+`FIT_Y` of the half-frame, measuring again after each step. It never pulls in, so a board that
+already fits keeps its nominal framing. Measured at 16:10, `L2-02` is pushed from 22.50 to 23.88
+and `L3-01` to 22.71; `L1-01` and `L4-01` are untouched.
+
+**Resize.** Because the vertical fov is derived from the aspect ratio, resizing changes how much of
+the frame the board fills — its vertical extent scales linearly with the aspect ratio. `ShowBase`
+answers a resize by calling `camLens.setAspectRatio()` and sending `aspectRatioChanged`, which only
+touches the UI lens and Ursina's UI children; `PrototypeScene` accepts the same event, sets a flag,
+and reframes once on the next `update()` (a drag-resize fires an event per pixel), then drops the
+handler in `teardown`. That is why a resized window no longer leaves the board cropped while the
+parallax — which refits every frame — keeps up.
+
 **Lens shift.** `_align_camera_lens` projects every non-void tile corner, measures how far the
 projected outline is from the horizontal centre of the window (`0` in the `[-1, 1]` projection
 space), and cancels it with a film offset — measured `-0.00954` on `L1-01`. That number is a
-fraction of `film_size.x`, so the correction holds when the aspect ratio changes. The shift is
+fraction of `film_size.x`, so it holds while the framing it was measured at holds; a resize
+re-measures it along with the rest, and a reframe resets the offset before measuring. The shift is
 applied to the 3D lens (`base.camLens`), never to the UI camera, so the HUD does not move with it.
 
 **HUD.** `gui/hud.py` places four `Text` entities at fixed UI coordinates: the level name at
@@ -128,9 +143,9 @@ On a wider window the same `x` leaves a proportionally larger margin; on resize 
 `update_aspect_ratio` rescales every `camera.ui` child by the ratio change, which keeps the HUD's
 *relative* placement but not its pixel size.
 
-**Load animation.** The pieces' vertical travel reuses the camera distance
-(`_camera_distance(stage)`), which is what guarantees they start outside the window rather than just
-below the board.
+**Load animation.** The pieces' vertical travel reuses the distance the camera settled on (after the
+fit below), which is what guarantees they start outside the window rather than just below the
+board.
 
 ## 5. The frame loop the window drives
 
@@ -143,11 +158,14 @@ every frame:
 4. calls `update()` on every enabled entity in the scene.
 
 The game hooks in at step 4: `PrototypeScene` is an `Entity`, so its `update()` is called once per
-frame and does all of the game's per-frame work — roll animation, load intro, bridge refresh, and
-the level clock:
+frame and does all of the game's per-frame work — a pending reframe after a resize, roll animation,
+load intro, bridge refresh, and the level clock:
 
 ```python
 def update(self) -> None:
+    if self._reframe_pending:              # a resize asked for the framing to be redone
+        self._reframe_pending = False
+        self._frame_camera(self.stage)
     self.block_view.update(time.dt)
     if not self.intro.finished:            # load animation still playing
         self.intro.advance(time.dt)
@@ -205,7 +223,7 @@ HUD can be built from validated data.
 
 | Goal | Where | Note |
 | --- | --- | --- |
-| Different resolution / aspect | `build()`, `size=` | Aspect drives the camera's vertical fov and the HUD margins; the lens shift rescales automatically. |
+| Different resolution / aspect | `build()`, `size=` | Aspect drives the camera's vertical fov, and the board is refitted to it (`FIT_X` / `FIT_Y` in `gui/framing.py`) on build and on every resize; the HUD margins follow the UI lens. |
 | Fullscreen | `build()`, `fullscreen=True` **and** a prc `fullscreen true` | `development_mode=False` alone does not do it (§3). |
 | Bordered / borderless | `build()`, `borderless=` | `borderless=True` also enables Ursina's in-window "x" exit button. |
 | Title | `window.title` in each scene | `Mixi-Blox | levels` on the select screen, `Mixi-Blox | <stage id> <name>` in a level. |
@@ -220,18 +238,23 @@ HUD can be built from validated data.
 - vsync is fixed on (Ursina applies it once, before entities exist) and is not exposed as a setting.
 - The window is a fixed size at startup: no remembered size/position between runs, and no
   `forced_aspect_ratio`.
+- A resize is handled (the board is refitted), but the window's own bounds are not remembered and
+  there is no fullscreen toggle.
 - `gui-scaffold.md` documents "no loading UI"; that is still true — the load animation animates the
   3D scene, it does not put anything in the window chrome.
 
 ## 9. Verification
 
-- `pytest tests/ -q` — 99 passed (Ursina is never imported in tests).
+- `pytest tests/ -q` — 130 passed (Ursina is never imported in tests).
 - `ruff check .` — clean.
 - On-screen probe (`build(..., window_type="onscreen")`, then read `base.win.getProperties()`):
   1280×800, not fullscreen, decorated, position (320, 140), stage-derived title, palette clear colour,
   editor UI disabled, hot-reloader off — the values in the table in §3.
 - Offscreen probe across all ten stages: every piece starts outside the viewport at `|screen y| > 1`
   and lands inside the frame.
+- Offscreen resize probe: after `camLens.setAspectRatio(21/9)` and an `aspectRatioChanged` event,
+  one `update()` reframed — `L2-02` moved out to 34.82 (nominal 22.50) with its outline at
+  `y ∈ [-0.850, +0.578]`, inside `FIT_Y`; the event after a scene swap left the next scene untouched.
 
 ## Related documents
 

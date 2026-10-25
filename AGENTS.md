@@ -28,6 +28,7 @@ Source/bloxorz/gui/            Ursina prototype (issue #28).
   catalog.py                   Stage play order, groups and next level (no Ursina import).
   controller.py                Current State, active cube, moves/clock, undo, retry, goal callback.
   dot_shader.py                Screen-space halftone shader for tiles and player.
+  framing.py                   How far to push the camera out so the board fits (no Ursina).
   hud.py                       Corner HUD: level name, live moves/clock, key hints, active cube.
   intro.py                     Load-animation timeline (no Ursina import).
   layout.py                    Pure grid <-> world geometry (no Ursina import).
@@ -111,6 +112,7 @@ the level select, quit or `Esc` closes the game), and `--stage FILE` opens that 
 are WASD/arrows (`Tab` swaps the active cube on a
 split stage, `Z` undoes a move, `R` retries), one roll per key press — holding a direction does not
 repeat — the block rolls a real quarter-turn, the HUD counts
-moves and time, and the goal raises a win overlay with next level / retry / level select. Camera constants, roll geometry,
+moves and time, and the goal raises a win overlay with next level / retry / level select. The camera
+fits each board to the window and refits after a resize. Camera constants, roll geometry,
 level flow, and known limitations are documented in `docs/gui/gui-scaffold.md`; palette changes
 belong in `gui/theme.py`.

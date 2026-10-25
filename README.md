@@ -7,9 +7,9 @@ Bloxorz game and solver — BFS, DFS, UCS, and A* (CSC14003, Project 1).
 The v1 core is frozen and complete: types, stage loader, transition model, and the 10 benchmark
 stages in `Source/bloxorz/core/stages/` (provenance in [`CREDITS.md`](CREDITS.md)). The Ursina
 game (#28) — a title screen, level select, playable stages, split-cube control, undo/retry, a live
-move/clock HUD and a results screen —
-its headless geometry/controller/catalog/reaction tests, and the benchmark harness (#24) with its
-CSV/JSON/LaTeX and chart exporters are in place. `pytest -q` runs 121 tests.
+move/clock HUD, a results screen and a board framing that survives a resize — its headless
+geometry/controller/catalog/reaction/framing tests, and the benchmark harness (#24) with its
+CSV/JSON/LaTeX and chart exporters are in place. `pytest -q` runs 130 tests.
 
 Still missing:
 

@@ -13,6 +13,9 @@ from bloxorz.core.engine import Board
 ROOT = Path(__file__).resolve().parents[1]
 STAGES = ROOT / "Source/bloxorz/core/stages"
 FIXTURES = ROOT / "tests/fixtures"
+# The hand-solved set (#21). Derived from the directory so a new fixture is picked up by every
+# solver test at once instead of needing the same literal list edited in four places.
+FIXTURE_IDS = tuple(path.stem.split("_")[0] for path in sorted(FIXTURES.glob("FIX-*.json")))
 
 
 def replay(board: Board, path: tuple) -> tuple[State, float]:

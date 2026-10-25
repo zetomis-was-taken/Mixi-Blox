@@ -25,13 +25,12 @@ from ursina import (
     application,
     camera,
     destroy,
-    held_keys,
     time,
     window,
 )
 from ursina.shaders import unlit_shader
 
-from bloxorz.core.contracts import Stage
+from bloxorz.core.contracts import Direction, Stage
 from bloxorz.core.engine import Board
 from bloxorz.core.stage import load_stage
 
@@ -55,16 +54,19 @@ CAMERA_YAW_DEGREES = 25.0
 CAMERA_DISTANCE_FACTOR = 1.5
 CAMERA_FOV = 45.0
 
-KEY_BINDINGS: tuple[tuple[str, str], ...] = (
-    ("w", "U"),
-    ("up arrow", "U"),
-    ("s", "D"),
-    ("down arrow", "D"),
-    ("a", "L"),
-    ("left arrow", "L"),
-    ("d", "R"),
-    ("right arrow", "R"),
-)
+# One key press, one action. Ursina delivers a press to ``input()`` as the bare key ("w"), a release
+# as "w up" and a held key as "w hold"; only the bare press is bound here, so holding a direction
+# never rolls twice and nothing has to be debounced.
+KEY_BINDINGS: dict[str, Direction] = {
+    "w": "U",
+    "up arrow": "U",
+    "s": "D",
+    "down arrow": "D",
+    "a": "L",
+    "left arrow": "L",
+    "d": "R",
+    "right arrow": "R",
+}
 
 
 def _camera_distance(stage: Stage) -> float:
@@ -205,10 +207,18 @@ class PrototypeScene(Entity):
         lens.setFilmOffset(film_x + shift * lens.getFilmSize().x / 2.0, lens.getFilmOffset().y)
 
     def input(self, key: str) -> None:
-        """Action keys: switch cube, undo, retry. The overlay owns input once the level is won."""
+        """Every action the level takes: roll, switch cube, undo, retry.
+
+        This is the whole input path, one press per action. A press is dropped — not queued — while
+        the load animation plays or once the level is won, and ``PlayerController`` refuses the four
+        actions while a roll is still animating, so nothing arriving mid-roll survives to the next
+        frame.
+        """
         if not self.intro.finished or self.controller.cleared:
             return
-        if key == "tab":
+        if key in KEY_BINDINGS:
+            self.controller.move(KEY_BINDINGS[key])
+        elif key == "tab":
             self.controller.switch_cube()
         elif key == "z":
             self.controller.undo()
@@ -230,18 +240,11 @@ class PrototypeScene(Entity):
             self.controller.split,
             self.controller.active,
         )
-        # The game only takes input once the whole load animation has played, and stops again once
-        # the level is cleared: the overlay is modal from then on.
+        # The clock runs only while the level is being played: it starts once the load animation has
+        # played and stops once the block is home, since the overlay is modal from then on.
         if not self.intro.finished or self.controller.cleared:
             return
         self.controller.tick(time.dt)
-        if self.controller.animating:
-            return
-
-        for key, direction in KEY_BINDINGS:
-            if held_keys[key]:
-                self.controller.move(direction)
-                break
 
     def _level_cleared(self) -> None:
         """Raise the results card: what the level cost, and the three ways out of it."""

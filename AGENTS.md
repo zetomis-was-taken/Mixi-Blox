@@ -109,7 +109,8 @@ Any related things belongs to the game space (ursina) and GUI should be follow b
 Quick facts: run with `python Source/main.py --gui`; the game boots into a title screen (play opens
 the level select, quit or `Esc` closes the game), and `--stage FILE` opens that level directly. Keys
 are WASD/arrows (`Tab` swaps the active cube on a
-split stage, `Z` undoes a move, `R` retries), the block rolls a real quarter-turn, the HUD counts
+split stage, `Z` undoes a move, `R` retries), one roll per key press — holding a direction does not
+repeat — the block rolls a real quarter-turn, the HUD counts
 moves and time, and the goal raises a win overlay with next level / retry / level select. Camera constants, roll geometry,
 level flow, and known limitations are documented in `docs/gui/gui-scaffold.md`; palette changes
 belong in `gui/theme.py`.

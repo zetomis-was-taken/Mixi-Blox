@@ -68,11 +68,14 @@ pose while ordinary rolls are real quarter-turns — a visible quality gap on L4
 
 ## 6. Input feel
 
-`PrototypeScene.update` polls `held_keys` every frame, so holding a key rolls continuously at the
-OS repeat delay's mercy.
+Done: `PrototypeScene.input` is the whole input path and a direction key is bound as one bare press,
+so a move is one key press — see `docs/gui/window.md` § 5. Keys pressed during the load animation or
+mid-roll are dropped, not queued.
 
-- [ ] Decide deliberately: one move per key press (an `input()` handler) or a tuned auto-repeat.
-- [ ] Keep dropping keys pressed during the load animation and during a roll — never queue them.
+- [x] Decide deliberately: one move per key press (an `input()` handler) or a tuned auto-repeat.
+      (One move per key press: Ursina delivers a press as the bare key and a held key as `w hold`,
+      so binding only the bare key gives discrete rolls with nothing to debounce.)
+- [x] Keep dropping keys pressed during the load animation and during a roll — never queue them.
 
 ## 7. Window and camera robustness
 

@@ -144,7 +144,7 @@ every frame:
 
 The game hooks in at step 4: `PrototypeScene` is an `Entity`, so its `update()` is called once per
 frame and does all of the game's per-frame work — roll animation, load intro, bridge refresh, and
-the input gate:
+the level clock:
 
 ```python
 def update(self) -> None:
@@ -155,19 +155,32 @@ def update(self) -> None:
     self.board_view.refresh(self.controller.state)
     ...
     if not self.intro.finished or self.controller.cleared:
-        return                             # input only after loading, and no more once won
-    self.controller.tick(time.dt)          # the level clock
-    if self.controller.animating:
-        return
-    for key, direction in KEY_BINDINGS:    # held-key polling, not events
-        if held_keys[key]:
-            self.controller.move(direction)
+        return                             # the clock only runs during play
+    self.controller.tick(time.dt)
 ```
 
-Input arrives through Ursina's `held_keys` map (which is fed by Panda3D's `raw-<key>` events), not
-through explicit event handlers, so holding a direction repeats the move as soon as the previous
-roll finishes. The one-shot keys — `Tab` (switch cube), `Z` (undo), `R` (retry) — come through
-`input()` instead, so holding them does not repeat.
+Input never goes through `update()`. Every action — roll, `Tab`, `Z`, `R` — arrives at
+`PrototypeScene.input()`, which Ursina calls once per key event:
+
+```python
+def input(self, key: str) -> None:
+    if not self.intro.finished or self.controller.cleared:
+        return
+    if key in KEY_BINDINGS:                # bare "w", never "w up" or "w hold"
+        self.controller.move(KEY_BINDINGS[key])
+    ...
+```
+
+That is a deliberate choice: **one key press, one action**. Ursina delivers a press as the bare key
+(`w`), a release as `w up`, and a repeating held key as `w hold`, so binding only the bare key means
+holding a direction cannot roll twice and no debounce is needed. `KEY_BINDINGS` is a
+`dict[str, Direction]` mapping both letter and arrow keys onto the four directions.
+
+Nothing is ever queued. A press that lands while the load animation is playing or after the block
+has reached the goal is dropped by the guard above, and one that lands mid-roll is refused by
+`PlayerController.move`/`switch_cube`/`undo`/`retry`, which all return `False` while
+`controller.animating`. Releasing a key does nothing — `w up` is not bound — so a tap and a long
+hold end up as the same single action.
 
 The window is only closed by the player: the goal raises `WinOverlay` and stops the level's input.
 `Esc` on that card tears the level scene down and rebuilds the level select. Quitting is a card on

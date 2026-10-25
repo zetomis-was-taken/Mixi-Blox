@@ -23,6 +23,8 @@ still no solver panel and the palette is a first pass at the art direction
   ([`theme.md`](theme.md#reactions)).
 - Rolls the block on every move: the animation is a real quarter-turn about the tile edge, driven by
   the translation, not a canned loop.
+- Rolls once per key press: a direction key is read as one `input()` event, so holding it down does
+  not repeat the roll and a press that lands mid-roll is dropped rather than queued.
 - Steers a split pair one cube at a time: the active cube keeps the coral `#ff6973`, the idle one is
   peach `#ffb0a3`, `Tab` swaps them, and the HUD names the active cube. A direction key still moves
   the other cube when the active one has no such action.
@@ -52,7 +54,7 @@ Ursina needs Python `< 3.14` (see `requirements.txt`). The level select lists ev
 
 | File | Responsibility |
 | --- | --- |
-| `Source/bloxorz/gui/app.py` | Window, the two scenes, `Game` (which scene is on screen, cleared levels), camera, input loop, launch helper |
+| `Source/bloxorz/gui/app.py` | Window, the scenes, `Game` (which scene is on screen, cleared levels), camera, input (one action per key press), launch helper |
 | `Source/bloxorz/gui/board_view.py` | One flat tile per non-void cell, plus per-kind detail pieces; bridge tint/height |
 | `Source/bloxorz/gui/block_view.py` | Player boxes and pivot-based roll animation |
 | `Source/bloxorz/gui/catalog.py` | The stage catalog: play order, grouping and the next level (no Ursina) |
@@ -133,7 +135,7 @@ each frame; no view keeps its own clock.
    `IntroTiming.obstacle_delay_max_seconds`. A stage with no detail pieces skips this phase;
 3. the player's block drops in from above (`intro.player_progress()`), starting only after the last
    tile and detail have landed;
-4. input: `PrototypeScene.update` returns early until `LoadIntro.finished`, so keys pressed during
+4. input: `PrototypeScene.input` returns early until `LoadIntro.finished`, so keys pressed during
    the animation are ignored rather than buffered.
 
 Progress is eased out (cubic). Tiles start below the board and the block above it, both by
@@ -297,6 +299,7 @@ the two can never disagree. A retry zeroes both numbers, an undo only the move c
 - No solver panel, replay, or stats display.
 - The level select shows stage ids only: the stage names appear once a level is open.
 - The level select has no way back to the title screen, so the quit card is reachable only at boot.
+- Holding a direction key does not repeat: a long corridor is tapped out key press by key press.
 - Split/merge/teleport changes snap instead of rolling.
 - A fragile panel never breaks on screen. A standing block on fragile is an illegal move
   (ADR-003), so no state exists in which the panel has given way; the crack only opens and shuts
@@ -327,6 +330,10 @@ the two can never disagree. A retry zeroes both numbers, an undo only the move c
 - Offscreen Ursina smoke run — scene builds, tiles and their detail pieces start below the board
   and the block above it, keys are ignored until `LoadIntro.finished`, tiles and details land on
   their resting heights, and the first legal move is accepted afterwards.
+- Offscreen input probe — on `L1-01` a `s` press before `LoadIntro.finished` left the counter at
+  0 moves, the first press after loading moved it to 1 (animating), a press plus `s hold` plus `s up`
+  mid-roll left it at 1, 40 frames of `s hold` left it at 1 again, the next press after the roll
+  reached 2, `Z` mid-roll was refused and `Z` after it took the count to 1, and `R` reset it to 0.
 - Offscreen reaction probe — a heavy plate measured at `0.0250 → -0.0050` (`PRESS_DEPTH`) while
   the standing block is on it and back to `0.0250` after it leaves, an opened bridge at its floor
   height and fully cyan, and a fragile crack measured at `0.1200 → 0.2160` (`×1.8`, `CRACK_OPEN`)

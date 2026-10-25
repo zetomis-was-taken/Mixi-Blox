@@ -12,7 +12,8 @@ from pathlib import Path
 from bloxorz.core.contracts import Action, State
 from bloxorz.core.engine import Board
 from bloxorz.core.stage import load_stage
-from bloxorz.gui.controller import PlayerController
+from bloxorz.gui import reaction
+from bloxorz.gui.controller import OPPOSITE, PlayerController
 
 ROOT = Path(__file__).resolve().parents[1]
 STAGES = ROOT / "Source" / "bloxorz" / "core" / "stages"
@@ -198,13 +199,58 @@ def test_undo_steps_back_one_move_at_a_time() -> None:
 
     assert controller.undo() is True
     assert controller.state == after_first
-    assert block.state == after_first, "the view snaps to the state we went back to"
     assert controller.moves == 1
+    # The view is asked to play the same quarter-turn in reverse, not to jump.
+    assert block.action == (0, OPPOSITE[path[1][1]])
+    assert controller.animating is True
+    block.finish()
+    assert controller.animating is False
 
     assert controller.undo() is True
     assert controller.state == start
+    assert block.action == (0, OPPOSITE[path[0][1]])
+    block.finish()
     assert controller.moves == 0
     assert controller.undo() is False
+
+
+def test_undo_rolls_the_cube_that_moved_on_a_split_stage() -> None:
+    board = StubBoard()
+    block = FakeBlock()
+    controller = PlayerController(board, block, lambda: None)
+
+    # The active cube (0) cannot move east, so cube 1 takes the action.
+    assert controller.move("R") is True
+    block.finish()
+
+    assert controller.undo() is True
+    assert block.action == (1, "L"), "the cube that moved is the one that rolls back"
+    block.finish()
+    assert controller.state == board.start()
+    assert controller.moves == 0
+
+
+def test_undo_puts_the_mechanisms_back() -> None:
+    """An undo restores the state a mechanism answers to, so the view eases back to it."""
+    stage = load_stage(STAGES / "L3-01_bridge_under_a_heavy_switch.json")
+    board = Board(stage)
+    block = FakeBlock()
+    controller = PlayerController(board, block, lambda: None)
+    start_loads = reaction.load_per_cell(stage, controller.state)
+
+    moved: State | None = None
+    for _, direction in _path_to(board, board.is_goal):
+        before = controller.state
+        assert controller.move(direction) is True
+        block.finish()
+        if reaction.load_per_cell(stage, controller.state) != start_loads:
+            moved = before
+            break
+    assert moved is not None, "the path never presses a switch"
+
+    assert controller.undo() is True
+    assert controller.state == moved
+    assert reaction.load_per_cell(stage, controller.state) == start_loads
 
 
 def test_retry_returns_to_the_start_and_forgets_the_attempt() -> None:

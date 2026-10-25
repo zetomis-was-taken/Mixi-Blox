@@ -245,7 +245,7 @@ HUD can be built from validated data.
 
 ## 9. Verification
 
-- `pytest tests/ -q` — 130 passed (Ursina is never imported in tests).
+- `pytest tests/ -q` — 132 passed (Ursina is never imported in tests).
 - `ruff check .` — clean.
 - On-screen probe (`build(..., window_type="onscreen")`, then read `base.win.getProperties()`):
   1280×800, not fullscreen, decorated, position (320, 140), stage-derived title, palette clear colour,

@@ -30,8 +30,9 @@ still no solver panel and the palette is a first pass at the art direction
 - Steers a split pair one cube at a time: the active cube keeps the coral `#ff6973`, the idle one is
   peach `#ffb0a3`, `Tab` swaps them, and the HUD names the active cube. A direction key still moves
   the other cube when the active one has no such action.
-- Lets a puzzle be recovered from: `Z` steps back one move and `R` restarts the level, both hinted
-  on the HUD. Split switches can leave the block in a losing position, so neither is optional.
+- Lets a puzzle be recovered from: `Z` rolls the last move back and `R` restarts the level, both
+  hinted on the HUD. Split switches can leave the block in a losing position, so neither is
+  optional.
 - Counts the run as it happens: the HUD's opposite corner shows the move count and the running
   clock, from the same `results.py` line the win overlay prints, so both always agree.
 - Ends a level on a win overlay: the move count and elapsed time, then next level, retry and back to
@@ -122,8 +123,10 @@ bottom edge it tips over:
 - angle sign is selected by checking which ±90° rotation lands on the destination centre;
 - duration = `theme.ROLL_SECONDS` (0.22 s), with linear angular motion.
 
-Unsplit moves and a split cube's own move use this path. Split-switch, merge, and teleport
-transitions currently snap to the destination pose; polishing those is still part of #28.
+Unsplit moves, a split cube's own move, and an undo of either use this path — an undo is the same
+plan with the direction reversed, so the block tips back over the edge it came in on. Split-switch,
+merge, and teleport transitions currently snap to the destination pose; polishing those is still
+part of #28.
 
 ## Load animation
 
@@ -326,9 +329,15 @@ card. Going back to the level select tears the level scene down (`PrototypeScene
 rebuilds the grid with the cleared levels tinted.
 
 Undo lives beside it: `PlayerController.history` is a stack of the immutable `State` values each
-move started from, so `Z` pops one and re-syncs the block instead of replaying anything. The HUD
-carries the hint (`Z undo`, `R retry`) and shows the same live counter the overlay then reports, so
-the two can never disagree. A retry zeroes both numbers, an undo only the move count.
+move started from, paired with the action that left it. `Z` pops one entry and hands the view that
+same quarter-turn in reverse, so the block rolls back through `BlockView.animate` instead of
+jumping — the cube keeps its arc, and a split stage rolls back the cube that had moved. The state
+is restored before the roll starts, so the mechanisms it feeds are retargeted in the same frame and
+bridges and plates ease back while the cube is still rolling. A transition a roll cannot express —
+split, merge, teleport — is still put back by snapping to the pose, which is what `animate` falls
+back to. The HUD carries the hint (`Z undo`, `R retry`) and shows the same live counter the overlay
+then reports, so the two can never disagree. A retry zeroes both numbers, an undo only the move
+count.
 
 ## Known limitations
 
@@ -336,7 +345,7 @@ the two can never disagree. A retry zeroes both numbers, an undo only the move c
 - The level select shows stage ids only: the stage names appear once a level is open.
 - The level select has no way back to the title screen, so the quit card is reachable only at boot.
 - Holding a direction key does not repeat: a long corridor is tapped out key press by key press.
-- Split/merge/teleport changes snap instead of rolling.
+- Split/merge/teleport changes snap instead of rolling — forward and when undone.
 - A fragile panel never breaks on screen. A standing block on fragile is an illegal move
   (ADR-003), so no state exists in which the panel has given way; the crack only opens and shuts
   with the weight.
@@ -348,7 +357,7 @@ the two can never disagree. A retry zeroes both numbers, an undo only the move c
 
 ## Verification
 
-- `pytest tests/ -q` — 130 passed.
+- `pytest tests/ -q` — 132 passed.
 - `ruff check .` — clean.
 - Offscreen HUD probe — the counter read `0 moves | 0:00` after the load animation, `2 moves |
   0:00` after two rolls, `2 moves | 0:01` once the clock had ticked, `1 move | 0:01` after `Z` and
@@ -368,6 +377,12 @@ the two can never disagree. A retry zeroes both numbers, an undo only the move c
 - Offscreen Ursina smoke run — scene builds, tiles and their detail pieces start below the board
   and the block above it, keys are ignored until `LoadIntro.finished`, tiles and details land on
   their resting heights, and the first legal move is accepted afterwards.
+- Offscreen undo probe — `Z` on `L1-01` began a roll whose positions ran
+  `(-2.5, 0.566, 0.576) → … → (-2.5, 0.5, 1.5)`, the pose the undone move started from, and
+  `BlockView.animating` went false on landing. On `L3-01` the bridge stood at `-0.015` (open) after
+  the heavy switch fired, and easing it back took nine frames to `-0.195` — 0.18 s,
+  `BRIDGE_SECONDS` — once the undo retargeted it. On `L4-01` an undo rolled back only the cube that
+  had moved and gave it the input again.
 - Offscreen camera-fit probe — the projected outline of every stage was measured at 16:10, 16:9,
   21:9 and 4:3. At 16:10 only `L2-02` (22.50 → 23.88) and `L3-01` (22.50 → 22.71) needed pushing
   out, `L1-01` and `L4-01` kept their nominal distance, and every stage ended inside `FIT_X` /

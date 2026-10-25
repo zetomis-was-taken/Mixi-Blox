@@ -9,7 +9,7 @@ stages in `Source/bloxorz/core/stages/` (provenance in [`CREDITS.md`](CREDITS.md
 game (#28) — a title screen, level select, playable stages, split-cube control, undo/retry, a live
 move/clock HUD, a results screen and a board framing that survives a resize — its headless
 geometry/controller/catalog/reaction/framing tests, and the benchmark harness (#24) with its
-CSV/JSON/LaTeX and chart exporters are in place. `pytest -q` runs 130 tests.
+CSV/JSON/LaTeX and chart exporters are in place. `pytest -q` runs 132 tests.
 
 Still missing:
 

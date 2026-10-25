@@ -9,8 +9,10 @@ animates — the shape solver playback needs. On a split stage the two cubes are
 ``active`` names the cube the next input moves and ``switch_cube`` hands it to the other one.
 
 It is also the level's memory: the move count, the clock the scene ticks, a stack of the states a
-move passed through (``undo``), and ``cleared`` once the block stands on the goal. Puzzle recovery —
-retry and undo — lives here rather than in the views, so both are covered headless.
+move passed through with the action that left each one (``undo``), and ``cleared`` once the block
+stands on the goal. Puzzle recovery — retry and undo — lives here rather than in the views, so both
+are covered headless. An undo hands the view the same quarter-turn in reverse, so the block rolls
+back instead of snapping.
 """
 
 from __future__ import annotations
@@ -19,6 +21,9 @@ from collections.abc import Callable
 
 from bloxorz.core.contracts import Action, Direction, State
 from bloxorz.core.engine import Board, roll
+
+# The direction that rolls a move back. An undo is the same quarter-turn, mirrored.
+OPPOSITE: dict[Direction, Direction] = {"U": "D", "D": "U", "L": "R", "R": "L"}
 
 
 class PlayerController:
@@ -31,7 +36,9 @@ class PlayerController:
         self.cleared = False
         self.moves = 0
         self.elapsed = 0.0
-        self.history: list[State] = []
+        # Each entry is the state a move started from, plus the action that left it, so an undo can
+        # roll that action back the same way it was played.
+        self.history: list[tuple[State, Action]] = []
         self._active = 0
 
     @property
@@ -80,20 +87,34 @@ class PlayerController:
         start = self.state
         self._active = self._active_after(start, next_state, action)
         self.state = next_state
-        self.history.append(start)
+        self.history.append((start, action))
         self.moves += 1
         self.animating = True
         self.block.animate(start, next_state, action, self._animation_finished)
         return True
 
     def undo(self) -> bool:
-        """Take back the last move. Returns whether there was one to take back."""
+        """Roll the last move back. Returns whether there was one to take back.
+
+        The view is given the same action in reverse, so the block rolls its quarter-turn back
+        rather than jumping: ``history`` keeps the action beside the state it started from. A
+        transition a roll cannot express — a split, a merge, a teleport — is still put back by
+        ``BlockView.animate`` snapping to the pose. Returns ``False`` while a roll is still playing.
+        """
         if self.animating or not self.history:
             return False
-        self.state = self.history.pop()
+
+        previous, action = self.history.pop()
+        current = self.state
+        self.state = previous
         self.moves -= 1
         self.cleared = False
-        self.block.sync(self.state)
+        # The cube that is rolling back is the one the action moved; ``active`` follows it, and the
+        # cube takes the input again in the state it is returning to.
+        index = self._active_after(previous, current, action)
+        self._active = action[0]
+        self.animating = True
+        self.block.animate(current, previous, (index, OPPOSITE[action[1]]), self._undo_finished)
         return True
 
     def retry(self) -> bool:
@@ -132,3 +153,7 @@ class PlayerController:
         if self.board.is_goal(self.state):
             self.cleared = True
             self.on_goal()
+
+    def _undo_finished(self) -> None:
+        """The roll back is over. Stepping back can never clear a level, so nothing else follows."""
+        self.animating = False

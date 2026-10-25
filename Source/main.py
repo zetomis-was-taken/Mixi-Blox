@@ -1,8 +1,8 @@
 """Entry point. Puts ``Source/`` on ``sys.path`` (§ Layout, rule 1) and reports a stage.
 
-``--gui`` launches the Ursina game (#28). It boots into the level select; ``--stage`` skips the
-menu and opens that level directly. The four solvers (#18-#23) are not here yet, so ``--solver``
-still reports that.
+``--gui`` launches the Ursina game (#28). It boots into the title screen, then the level select;
+``--stage`` skips both menus and opens that level directly. The four solvers (#18-#23) are not here
+yet, so ``--solver`` still reports that.
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--gui",
         action="store_true",
-        help="launch the Ursina game (level select, or --stage for one level)",
+        help="launch the Ursina game (title screen, level select, or --stage for one level)",
     )
     return parser
 

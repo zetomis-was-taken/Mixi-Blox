@@ -1,14 +1,17 @@
 # GUI Scaffold (Ursina)
 
 A short report on the current Ursina prototype (#28). This is a runnable game, not the finished one:
-it boots into a level select and ends a level on a results card, but there is still no solver panel
-and the palette is a first pass at the art direction ([`theme.md`](theme.md)).
+it boots into a title screen, then a level select, and ends a level on a results card, but there is
+still no solver panel and the palette is a first pass at the art direction
+([`theme.md`](theme.md)).
 
 ## What it does
 
-- Boots into a level select: one card per stage, one row per stage group (L1-L4), with cleared
-  levels tinted the mechanism cyan for the rest of the session. Clicking a card starts that level,
-  and `--stage FILE` skips the menu and opens that level directly.
+- Boots into a title screen: the wordmark over two cards, play (into the level select) and quit,
+  with `Enter` / `Esc` as their keyboard route. `--stage FILE` skips both menus entirely.
+- Opens the level select from that card: one card per stage, one row per stage group (L1-L4), with
+  cleared levels tinted the mechanism cyan for the rest of the session. Clicking a card starts that
+  level.
 - Plays a load animation on entry: tiles float up from below with randomised delays, then the block
   drops in from above. Input is blocked until the animation has fully played.
 - Renders the board as flat tiles: a dark tile per walkable cell, butted together with a faint
@@ -38,8 +41,8 @@ and the palette is a first pass at the art direction ([`theme.md`](theme.md)).
 
 ```bash
 pip install -r requirements.txt
-python Source/main.py --gui                      # level select
-python Source/main.py --gui --stage FILE         # one level, no menu
+python Source/main.py --gui                      # title screen
+python Source/main.py --gui --stage FILE         # one level, no menus
 ```
 
 Ursina needs Python `< 3.14` (see `requirements.txt`). The level select lists every stage under
@@ -58,11 +61,12 @@ Ursina needs Python `< 3.14` (see `requirements.txt`). The level select lists ev
 | `Source/bloxorz/gui/hud.py` | The corner HUD: level name, live move count and clock, key hints, active cube |
 | `Source/bloxorz/gui/intro.py` | Load-animation timeline: tile stagger, detail phase, then the block drop (no Ursina) |
 | `Source/bloxorz/gui/layout.py` | Grid ↔ world geometry and pose derivation (no Ursina) |
-| `Source/bloxorz/gui/level_select.py` | The boot screen: a card per stage, grouped by stage group, cleared ones tinted |
+| `Source/bloxorz/gui/level_select.py` | The level select: a card per stage, grouped by stage group, cleared ones tinted |
 | `Source/bloxorz/gui/parallax.py` | Scrolling tiled square backdrop in two depth layers |
 | `Source/bloxorz/gui/reaction.py` | Which mechanisms the block loads, and how their value eases there (no Ursina) |
 | `Source/bloxorz/gui/results.py` | The move/clock line the HUD and the win overlay show (no Ursina) |
 | `Source/bloxorz/gui/theme.py` | Palette (mapped in [`theme.md`](theme.md)), reaction timing and roll timing |
+| `Source/bloxorz/gui/title.py` | The title screen: wordmark, play and quit cards, `Enter` / `Esc` |
 | `Source/bloxorz/gui/widgets.py` | The flat card + label both menu screens are built from |
 | `Source/bloxorz/gui/win_overlay.py` | The results card: cost of the level, next/retry/levels, `Enter`/`R`/`Esc` |
 | `tests/test_gui_layout.py`, `tests/test_gui_controller.py`, `tests/test_gui_intro.py`, `tests/test_gui_reaction.py`, `tests/test_gui_catalog.py`, `tests/test_gui_results.py` | Headless pose, controller, load-timeline, mechanism, catalog and result-text checks |
@@ -71,6 +75,21 @@ The controller never builds a `State` and never re-implements a transition: it a
 legal successors and turns a key into one concrete `(next_state, action)` pair, which is also the
 shape solver playback feeds through the same animation. The GUI layer imports `bloxorz.core` only,
 as required by the layering rules in `docs/contracts.md`.
+
+## Screen flow
+
+`Game` owns the scene on screen. Each screen is an `Entity` that builds itself in `__init__` and
+removes its own entities in `teardown()`, and `Game._show` tears the old one down before the new one
+is built, so two screens never share the window.
+
+| Screen | Built by | Leaves via |
+| --- | --- | --- |
+| Title | `TitleScene` — the boot screen | play card or `Enter` → level select; quit card or `Esc` → `application.quit()` |
+| Level select | `LevelSelectScene`, from `catalog.load_catalog()` | a stage card → that level |
+| Level | `PrototypeScene` | the win overlay: next level, retry, or back to the level select |
+
+`--stage FILE` skips the first two rows and builds the level scene directly. The title screen is
+given only the callback that opens the level select, so it reads no stage and no cleared-level data.
 
 ## Split cubes
 
@@ -277,6 +296,7 @@ the two can never disagree. A retry zeroes both numbers, an undo only the move c
 
 - No solver panel, replay, or stats display.
 - The level select shows stage ids only: the stage names appear once a level is open.
+- The level select has no way back to the title screen, so the quit card is reachable only at boot.
 - Split/merge/teleport changes snap instead of rolling.
 - A fragile panel never breaks on screen. A standing block on fragile is an illegal move
   (ADR-003), so no state exists in which the panel has given way; the crack only opens and shuts
@@ -293,6 +313,11 @@ the two can never disagree. A retry zeroes both numbers, an undo only the move c
   0:00` after two rolls, `2 moves | 0:01` once the clock had ticked, `1 move | 0:01` after `Z` and
   `0 moves | 0:00` after `R`; on `L4-01` the cube line appears while the counter keeps counting,
   and `Hud.teardown` leaves none of the four lines in `scene.entities`.
+- Offscreen title probe — `build()` on `window_type="offscreen"` lands on the title scene: the
+  wordmark, the tagline, the `Play` / `Quit` cards and the key line, on plain `quad` models.
+  `Enter` builds the level select and leaves no title entity behind, a card click then builds
+  `L1-01`'s level scene, and `--stage` skips both menus. `Esc` and `Enter` reach the quit and play
+  callbacks.
 - Offscreen menu probe — the level select lists all ten stage ids plus a group label per row,
   cards measure 0.22 × 0.07 UI units on a plain 1 × 1 quad (no aspect fold from `Button`'s default
   model), picking `L1-01` builds the level scene, its goal raises the overlay reading

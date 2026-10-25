@@ -44,10 +44,11 @@ win overlay prints.
 
 ## 4. Level flow: menu, level select, progression
 
-Done: the game boots into a level select (`gui/level_select.py`) built from
-`Source/bloxorz/core/stages/`, and `--stage` still skips it.
+Done: the game boots into a title screen (`gui/title.py`) — play opens the level select, quit or
+`Esc` closes the game — and the level select (`gui/level_select.py`) is built from
+`Source/bloxorz/core/stages/`; `--stage` still skips both menus.
 
-- [ ] Add a title/menu scene.
+- [x] Add a title/menu scene.
 - [x] Add a level-select grid grouped L1-L4, using the stages under
       `Source/bloxorz/core/stages/`.
 - [x] Chain the next level after a win.

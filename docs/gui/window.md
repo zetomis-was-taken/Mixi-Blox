@@ -170,16 +170,17 @@ roll finishes. The one-shot keys — `Tab` (switch cube), `Z` (undo), `R` (retry
 `input()` instead, so holding them does not repeat.
 
 The window is only closed by the player: the goal raises `WinOverlay` and stops the level's input.
-`Esc` on that card tears the level scene down and rebuilds the level select, which is also the first
-screen `build()` shows.
+`Esc` on that card tears the level scene down and rebuilds the level select. Quitting is a card on
+the title screen (or `Esc` there), which is the first screen `build()` shows.
 
 ## 6. Entry point and window type
 
 `Source/main.py --gui [--stage FILE]` imports `bloxorz.gui.app.run` lazily and calls it with
-`args.stage`. With no `--stage` the game boots into the level select, which `build()` fills from
-`catalog.load_catalog()`; with `--stage` the stage is loaded **before** any scene exists — `build()`
-calls `load_stage()` first — so a bad stage path fails as a normal `StageError` in the terminal
-instead of a broken window, and the window title and HUD can be built from validated data.
+`args.stage`. With no `--stage` the game boots into the title screen, whose play card opens the
+level select, which `build()` fills from `catalog.load_catalog()`; with `--stage` the stage is
+loaded **before** any scene exists — `build()` calls `load_stage()` first — so a bad stage path
+fails as a normal `StageError` in the terminal instead of a broken window, and the window title and
+HUD can be built from validated data.
 
 `build()` exposes `window_type`, which is the only seam the tests need:
 

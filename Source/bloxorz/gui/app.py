@@ -1,11 +1,12 @@
-"""Ursina scenes: the level select, a playable stage, and the switch between them.
+"""Ursina scenes: the title screen, the level select, a playable stage, and the switch between them.
 
-The game boots into the level select (``LevelSelectScene``) and opens a stage when a card is
-clicked; ``--stage`` skips straight to that level. ``Game`` owns whichever scene is on screen and
-the session's cleared levels, and each scene tears its own entities down before the next one is
-built, so the two never share the screen.
+The game boots into the title screen (``TitleScene``), whose play card opens the level select
+(``LevelSelectScene``), which opens a stage when a card is clicked; ``--stage`` skips both menus and
+goes straight to that level. ``Game`` owns whichever scene is on screen and the session's cleared
+levels, and each scene tears its own entities down before the next one is built, so no two ever
+share the screen.
 
-A level scene is deliberately bare: no title screen or theme switching. The stage is loaded before
+A level scene is deliberately bare: no theme switching. The stage is loaded before
 the scene is built and plays the load animation (tiles rise, details land on them, then the block
 drops in) before it accepts any input. Landing on the goal raises ``WinOverlay``, which offers the
 next level, a retry and the way back to the level select. The palette lives in ``theme.py`` and is
@@ -42,6 +43,7 @@ from .hud import Hud
 from .intro import IntroTiming, LoadIntro
 from .layout import TILE_SIZE, board_center, cell_to_world
 from .level_select import LevelSelectScene
+from .title import TitleScene
 from .win_overlay import WinOverlay
 
 WINDOW_TITLE = "Mixi-Blox"
@@ -82,6 +84,9 @@ class Game:
         self.catalog = stages
         self.cleared: set[str] = set()
         self.scene: Entity | None = None
+
+    def show_title(self) -> None:
+        self._show(TitleScene(self.show_level_select))
 
     def show_level_select(self) -> None:
         self._show(LevelSelectScene(self.catalog, self.cleared, self.play))
@@ -273,7 +278,7 @@ class PrototypeScene(Entity):
 def build(
     stage_path: str | Path | None = None, window_type: str = "onscreen"
 ) -> tuple[Ursina, Game]:
-    """Open the window, then boot the level select — or ``stage_path`` when one is given."""
+    """Open the window, then boot the title screen — or ``stage_path`` when one is given."""
     app = Ursina(
         title=WINDOW_TITLE,
         borderless=False,
@@ -290,7 +295,7 @@ def build(
 
     game = Game(catalog.load_catalog())
     if stage_path is None:
-        game.show_level_select()
+        game.show_title()
     else:
         game.play(load_stage(stage_path))
     return app, game

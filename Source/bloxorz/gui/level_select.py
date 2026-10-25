@@ -1,4 +1,4 @@
-"""The level select: the screen the game boots into.
+"""The level select: the screen the title screen's play card opens.
 
 One card per stage, one row per stage group, and a cleared stage keeps the mechanism-cyan card for
 the rest of the session. Clicking a card starts that level. The order and the grouping come from

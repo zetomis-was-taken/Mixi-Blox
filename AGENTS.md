@@ -36,6 +36,7 @@ Source/bloxorz/gui/            Ursina prototype (issue #28).
   reaction.py                  Which mechanisms the block loads, and how they ease (no Ursina).
   results.py                   Move/clock text for the win overlay (no Ursina import).
   theme.py                     Palette (mapped in docs/gui/theme.md) and animation timing.
+  title.py                     Boot screen: wordmark, play/quit cards, Enter/Esc.
   widgets.py                   The flat card + label both menu screens are built from.
   win_overlay.py               Results card: next level / retry / level select.
 Source/bloxorz/bench/          Benchmark harness (issue #24).
@@ -70,8 +71,8 @@ pytest -q                                   # full suite (pytest.ini adds Source
 ruff check .                                # lint (E, F, I; line length 100)
 
 python Source/main.py --stage Source/bloxorz/core/stages/L1-01_long_corridor.json
-python Source/main.py --gui                 # Ursina game, boots the level select
-python Source/main.py --gui --stage FILE    # one level, no menu
+python Source/main.py --gui                 # Ursina game, boots the title screen
+python Source/main.py --gui --stage FILE    # one level, no menus
 
 PYTHONPATH=Source python -m bloxorz.bench.run_all   # fails until bloxorz.solvers exists
 python tools/verify_submission.py .         # CI also runs this on every push/PR
@@ -105,8 +106,9 @@ python tools/package.py [student_id ...]    # builds the submission ZIP
 
 Any related things belongs to the game space (ursina) and GUI should be follow by these docs the the folder: `docs/gui`
 
-Quick facts: run with `python Source/main.py --gui`; the game boots into the level select, and
-`--stage FILE` opens that level directly. Keys are WASD/arrows (`Tab` swaps the active cube on a
+Quick facts: run with `python Source/main.py --gui`; the game boots into a title screen (play opens
+the level select, quit or `Esc` closes the game), and `--stage FILE` opens that level directly. Keys
+are WASD/arrows (`Tab` swaps the active cube on a
 split stage, `Z` undoes a move, `R` retries), the block rolls a real quarter-turn, the HUD counts
 moves and time, and the goal raises a win overlay with next level / retry / level select. Camera constants, roll geometry,
 level flow, and known limitations are documented in `docs/gui/gui-scaffold.md`; palette changes

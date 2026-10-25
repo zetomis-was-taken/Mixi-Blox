@@ -30,9 +30,9 @@ still no solver panel and the palette is a first pass at the art direction
 - Steers a split pair one cube at a time: the active cube keeps the coral `#ff6973`, the idle one is
   peach `#ffb0a3`, `Tab` swaps them, and the HUD names the active cube. A direction key still moves
   the other cube when the active one has no such action.
-- Lets a puzzle be recovered from: `Z` rolls the last move back and `R` restarts the level, both
-  hinted on the HUD. Split switches can leave the block in a losing position, so neither is
-  optional.
+- Lets a puzzle be recovered from: `Z` rolls the last move back and `R` restarts the level —
+  replaying its load animation — both hinted on the HUD. Split switches can leave the block in a
+  losing position, so neither is optional.
 - Counts the run as it happens: the HUD's opposite corner shows the move count and the running
   clock, from the same `results.py` line the win overlay prints, so both always agree.
 - Ends a level on a win overlay: the move count and elapsed time, then next level, retry and back to
@@ -131,7 +131,9 @@ part of #28.
 ## Load animation
 
 `gui/intro.py` owns the sequence as an absolute-time timeline, and the scene reads progress from it
-each frame; no view keeps its own clock.
+each frame; no view keeps its own clock. `PrototypeScene._load_intro` builds it from the camera
+distance the last framing settled on, and the same call runs on a retry — so a retried stage plays
+the identical animation (with fresh random staggers) instead of jumping to its start pose.
 
 1. every non-void tile floats up from below the board (`intro.tile_progress(index)`), each with its
    own random delay inside `IntroTiming.tile_delay_max_seconds`, so the platform assembles instead
@@ -322,11 +324,13 @@ the level in `Game.cleared` and raises `WinOverlay`.
 
 The overlay is modal: the scene stops reading movement keys, and the overlay itself answers
 `Enter` (next level), `R` (retry) and `Esc` (level select). The same three actions are cards, so the
-flow never depends on knowing a key. Retry calls `PlayerController.retry` and dismisses the card,
-which puts the level back in play; the next level comes from `catalog.next_stage`, and a level with
-no successor — the last stage, or one loaded from an arbitrary `--stage` path — simply has no next
-card. Going back to the level select tears the level scene down (`PrototypeScene.teardown`) and
-rebuilds the grid with the cleared levels tinted.
+flow never depends on knowing a key. Retry calls `PlayerController.retry` — which zeroes the run —
+dismisses the card and builds a fresh `LoadIntro`, so the stage is put back exactly the way it was
+opened: the platform re-assembles from below and the block falls in last. The camera does not move.
+The next level comes from `catalog.next_stage`, and a level with no successor — the last stage, or
+one loaded from an arbitrary `--stage` path — simply has no next card. Going back to the level select
+tears the level scene down (`PrototypeScene.teardown`) and rebuilds the grid with the cleared levels
+tinted.
 
 Undo lives beside it: `PlayerController.history` is a stack of the immutable `State` values each
 move started from, paired with the action that left it. `Z` pops one entry and hands the view that
@@ -377,6 +381,12 @@ count.
 - Offscreen Ursina smoke run — scene builds, tiles and their detail pieces start below the board
   and the block above it, keys are ignored until `LoadIntro.finished`, tiles and details land on
   their resting heights, and the first legal move is accepted afterwards.
+- Offscreen retry probe — after two moves, `R` left the scene in place (`game.scene is scene`),
+  zeroed the counter and the clock, and started a fresh intro: one frame later the block was at
+  `y = 23.5` against a rest height of `1.0` and every tile offset was `-22.50` (the fitted camera
+  distance), a direction press during the replay was dropped, and the pieces landed back on the
+  start pose when it finished. The overlay's retry card behaved the same way: the card went away,
+  the intro restarted, and the level took a move afterwards.
 - Offscreen undo probe — `Z` on `L1-01` began a roll whose positions ran
   `(-2.5, 0.566, 0.576) → … → (-2.5, 0.5, 1.5)`, the pose the undone move started from, and
   `BlockView.animating` went false on landing. On `L3-01` the bridge stood at `-0.015` (open) after

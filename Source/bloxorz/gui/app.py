@@ -168,16 +168,8 @@ class PrototypeScene(Entity):
         # The camera is fitted before the load animation is built, so both use the same distance:
         # a piece travelling one camera distance starts outside the viewport, whatever the board
         # size and whatever the window's aspect ratio.
-        clearance = self._frame_camera(stage)
-        self.intro = LoadIntro(
-            len(self.board_view.tiles),
-            IntroTiming(
-                tile_rise=clearance,
-                obstacle_rise=clearance,
-                player_drop=clearance,
-            ),
-            obstacle_count=len(self.board_view.details),
-        )
+        self._frame_camera(stage)
+        self.intro = self._load_intro()
         # A resize changes the vertical field of view (the horizontal one is fixed), which is what
         # decides how much of the frame the board fills, so the framing is redone when it happens.
         application.base.accept("aspectRatioChanged", self._mark_reframe)
@@ -187,12 +179,29 @@ class PrototypeScene(Entity):
         self.parallax = parallax.ParallaxBackground()
         dot_shader.apply(self.board_view, self.block_view)
 
-    def _frame_camera(self, stage: Stage) -> float:
-        """Frame the board for the window as it is now, and return the distance that took.
+    def _load_intro(self) -> LoadIntro:
+        """The load timeline a level opens with: every piece rises from off-screen, block last.
+
+        Read from the camera distance the last framing settled on, so the travel is the same
+        whether the level is being opened or retried, and scales with the board and the window.
+        """
+        return LoadIntro(
+            len(self.board_view.tiles),
+            IntroTiming(
+                tile_rise=self._clearance,
+                obstacle_rise=self._clearance,
+                player_drop=self._clearance,
+            ),
+            obstacle_count=len(self.board_view.details),
+        )
+
+    def _frame_camera(self, stage: Stage) -> None:
+        """Frame the board for the window as it is now.
 
         The nominal distance comes from the grid, but a grid says nothing about how tightly the
         walkable footprint fills it, and the frame's vertical budget depends on the window's aspect
-        ratio. So the camera is pushed out until ``framing`` accepts the projected outline.
+        ratio. So the camera is pushed out until ``framing`` accepts the projected outline, and the
+        distance it settles on becomes ``_clearance`` for the load animation.
         """
 
         def measure(distance: float) -> tuple[float, float]:
@@ -204,9 +213,8 @@ class PrototypeScene(Entity):
             # vertically it is not, so the larger of the two edges is what has to fit.
             return ((max_x - min_x) / 2.0, max(abs(min_y), abs(max_y)))
 
-        distance = framing.fitting_distance(measure, _camera_distance(stage))
-        self._place_camera(stage, distance)
-        return distance
+        self._clearance = framing.fitting_distance(measure, _camera_distance(stage))
+        self._place_camera(stage, self._clearance)
 
     def _place_camera(
         self, stage: Stage, distance: float
@@ -279,7 +287,7 @@ class PrototypeScene(Entity):
         elif key == "z":
             self.controller.undo()
         elif key == "r":
-            self.controller.retry()
+            self._retry()
 
     def update(self) -> None:
         if self._reframe_pending:
@@ -320,9 +328,15 @@ class PrototypeScene(Entity):
         )
 
     def _retry(self) -> None:
-        """Start this level over from the overlay's retry card."""
+        """Start the level over: reset the run, then replay the load animation.
+
+        A retry puts the stage back the way it opened — the platform re-assembles from below and the
+        block drops in last — instead of the board jumping to its start pose. The camera stays where
+        it is; only the pieces are re-animated.
+        """
         if self.controller.retry():
             self._dismiss_overlay()
+            self.intro = self._load_intro()
 
     def _dismiss_overlay(self) -> None:
         if self.overlay is not None:

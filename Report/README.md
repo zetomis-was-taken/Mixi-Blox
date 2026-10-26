@@ -1,38 +1,50 @@
-# Hướng Dẫn Sử Dụng Khung Báo Cáo LaTeX (CSC14003 - Bloxorz)
+# Báo Cáo Đồ Án 1 - Bloxorz Solver (CSC14003)
 
-Thư mục này chứa toàn bộ mẫu báo cáo LaTeX chuẩn cho đồ án 1 môn **Cơ sở Trí tuệ nhân tạo (CSC14003)**.
+Báo cáo LaTeX của nhóm. File nguồn chính là `report.tex`, toàn bộ nội dung nằm trong `sections/`.
 
 ## 1. Cấu trúc thư mục
 
 ```text
-report/
-├── main.tex              # File nguồn LaTeX chính (đã phân mục theo đúng barem 30 điểm)
-├── figures/              # Chứa toàn bộ hình ảnh và biểu đồ thực nghiệm
-│   ├── logo_khtn.png
-│   ├── benchmark_search_time.pdf
-│   ├── benchmark_peak_memory.pdf
-│   ├── benchmark_expanded_nodes.pdf
-│   └── benchmark_solution_length.pdf
-└── README.md             # Tài liệu hướng dẫn này
+Report/
+├── report.tex              # File nguồn chính
+├── reportDoCS2025.cls      # Class của bộ môn
+├── biblio.tex              # Tài liệu tham khảo
+├── sections/               # Nội dung báo cáo
+│   ├── credits.tex         # Bảng phân công & lộ trình thực hiện
+│   ├── part1.tex           # Mô hình hóa bài toán
+│   ├── part2.tex           # Cài đặt các thuật toán tìm kiếm
+│   │   ├── bfs.tex, dfs.tex, ucs.tex, action_cost.tex, astar.tex
+│   ├── part3.tex           # Thiết kế kịch bản thực nghiệm
+│   ├── part4.tex           # Kết quả thực nghiệm & phân tích
+│   ├── part5.tex           # Giao diện & video demo
+│   ├── conclusion.tex      # Kết luận & phụ lục GenAI
+│   └── informed_search_ai_usage.tex
+├── tables/                 # Bảng sinh tự động bởi bench
+├── figures/                # Biểu đồ sinh tự động bởi bench + figures/logos/
+└── data/                   # Số liệu thô CSV/JSON sinh bởi bench
 ```
 
-## 2. Cách biên dịch file LaTeX
+## 2. Biên dịch
 
-### Cách 1: Sử dụng Overleaf (Khuyên dùng)
-1. Nén toàn bộ thư mục `report/` thành file `.zip`.
-2. Truy cập [Overleaf](https://www.overleaf.com), bấm **New Project** -> **Upload Project**.
-3. Chọn file `.zip` vừa nén để tải lên.
-4. Chọn compiler là **pdfLaTeX** hoặc **XeLaTeX** và bấm **Recompile**.
+Báo cáo được biên dịch **trực tuyến trên Prism**, không biên dịch cục bộ trong repo.
 
-### Cách 2: Biên dịch cục bộ (Local máy tính)
-Nếu máy bạn đã cài MiKTeX hoặc TeX Live:
+- File chính: `report.tex`
+- Compiler: **XeLaTeX** (class dùng `fontspec` + `polyglossia` cho tiếng Việt)
+- Không cần `--shell-escape`: báo cáo không dùng `minted` hay `lstlisting`
+
+Sau khi tải PDF về, lưu thành `Report/Report.pdf` để `tools/package.py` và
+`tools/verify_submission.py` tìm thấy (các file PDF/aux đã được `.gitignore` bỏ qua).
+
+## 3. Cập nhật số liệu thực nghiệm
+
 ```bash
-pdflatex main.tex
+python -m bloxorz.bench.run_all
 ```
 
-## 3. Cách cập nhật số liệu thực nghiệm tự động
+(hoặc `python Source/bloxorz/bench/run_all.py` từ thư mục gốc repo) sẽ ghi lại:
 
-Khi nhóm chạy thử nghiệm các thuật toán thông qua thư viện `benchmark`, chỉ cần:
-1. Chạy hàm `runner.to_latex_table()` hoặc `runner.export_latex_table("report/tables/benchmark_table.tex")` để xuất bảng mã LaTeX.
-2. Chạy `plot_benchmark_results(results, output_dir="report/figures")` để tự động làm mới các file đồ thị vector PDF trong thư mục `report/figures/`.
-3. Biên dịch lại file LaTeX là báo cáo sẽ tự động cập nhật bảng biểu và đồ thị mới nhất!
+- `Report/data/benchmark_results.csv` và `Report/data/benchmark_results.json`
+- `Report/tables/benchmark_results.tex` (bảng được `\input` từ `part4.tex`)
+- `Report/figures/benchmark_*.pdf` (biểu đồ so sánh)
+
+Sau đó biên dịch lại trên Prism để bảng và biểu đồ mới nhất xuất hiện trong báo cáo.

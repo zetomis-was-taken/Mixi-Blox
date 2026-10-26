@@ -1,7 +1,7 @@
-\subsection{Tìm kiếm theo chiều sâu (Depth-First Search, DFS)}
+\section{Tìm kiếm theo chiều sâu (Depth-First Search, DFS)}
 \label{sec:bloxorz-dfs}
 
-\subsubsection{Biến thể đã chọn: DFS lặp với ngăn xếp}
+\subsection{Biến thể đã chọn: DFS lặp với ngăn xếp}
 DFS được cài đặt dưới dạng lặp, dùng ngăn xếp LIFO tường minh thay cho đệ quy.
 Lớp \texttt{StackFrontier} kế thừa \texttt{Frontier} của vòng lặp chung và chỉ
 đổi thao tác lấy nút: nút được đưa vào gần nhất được mở rộng trước. Cách này
@@ -16,7 +16,7 @@ tức $2{,}1$ lần; mức tệ nhất là L4-02 với $168$ bước so với $2
 hiện tượng đường đi dài bất thường, nên việc mở rộng lại của IDS không cần
 thiết để so sánh ở mục thực nghiệm.
 
-\subsubsection{Trạng thái lặp, tính kết thúc và tính tối ưu}
+\subsection{Trạng thái lặp, tính kết thúc và tính tối ưu}
 Mỗi trạng thái được đưa vào ngăn xếp nhiều nhất một lần. \texttt{Frontier.push}
 từ chối khóa đã gặp, kể cả khi nút tương ứng còn đang chờ hoặc đã được mở rộng,
 nên tập đã gặp chính là cơ chế chặn chu trình. Trên đồ thị hữu hạn, ngăn xếp
@@ -30,7 +30,7 @@ mục~\ref{sec:bloxorz-ucs} trả $22$ bước với chi phí $22$. Vì vậy DF
 để kiểm chứng yêu cầu về duyệt sâu, không dùng thay UCS hay A* khi cần nghiệm
 tối ưu.
 
-\subsubsection{Kiểm chứng trên bộ dữ liệu}
+\subsection{Kiểm chứng trên bộ dữ liệu}
 Kiểm thử phát lại mọi đường đi qua \texttt{Board} và so chi phí với chi phí
 tính lại, nên đường không hợp lệ hoặc chi phí sai đều bị bắt. Ba màn nhỏ có
 đáp án tính tay đều được giải với $6$, $4$ và $4$ bước, khớp đáp án. Vì DFS
@@ -47,7 +47,7 @@ Trên mười màn chính thức, DFS giải được cả mười và mọi đ�
 lệ. DFS mở rộng ít nút hơn UCS ở $8/10$ màn vì dừng ngay khi chạm đích, nhưng
 đỉnh ngăn xếp lại lớn hơn ở cả $10/10$ màn.
 
-\subsubsection{Giới hạn và phạm vi kết luận}
+\subsection{Giới hạn và phạm vi kết luận}
 Các số trên là kết quả của bộ giải, không phải phép đo thời gian hay bộ nhớ;
 phép đo thuộc công cụ chung và chưa được thực hiện ở đây.
 

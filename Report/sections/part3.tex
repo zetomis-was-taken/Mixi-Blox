@@ -1,0 +1,19 @@
+\chapter{Thiết kế kịch bản thực nghiệm (Experimental Setup)}
+
+\newpage
+
+\section{Phân loại bộ dữ liệu kiểm thử (Test Cases)}
+Bộ dữ liệu gồm 10 màn chơi được phân loại theo 4 cấp độ phức tạp tăng dần:
+\begin{itemize}
+    \item \textbf{Nhóm 1 (Cơ bản)}: Màn chơi chỉ gồm các ô sàn kiên cố, không có ô chức năng đặc biệt (Level 1, Level 2).
+    \item \textbf{Nhóm 2 (Ô dễ vỡ - Fragile Tiles)}: Màn chơi có các dải ô cam dễ vỡ buộc khối phải đi qua ở tư thế nằm (Level 3, Level 4).
+    \item \textbf{Nhóm 3 (Cầu \& Công tắc)}: Màn chơi có hệ thống cầu đóng/mở được điều khiển bởi Soft Switches và Heavy Switches (Level 5, Level 6, Level 7).
+    \item \textbf{Nhóm 4 (Phức tạp \& Phân tách khối)}: Màn chơi quy mô lớn kết hợp Split Switches, tách 2 khối nhỏ điều khiển độc lập và ghép nối lại (Level 8, Level 9, Level 10).
+\end{itemize}
+
+\section{Môi trường thực nghiệm}
+\begin{itemize}
+    \item \textbf{Phần cứng}: CPU AMD/Intel [Ghi rõ cấu hình máy của bạn], RAM 16GB.
+    \item \textbf{Hệ điều hành}: Windows 11 64-bit.
+    \item \textbf{Công cụ đo lường}: Module \texttt{time.perf_counter} (thời gian chính xác cao) và module \texttt{tracemalloc} (đo RAM đỉnh thực tế).
+\end{itemize}

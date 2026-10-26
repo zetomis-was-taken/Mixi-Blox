@@ -1,0 +1,57 @@
+\chapter{Mô hình hóa bài toán tìm kiếm (Problem Formulation)}
+
+\newpage
+
+\section{Không gian trạng thái (State Space)}
+Trong trò chơi Bloxorz, không gian trạng thái $S$ bao gồm:
+\begin{enumerate}
+    \item \textbf{Định hướng và vị trí khối hộp}:
+    Khối có kích thước $1 \times 1 \times 2$, tại mỗi bước tồn tại ở một trong ba trạng thái định hướng $O$:
+    \begin{itemize}
+        \item \textbf{Đứng (Standing - S)}: Khối chiếm 1 ô duy nhất tại tọa độ $(r, c)$.
+        \item \textbf{Nằm ngang (Lying Horizontally - H)}: Khối chiếm 2 ô liền kề $(r, c)$ và $(r, c + 1)$.
+        \item \textbf{Nằm dọc (Lying Vertically - V)}: Khối chiếm 2 ô liền kề $(r, c)$ và $(r + 1, c)$.
+    \end{itemize}
+    Trường hợp phân tách khối (Split state): Trạng thái lưu tọa độ của cả hai khối lập phương $1 \times 1 \times 1$: $(r_1, c_1)$ và $(r_2, c_2)$ kèm con trỏ chỉ định khối đang được điều khiển.
+    
+    \item \textbf{Trạng thái cầu (Bridges Configuration)}:
+    Giả sử màn chơi có $k$ cây cầu, trạng thái của các cây cầu được biểu diễn dưới dạng tuple hoặc bitmask nhị phân $B = (b_1, b_2, \dots, b_k)$ với $b_i \in \{0, 1\}$ (0: Đóng / Void, 1: Mở / Sàn).
+\end{enumerate}
+Do đó, một trạng thái tổng quát được biểu diễn chính xác là một bộ:
+\begin{equation}
+    s = (O, \text{BlockPosition}, B)
+\end{equation}
+
+\section{Không gian hành động (Actions)}
+Tại mỗi bước, tập hành động hợp lệ $A = \{\text{Up}, \text{Down}, \text{Left}, \text{Right}\}$. Khi khối bị tách thành 2 khối nhỏ, hành động mở rộng thêm thao tác hoán đổi quyền điều khiển (\texttt{SwitchControl}).
+
+\section{Mô hình chuyển trạng thái (Transition Model)}
+Bảng \ref{tab:transition_rules} mô tả quy luật biến đổi tất định vị trí và định hướng khi thực hiện hành động lăn từ tọa độ tham chiếu $(r, c)$:
+
+\begin{table}[htbp]
+\centering
+\caption{Quy luật chuyển đổi trạng thái khi lăn khối 1×1×2}
+\label{tab:transition_rules}
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Trạng thái hiện tại} & \textbf{Up} & \textbf{Down} & \textbf{Left} & \textbf{Right} \\
+\midrule
+Đứng $S(r, c)$ & $V(r-2, c)$ & $V(r+1, c)$ & $H(r, c-2)$ & $H(r, c+1)$ \\
+Nằm ngang $H(r, c)$ & $H(r-1, c)$ & $H(r+1, c)$ & $S(r, c-1)$ & $S(r, c+2)$ \\
+Nằm dọc $V(r, c)$ & $S(r-1, c)$ & $S(r+2, c)$ & $V(r, c-1)$ & $V(r, c+1)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Kiểm tra tính hợp lệ \& Trạng thái kết thúc}
+\begin{itemize}
+    \item \textbf{Nước đi không hợp lệ (Illegal Move)}: Một hành động lăn bị coi là không hợp lệ nếu bất kỳ phần nào của khối chiếm ô ngoài bản đồ, ô trống (Void), ô cầu đang ở trạng thái Đóng ($b_i = 0$), hoặc khối rơi vào trạng thái Đứng trên ô màu cam dễ vỡ (Fragile Tile).
+    \item \textbf{Kiểm tra đích (Goal Test)}: Trạng thái đích đạt được khi và chỉ khi khối ở trạng thái \textbf{Đứng (Standing)} tại tọa độ ô mục tiêu (Goal Hole).
+\end{itemize}
+
+\section{Quản lý trạng thái lặp (Cycle Detection \& Visited Set)}
+Để đảm bảo thuật toán không bị rơi vào chu trình vô hạn, cấu trúc dữ liệu \texttt{visited} được cài đặt bằng bảng băm (\texttt{set} trong Python) với khóa băm (hashable key) là tuple bất biến:
+\begin{equation}
+    \text{key} = (O, \text{tuple}(\text{pos}), \text{tuple}(B))
+\end{equation}

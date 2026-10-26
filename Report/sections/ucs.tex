@@ -1,7 +1,7 @@
-\subsection{Tìm kiếm chi phí đồng nhất (Uniform-Cost Search, UCS)}
+\section{Tìm kiếm chi phí đồng nhất (Uniform-Cost Search, UCS)}
 \label{sec:bloxorz-ucs}
 
-\subsubsection{Biểu diễn và giao diện dùng chung}
+\subsection{Biểu diễn và giao diện dùng chung}
 Trạng thái \texttt{State(cubes, bridges)} lưu các ô khối đang chiếm và cấu hình
 cầu. Khóa chuẩn hóa chứa cả hai trường; hai lập phương sau khi tách được sắp
 theo vị trí. Hành động \texttt{(cube\_index, direction)} chỉ định lập phương
@@ -10,7 +10,7 @@ thái. Bộ giải dùng \texttt{Board.successors} và không cài lại luật 
 
 \input{sections/action_cost}
 
-\subsubsection{Thứ tự chi phí và xử lý đường rẻ hơn}
+\subsection{Thứ tự chi phí và xử lý đường rẻ hơn}
 UCS lấy nút có chi phí tích lũy $g$ nhỏ nhất từ hàng đợi ưu tiên (priority queue).
 Lớp \texttt{CostFrontier} quản lý bảng chi phí tốt nhất theo khóa trạng thái,
 các nút đang chờ và hàng đợi \texttt{heapq}. Khi phát hiện đường rẻ hơn, nút
@@ -31,7 +31,7 @@ hữu hạn và không áp giới hạn, thuật toán kết thúc bằng nghi�
 không có nghiệm. Thuật toán kiểm tra chi phí hữu hạn và cận tối thiểu khi
 frontier nhận một cạnh mới.
 
-\subsubsection{Vòng lặp, bộ đếm và giới hạn}
+\subsection{Vòng lặp, bộ đếm và giới hạn}
 UCS gọi \texttt{base.search(stage, caps, frontier=...)} theo hạ tầng chung
 của nhóm. Vòng lặp quản lý bộ đếm và giới hạn; frontier sở hữu chính sách
 trạng thái lặp và thứ tự lấy nút. Không thay đổi mã base hoặc giao diện
@@ -49,7 +49,7 @@ giới hạn và không có nghiệm đều trả \texttt{Counts}. Đồng hồ 
 chỉ thực thi giới hạn; thời gian và bộ nhớ thực nghiệm do công cụ đo chung
 phụ trách. Màn chơi đã được nạp và biên dịch trước lời gọi bộ giải.
 
-\subsubsection{Kiểm chứng tính đúng và giới hạn}
+\subsection{Kiểm chứng tính đúng và giới hạn}
 Kiểm thử so sánh với ba màn có đáp án tính tay, phát lại đường đi, kiểm tra
 giới hạn, trạng thái không có nghiệm, đường rẻ hơn, bản ghi cũ và số nút
 hiện hành. Trên mười màn chính thức, đồ thị được duyệt độc lập và đảo cạnh

@@ -1,11 +1,11 @@
-\subsection{Tìm kiếm theo chiều rộng (Breadth-First Search, BFS)}
+\section{Tìm kiếm theo chiều rộng (Breadth-First Search, BFS)}
 \label{sec:bloxorz-bfs}
 
 BFS sử dụng chung \texttt{State}, \texttt{Action}, \texttt{Board} và vòng lặp tìm kiếm
 chung của solver cơ sở. Sự khác biệt của BFS nằm ở chính sách lấy các node: hàng đợi
 FIFO.
 
-\subsubsection{Thứ tự FIFO và chiến lược}
+\subsection{Thứ tự FIFO và chiến lược}
 
 Đối với BFS, frontier là hàng đợi FIFO. Hai phương thức quan trọng trong hàng đợi gồm
 \texttt{push} và \texttt{pop}. Trong đó, \texttt{push} sẽ không duyệt lại các node đã
@@ -20,7 +20,7 @@ cây tìm kiếm đúng bằng một bước, nên độ sâu chính là số b�
 \texttt{search(stage, caps, frontier=Frontier())}: luật trò chơi nằm ở
 \texttt{Board.successors}, còn \texttt{Frontier()} đã là hàng đợi FIFO.
 
-\subsubsection{Quan hệ với mô hình chi phí}
+\subsection{Quan hệ với mô hình chi phí}
 
 BFS dùng FIFO và không đọc \texttt{step\_cost}, nên thuật toán chỉ tối ưu số bước di
 chuyển, không tối ưu chi phí. Trên các màn chỉ gồm ô thường, mọi bước đi đều có giá trị
@@ -28,7 +28,7 @@ chuyển, không tối ưu chi phí. Trên các màn chỉ gồm ô thường, m
 bước không còn bằng 1 nên hai mục tiêu tách nhau: BFS có thể trả về đường ít bước hơn
 nhưng đắt hơn UCS (ví dụ ở mục~\ref{sec:bloxorz-ucs}).
 
-\subsubsection{Vòng lặp chung, bộ đếm và giới hạn}
+\subsection{Vòng lặp chung, bộ đếm và giới hạn}
 
 Phần cài đặt của BFS gọi \texttt{base.search(stage, caps, frontier=Frontier())}, khai
 báo frontier tường minh và đối xứng với \texttt{ucs.py} và \texttt{astar.py}, dù
@@ -44,7 +44,7 @@ Gọi $V$ và $E$ là số trạng thái và cạnh đạt được: BFS chạy 
 dùng $O(V)$ bộ nhớ cho tập trạng thái đã gặp và frontier, và không có hàng đợi ưu tiên
 nên không phát sinh thừa số $\log$.
 
-\subsubsection{Kiểm chứng và kết quả}
+\subsection{Kiểm chứng và kết quả}
 
 Ba màn có đáp án tính tay cho kết quả 6, 4 và 4 bước, trùng với
 \texttt{expected.optimal\_cost}. Với mỗi màn, đường đi trả về được phát lại trên

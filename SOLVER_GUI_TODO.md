@@ -35,7 +35,7 @@ controller seam, two UI surfaces, input gating, a mock, tests, docs.
 
 ## 1. Decisions to settle first
 
-Settle these before writing the driver — they change its shape. Recommended default in **bold**.
+**Settled — the recommended default was taken for all six.** The driver is built to them.
 
 1. **Where Solve lives**: **a small panel on the level scene** (four algorithm cards) vs. a level
    select entry vs. both. Level-scene-only is the smallest change and matches "Solve buttons".
@@ -58,27 +58,32 @@ Settle these before writing the driver — they change its shape. Recommended de
 **New file: `Source/bloxorz/gui/replay.py`.** No Ursina import, like `intro.py` / `results.py` /
 `catalog.py`, so it is testable headless.
 
-- [ ] A `Replay` object built from a `SearchResult`, the `Board`, and a step-pacing value.
-- [ ] It computes the **state sequence once**, up front, by walking `board.successors` and matching
+- [x] A `Replay` object built from a `SearchResult`, the `Board`, and a step-pacing value.
+- [x] It computes the **state sequence once**, up front, by walking `board.successors` and matching
       each `Action` in `path`. Never construct a `State`; never re-implement a transition.
-- [ ] It raises/short-circuits on a path that cannot be followed (an illegal action) — see traps.
-- [ ] State machine: `ready → playing → paused → finished`, plus `aborted`. Small, explicit,
+- [x] It raises/short-circuits on a path that cannot be followed (an illegal action) — see traps.
+      A path the engine cannot follow raises `ValueError`; a non-`solved` result, or a solved one
+      whose path is empty, finishes at once with `playable == False`.
+- [x] State machine: `ready → playing → paused → finished`, plus `aborted`. Small, explicit,
       no booleans soup.
-- [ ] `advance(dt)`-style tick that returns "start the next roll" only after the previous roll
+- [x] `advance(dt)`-style tick that returns "start the next roll" only after the previous roll
       finished and the inter-move pause elapsed; one action in flight at a time.
-- [ ] `progress` as `(index, total)` for the HUD line, and `remaining` for the card.
-- [ ] `stop()` returns the pre-solve `State` (and every intermediate state it produced) so the
-      scene can restore without replaying in reverse.
-- [ ] Speed multiplier (`1.0` default) applied to the pause only.
-- [ ] Empty `path` with `status == "solved"` is a valid, instantly-finished replay (start already
+- [x] `progress` as `(index, total)` for the HUD line, and `remaining` for the card.
+- [x] `stop()` returns the pre-solve `State` (and every intermediate state it produced) so the
+      scene can restore without replaying in reverse. The steps themselves are public, so the
+      scene can also re-sync the view directly.
+- [x] Speed multiplier (`1.0` default) applied to the pause only.
+- [x] Empty `path` with `status == "solved"` is a valid, instantly-finished replay (start already
       at goal) — no divide-by-zero, no phantom roll.
 
-**Pacing constant:** add the inter-move pause to `gui/theme.py` beside `ROLL_SECONDS`
-(a named constant, no magic number). Document it in `docs/gui/theme.md` only if it is
-user-visible.
+**Pacing constant:** the driver takes the pause as a required argument (`pause`) and `replay.py`
+stays Ursina-free, so `theme.REPLAY_PAUSE_SECONDS` is added in Phase E together with the scene
+wiring that feeds it — the same split `intro.py` uses for its `IntroTiming` durations.
 
 **Done when:** a headless test can drive a fake path from start to goal with no Ursina installed,
-and asserts the state sequence, the terminal status, and the restore value.
+and asserts the state sequence, the terminal status, and the restore value. ✅
+`tests/test_gui_replay.py` (11 tests) does this with a BFS-backed mock solver, plus the split-cube
+index case and the illegal-path rejection.
 
 ---
 
@@ -185,7 +190,7 @@ inside `bloxorz.solvers/` (that package is owned by #18–#23 and policed by `te
 
 Follow the existing headless style; no Ursina import in `tests/`.
 
-- [ ] `tests/test_gui_replay.py`: state sequence from a fixed `path`, one-action-at-a-time
+- [x] `tests/test_gui_replay.py`: state sequence from a fixed `path`, one-action-at-a-time
       pacing, `stop()` restore value, empty path, illegal path rejection, `cap`/`unsolvable`
       producing no movie.
 - [ ] Extend `tests/test_gui_controller.py`: replay-apply does not touch `moves`/`history`/`elapsed`

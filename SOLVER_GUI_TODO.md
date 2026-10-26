@@ -92,17 +92,21 @@ index case and the illegal-path rejection.
 `PlayerController` can only take a `Direction` (`move` → `resolve`). Playback has a concrete
 action and must not re-resolve it.
 
-- [ ] Add one small method that applies `(next_state, action)` directly: update `state`, `active`
+- [x] Add one small method that applies `(next_state, action)` directly: update `state`, `active`
       (via the existing `_active_after`), set `animating`, call `block.animate(...)`, and reuse
-      `_animation_finished` for the goal.
-- [ ] It **must not** touch `moves`, `elapsed`, or `history` — replay is not a player move and
+      `_animation_finished` for the goal. (`PlayerController.play`)
+- [x] It **must not** touch `moves`, `elapsed`, or `history` — replay is not a player move and
       must not be undoable with `Z`.
-- [ ] It refuses while `animating` or `cleared`, exactly like `move`.
-- [ ] Do not duplicate `move`'s body: factor the shared tail (state, active, animating, animate)
-      so both paths use one implementation.
+- [x] It refuses while `animating` or `cleared`, exactly like `move`.
+- [x] Do not duplicate `move`'s body: factor the shared tail (state, active, animating, animate)
+      so both paths use one implementation. (`_begin`)
+- [x] The pair is checked against `Board.successors` rather than trusted, so a replay that drifted
+      out of step with the board is refused instead of rolling to an unreachable pose.
 
 **Done when:** existing `tests/test_gui_controller.py` still passes, and a new test shows
-replay-apply leaves `moves == 0`, `history == []`, and still fires the goal callback.
+replay-apply leaves `moves == 0`, `history == []`, and still fires the goal callback. ✅
+Three playback tests added (apply without counting, full path to the goal via the exit hook,
+illegal pair and second-roll refusal).
 
 ---
 
@@ -193,7 +197,7 @@ Follow the existing headless style; no Ursina import in `tests/`.
 - [x] `tests/test_gui_replay.py`: state sequence from a fixed `path`, one-action-at-a-time
       pacing, `stop()` restore value, empty path, illegal path rejection, `cap`/`unsolvable`
       producing no movie.
-- [ ] Extend `tests/test_gui_controller.py`: replay-apply does not touch `moves`/`history`/`elapsed`
+- [x] Extend `tests/test_gui_controller.py`: replay-apply does not touch `moves`/`history`/`elapsed`
       and still triggers `on_goal`.
 - [ ] `tests/test_gui_results.py`: replay HUD/card wording (pure functions).
 - [ ] A `SearchResult` mock with a **validated** path; assert every action is in

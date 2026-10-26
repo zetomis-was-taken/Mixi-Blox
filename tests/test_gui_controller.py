@@ -81,6 +81,11 @@ def _moved_cube(before: State, after: State) -> int:
     return next(index for index, cube in enumerate(before.cubes) if cube not in after.cubes)
 
 
+def _pair_from(board: Board, state: State, action: Action) -> tuple[State, Action]:
+    """The engine's ``(next_state, action)`` pair for ``action`` taken from ``state``."""
+    return next(pair for pair in board.successors(state) if pair[1] == action)
+
+
 def test_reaching_the_goal_calls_the_exit_hook_once() -> None:
     stage = load_stage(STAGES / "L1-01_long_corridor.json")
     board = Board(stage)
@@ -293,3 +298,61 @@ def test_a_cleared_level_takes_no_more_moves_until_undo() -> None:
     # Undo puts the level back in play, so the win overlay can be dismissed by stepping back.
     assert controller.undo() is True
     assert controller.cleared is False
+
+
+def test_playback_applies_an_action_without_counting_it_as_a_move() -> None:
+    stage = load_stage(STAGES / "L1-01_long_corridor.json")
+    board = Board(stage)
+    block = FakeBlock()
+    controller = PlayerController(board, block, lambda: None)
+
+    next_state, action = board.successors(controller.state)[0]
+    assert controller.play(next_state, action) is True
+
+    assert controller.state == next_state
+    assert controller.animating is True
+    assert block.action == action
+    assert block.on_done is not None
+    assert controller.moves == 0
+    assert controller.history == []
+
+    block.finish()
+    assert controller.animating is False
+    # Playback never lands on the undo stack, so Z cannot walk a solver's movie backwards.
+    assert controller.undo() is False
+
+
+def test_playback_can_reach_the_goal_through_the_ordinary_hook() -> None:
+    stage = load_stage(STAGES / "L1-01_long_corridor.json")
+    board = Board(stage)
+    block = FakeBlock()
+    exits: list[bool] = []
+    controller = PlayerController(board, block, lambda: exits.append(True))
+
+    for action in _path_to(board, board.is_goal):
+        next_state, _ = _pair_from(board, controller.state, action)
+        assert controller.play(next_state, action) is True
+        block.finish()
+
+    assert board.is_goal(controller.state)
+    assert controller.cleared is True
+    assert exits == [True]
+    assert controller.moves == 0, "the solver's path is not the player's run"
+
+
+def test_playback_refuses_an_illegal_pair_and_a_second_roll() -> None:
+    stage = load_stage(STAGES / "L1-01_long_corridor.json")
+    board = Board(stage)
+    block = FakeBlock()
+    controller = PlayerController(board, block, lambda: None)
+
+    start = controller.state
+    next_state, action = board.successors(start)[0]
+    # Void to the left of L1-01's start: no such transition exists, so the pair is refused.
+    assert controller.play(next_state, (0, "L")) is False
+    assert controller.state == start
+    assert controller.animating is False
+    assert block.on_done is None
+
+    assert controller.play(next_state, action) is True
+    assert controller.play(next_state, action) is False, "one roll at a time"

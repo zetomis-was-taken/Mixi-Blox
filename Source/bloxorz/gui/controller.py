@@ -5,8 +5,10 @@ constructs a state or re-implements a transition. Ursina stays out of this modul
 can be tested headless.
 
 An input resolves to one concrete ``(next_state, action)`` pair, and that action is what the view
-animates — the shape solver playback needs. On a split stage the two cubes are steered separately:
-``active`` names the cube the next input moves and ``switch_cube`` hands it to the other one.
+animates — the shape solver playback needs. ``play`` is that second caller: it applies a pair the
+replay planned, as an action that costs the player nothing. On a split stage the two cubes are
+steered separately: ``active`` names the cube the next input moves and ``switch_cube`` hands it to
+the other one.
 
 It is also the level's memory: the move count, the clock the scene ticks, a stack of the states a
 move passed through with the action that left each one (``undo``), and ``cleared`` once the block
@@ -84,14 +86,34 @@ class PlayerController:
             return False
 
         next_state, action = resolved
+        self.history.append((self.state, action))
+        self.moves += 1
+        self._begin(next_state, action)
+        return True
+
+    def play(self, next_state: State, action: Action) -> bool:
+        """Apply one action chosen elsewhere — solver playback — as a move that costs nothing.
+
+        The pair comes from a ``SearchResult.path`` planned through the engine, but it is checked
+        against ``Board.successors`` rather than trusted: a replay that drifted out of step with
+        the board is refused here instead of rolling to a pose the board cannot reach. Playback is
+        not the player's run, so ``moves``, ``elapsed`` and ``history`` stay untouched and ``Z``
+        cannot take it back; reaching the goal still fires through the ordinary animation hook.
+        """
+        if self.animating or self.cleared:
+            return False
+        if (next_state, action) not in self.board.successors(self.state):
+            return False
+        self._begin(next_state, action)
+        return True
+
+    def _begin(self, next_state: State, action: Action) -> None:
+        """Commit one legal transition and start its animation."""
         start = self.state
         self._active = self._active_after(start, next_state, action)
         self.state = next_state
-        self.history.append((start, action))
-        self.moves += 1
         self.animating = True
         self.block.animate(start, next_state, action, self._animation_finished)
-        return True
 
     def undo(self) -> bool:
         """Roll the last move back. Returns whether there was one to take back.

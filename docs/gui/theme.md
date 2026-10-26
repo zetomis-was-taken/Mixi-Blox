@@ -149,6 +149,8 @@ has given way. The crack opens and shuts with the weight.
 - `Source/bloxorz/gui/hud.py` — every HUD line, all in `TEXT`.
 - `Source/bloxorz/gui/level_select.py`, `Source/bloxorz/gui/win_overlay.py` — menu cards and the
   results panel (via `widgets.py`, which holds no colours of its own).
+- `Source/bloxorz/gui/solver_panel.py`, `Source/bloxorz/gui/solver_overlay.py` — the Solve cards
+  and the solver result card, using the same menu pair as the win overlay.
 - `Source/bloxorz/gui/parallax.py` — the parallax square colour and per-layer opacity.
 
 No other module contains a colour value.

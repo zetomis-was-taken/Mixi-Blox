@@ -202,3 +202,41 @@ def test_an_illegal_action_is_rejected_when_the_path_is_planned() -> None:
 
     with pytest.raises(ValueError):
         Replay(board, result, PAUSE)
+
+
+def test_the_mock_path_is_legal_at_every_step() -> None:
+    """An invalid mock looks like a rendering bug, so assert the fixture itself first."""
+    board, result = _corridor()
+    state = board.start()
+    cost = 0.0
+
+    for action in result.path:
+        matches = [landing for landing, candidate in board.successors(state) if candidate == action]
+        assert matches, f"{action} is not legal from {state.key()}"
+        landing = matches[0]
+        cost += board.step_cost(state, action, landing)
+        state = landing
+
+    assert board.is_goal(state)
+    assert result.cost == cost
+
+
+@pytest.mark.parametrize(
+    "stage_file", sorted(STAGES.glob("*.json")), ids=lambda path: path.stem
+)
+def test_every_benchmark_stage_replays_from_the_start_to_the_goal(stage_file: Path) -> None:
+    """The driver has to survive every board: fragile, switch/bridge, and the split pair."""
+    board = Board(load_stage(stage_file))
+    replay = Replay(board, _solved(board), PAUSE)
+    assert replay.playable is True
+
+    replay.start()
+    step = replay.advance(0.0)
+    landed_last = False
+    while step is not None:
+        landed_last = replay.roll_finished()
+        step = replay.advance(PAUSE)
+
+    assert landed_last is True, "the last roll must be the one that ends the replay"
+    assert replay.phase == "finished"
+    assert board.is_goal(replay.steps[-1][1])

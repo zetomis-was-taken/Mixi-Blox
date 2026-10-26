@@ -27,6 +27,7 @@ Source/bloxorz/gui/            Ursina prototype (issue #28).
   block_view.py                Player boxes and pivot-based roll animation.
   catalog.py                   Stage play order, groups and next level (no Ursina import).
   controller.py                Current State, active cube, moves/clock, undo, retry, goal callback.
+  demo_solver.py               Dev-only BFS behind --replay-demo (deleted when #18 lands).
   dot_shader.py                Screen-space halftone shader for tiles and player.
   framing.py                   How far to push the camera out so the board fits (no Ursina).
   hud.py                       Corner HUD: level name, live moves/clock, key hints, active cube.
@@ -116,7 +117,9 @@ the level select, quit or `Esc` closes the game), and `--stage FILE` opens that 
 are WASD/arrows (`Tab` swaps the active cube on a split stage, `Z` undoes a move, `R` restarts the
 level and replays its load animation), one roll per key press — holding a direction does not repeat
 — the block rolls a real quarter-turn and an undo rolls it back the same way, the HUD counts moves
-and time, and the goal raises a win overlay with next level / retry / level select. The camera fits
-each board to the window and refits after a resize. Camera constants, roll geometry, level flow, and
-known limitations are documented in `docs/gui/gui-scaffold.md`; palette changes belong in
-`gui/theme.py`.
+and time, and the goal raises a win overlay with next level / retry / level select. When the app is
+given an algorithms mapping (`--replay-demo` today, `bloxorz.solvers` later), a Solve panel replays
+the chosen path as a movie: `Space` pauses, `Esc` stops and restores the player's own run, and a
+solver run never counts as a clear. The camera fits each board to the window and refits after a
+resize. Camera constants, roll geometry, level flow, and known limitations are documented in
+`docs/gui/gui-scaffold.md`; palette changes belong in `gui/theme.py`.

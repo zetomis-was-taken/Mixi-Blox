@@ -1,9 +1,9 @@
 # GUI Scaffold (Ursina)
 
 A short report on the current Ursina prototype (#28). This is a runnable game, not the finished one:
-it boots into a title screen, then a level select, and ends a level on a results card, but there is
-still no solver panel and the palette is a first pass at the art direction
-([`theme.md`](theme.md)).
+it boots into a title screen, then a level select, and ends a level on a results card; a Solve
+control on every level replays a solver's answer as a movie. The palette is still a first pass at
+the art direction ([`theme.md`](theme.md)).
 
 ## What it does
 
@@ -35,6 +35,18 @@ still no solver panel and the palette is a first pass at the art direction
   losing position, so neither is optional.
 - Counts the run as it happens: the HUD's opposite corner shows the move count and the running
   clock, from the same `results.py` line the win overlay prints, so both always agree.
+- Offers a Solve control once a level has loaded: one card per algorithm in the injected mapping,
+  hidden while the level is loading or won. A click shows a "BFS…" busy card and starts the search
+  on the next frame, so the window never looks dead during a blocking `solve`.
+- Replays the answer as a movie: the block rolls the solver's path through the same quarter-turn
+  animation, one roll at a time with `REPLAY_PAUSE_SECONDS` between them. The HUD's right-hand line
+  reads `BFS replay — move 4 of 19`; `Space` pauses, `Esc` stops and puts the player's own run back,
+  and direction keys, `Tab`, `Z` and `R` are ignored while a movie plays.
+- Reports the run on a solver card: outcome, solution length and cost, and the three `Counts`, with
+  watch again / close / levels. `cap` and `unsolvable` show the card without a movie, a solver run
+  never counts as a player clear, and time/memory are not shown — the GUI may not clock a search.
+- Runs with a demo solver when asked: `--replay-demo` injects `gui/demo_solver.py`'s throwaway BFS,
+  so playback can be exercised before `bloxorz.solvers` (#18–#23) lands.
 - Ends a level on a win overlay: the move count and elapsed time, then next level, retry and back to
   the level select — as cards or as `Enter` / `R` / `Esc`.
 - Draws an optional parallax backdrop: two regular grids of filled and outlined `#15788c` squares,
@@ -48,6 +60,7 @@ still no solver panel and the palette is a first pass at the art direction
 pip install -r requirements.txt
 python Source/main.py --gui                      # title screen
 python Source/main.py --gui --stage FILE         # one level, no menus
+python Source/main.py --gui --replay-demo        # + a dev-only BFS on the Solve panel
 ```
 
 Ursina needs Python `< 3.14` (see `requirements.txt`). The level select lists every stage under
@@ -61,7 +74,8 @@ Ursina needs Python `< 3.14` (see `requirements.txt`). The level select lists ev
 | `Source/bloxorz/gui/board_view.py` | One flat tile per non-void cell, plus per-kind detail pieces; bridge tint/height |
 | `Source/bloxorz/gui/block_view.py` | Player boxes and pivot-based roll animation |
 | `Source/bloxorz/gui/catalog.py` | The stage catalog: play order, grouping and the next level (no Ursina) |
-| `Source/bloxorz/gui/controller.py` | Current `State`, the active cube, input → one `(next_state, action)` pair, moves/clock, undo, retry, goal callback |
+| `Source/bloxorz/gui/controller.py` | Current `State`, the active cube, input → one `(next_state, action)` pair, moves/clock, undo, retry, goal callback, and the run snapshot playback borrows |
+| `Source/bloxorz/gui/demo_solver.py` | Dev-only BFS behind `--replay-demo`; not the submission's solver, deleted when #18 lands |
 | `Source/bloxorz/gui/dot_shader.py` | Screen-space halftone shader applied to tiles and player only |
 | `Source/bloxorz/gui/framing.py` | How far to push the camera out so the board fits the frame (no Ursina) |
 | `Source/bloxorz/gui/hud.py` | The corner HUD: level name, live move count and clock, key hints, active cube |
@@ -348,11 +362,17 @@ count.
 
 ## Known limitations
 
-- No solver panel, replay, or stats display.
+- The Solve control only appears when the app was given an algorithms mapping. Plain `--gui` (and
+  `--gui --stage`) has no mapping, so it plays exactly as before; `--replay-demo` supplies one.
+- Playback always starts the stage over: the board is reset to the level's start, and the player's
+  own run — position, move count, clock, undo stack — is held aside and put back when the card is
+  closed or the movie stopped.
+- The solver card shows `Counts` only. Time and memory are the benchmark harness's job, because the
+  GUI may not start a clock around a search (contract rule 5).
 - The level select shows stage ids only: the stage names appear once a level is open.
 - The level select has no way back to the title screen, so the quit card is reachable only at boot.
 - Holding a direction key does not repeat: a long corridor is tapped out key press by key press.
-- Split/merge/teleport changes snap instead of rolling — forward and when undone.
+- Split/merge/teleport changes snap instead of rolling — forward, when undone, and during a movie.
 - A fragile panel never breaks on screen. A standing block on fragile is an illegal move
   (ADR-003), so no state exists in which the panel has given way; the crack only opens and shuts
   with the weight.
@@ -364,7 +384,7 @@ count.
 
 ## Verification
 
-- `pytest tests/ -q` — 132 passed.
+- `pytest tests/ -q` — 165 passed.
 - `ruff check .` — clean.
 - Offscreen HUD probe — the counter read `0 moves | 0:00` after the load animation, `2 moves |
   0:00` after two rolls, `2 moves | 0:01` once the clock had ticked, `1 move | 0:01` after `Z` and
@@ -409,6 +429,14 @@ count.
   0 moves, the first press after loading moved it to 1 (animating), a press plus `s hold` plus `s up`
   mid-roll left it at 1, 40 frames of `s hold` left it at 1 again, the next press after the roll
   reached 2, `Z` mid-roll was refused and `Z` after it took the count to 1, and `R` reset it to 0.
+- Offscreen solver-replay probe (Python 3.11 + Ursina, the `--replay-demo` BFS, `window_type="offscreen"`)
+  — the Solve panel started hidden, stayed hidden through `LoadIntro`, and appeared once the intro
+  finished. Picking `BFS (demo)` retitled that card to `BFS (demo)…`, hid the panel, and played the
+  seven-roll path; the HUD read `BFS (demo) replay — move 1 of 7` on the first roll, a direction
+  press mid-movie left the player's counter at 0 moves, and the run ended on the solver card with
+  the block on the goal and `Game.cleared` still empty. Closing the card put the block back on the
+  start and brought the panel back; a second run paused with `Space`, resumed, and `Esc` after a
+  landing restored the start and cleared the replay line.
 - Offscreen reaction probe — a heavy plate measured at `0.0250 → -0.0050` (`PRESS_DEPTH`) while
   the standing block is on it and back to `0.0250` after it leaves, an opened bridge at its floor
   height and fully cyan, and a fragile crack measured at `0.1200 → 0.2160` (`×1.8`, `CRACK_OPEN`)

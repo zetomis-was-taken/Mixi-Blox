@@ -8,6 +8,11 @@ the returned `path` through the existing roll animation**, so the answer is demo
 rather than printed. It must be buildable and demoable now, with a mocked `solve()`, because
 `bloxorz.solvers` (#18–#23) does not exist yet.
 
+> **Status: complete on the GUI side.** The Solve panel, the replay driver, the HUD line, the
+> result card, the input gate, the run snapshot/restore, the `--replay-demo` aid and the tests are
+> in place; `docs/gui/gui-scaffold.md` describes the shipped behaviour. The four real algorithms
+> still wait on #18–#23 and plug in as the `ALGORITHMS` mapping, with no GUI change.
+
 ---
 
 ## 0. Ground truth (verify before starting)
@@ -243,29 +248,38 @@ Follow the existing headless style; no Ursina import in `tests/`.
       producing no movie.
 - [x] Extend `tests/test_gui_controller.py`: replay-apply does not touch `moves`/`history`/`elapsed`
       and still triggers `on_goal`.
-- [ ] `tests/test_gui_results.py`: replay HUD/card wording (pure functions).
-- [ ] A `SearchResult` mock with a **validated** path; assert every action is in
+- [x] `tests/test_gui_results.py`: replay HUD/card wording (pure functions).
+- [x] A `SearchResult` mock with a **validated** path; assert every action is in
       `board.successors` at the state it is applied to. This is the single most valuable test —
-      an invalid mock looks like a rendering bug.
-- [ ] Optional offscreen Ursina probe, recorded in `docs/gui/gui-scaffold.md` § Verification:
+      an invalid mock looks like a rendering bug. (`test_the_mock_path_is_legal_at_every_step`,
+      which also recomputes the cost from `step_cost`.)
+- [x] Optional offscreen Ursina probe, recorded in `docs/gui/gui-scaffold.md` § Verification:
       e.g. "the demo path played 7 rolls in order, no input accepted mid-replay, `Esc` restored
-      the start pose and the counter read 0 moves".
-- [ ] `pytest -q` and `ruff check .` green (132 tests today, line length 100).
+      the start pose and the counter read 0 moves". ✅ Run on Python 3.11 with Ursina installed in
+      a throwaway venv: the panel, the busy card, the seven rolls, the HUD line, the dropped key,
+      the card with an empty `Game.cleared`, close/restore and pause/stop all behaved.
+- [x] `pytest -q` and `ruff check .` green (165 tests, line length 100). A parametrized sweep also
+      replays every benchmark stage — fragile, switch/bridge and split — from the start to the goal.
 
 ---
 
 ## 8. Phase G — documentation
 
-- [ ] `docs/gui/gui-scaffold.md`: add the new files to the Structure table, add playback to
+- [x] `docs/gui/gui-scaffold.md`: add the new files to the Structure table, add playback to
       "What it does", **delete** the "No solver panel, replay, or stats display" limitation,
       record the probe results.
-- [ ] `docs/gui/theme.md`: palette rows for any new colours; timing row if the pause is exposed.
-- [ ] `README.md`: replace the "Solver playback ("movie mode")" missing-item entry with what now
+- [x] `docs/gui/theme.md`: palette rows for any new colours; timing row if the pause is exposed.
+      No colours were added (the menu pair was reused), so only the timing note and the file list
+      changed.
+- [x] `README.md`: replace the "Solver playback ("movie mode")" missing-item entry with what now
       exists, and state that the search itself still waits on #18–#23.
-- [ ] `AGENTS.md`: add `gui/replay.py` (and the panel/overlay files) to the project layout.
-- [ ] This file: tick what is done, or delete it when the feature lands.
-- [ ] **Do not edit `docs/contracts.md`.** The Solver API is frozen v1; the GUI is a consumer
-      ("#28 renders the same path, using each action's cube index").
+- [x] `AGENTS.md`: add `gui/replay.py` (and the panel/overlay files) to the project layout, plus
+      `gui/demo_solver.py` and the playback keys in the GUI quick facts.
+- [x] This file: every phase is ticked and the header records what "done" means. Kept rather than
+      deleted so the deviations (clock paused, cache dropped, demo flag, probe evidence) stay on
+      the record.
+- [x] **Do not edit `docs/contracts.md`.** The Solver API is frozen v1; the GUI is a consumer
+      ("#28 renders the same path, using each action's cube index"). It was not touched.
 
 ---
 

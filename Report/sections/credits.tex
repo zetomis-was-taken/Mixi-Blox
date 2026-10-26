@@ -1,10 +1,24 @@
 \newpage
 
+\thispagestyle{empty}
+
 \begin{center}
-    \Large\textbf{BẢNG PHÂN CHIA CÔNG VIỆC}
+    \Large\textbf{Lộ trình \& Phân chia công việc}
 \end{center}
 
 \noindent\textbf{Link GitHub Project}: \url{https://github.com/zetomis-was-taken/Mixi-Blox}
+
+\vspace{1cm}
+
+\noindent\textbf{Lộ trình và Tiến độ thực tế}
+\addcontentsline{toc}{section}{Lộ trình và Tiến độ thực tế}
+\begin{enumerate}
+    \item \textbf{Tuần 1}: Phân tích yêu cầu, thiết kế cấu trúc dữ liệu bản đồ (JSON format) và lập trình Core Game Engine (kiểm thử bảng chuyển trạng thái Transition Table).
+    \item \textbf{Tuần 2}: Hoàn thiện xử lý các ô nâng cao (Fragile tiles, Bridges, Switches, Split block) và cài đặt 4 thuật toán tìm kiếm (BFS, DFS, UCS, A*).
+    \item \textbf{Tuần 2.5}: Phát triển giao diện người dùng GUI, tích hợp các Solver và tính năng phát lại (replay/animation) lời giải.
+    \item \textbf{Tuần 3}: Thiết kế bộ dữ liệu kiểm thử phân tầng độ khó, chạy thực nghiệm tự động bằng thư viện \texttt{benchmark}, vẽ biểu đồ so sánh.
+    \item \textbf{Tuần 3.5}: Hoàn tất Báo cáo kỹ thuật, quay Video thuyết minh trên YouTube và đóng gói mã nguồn nộp bài.
+\end{enumerate}
 
 \begin{table}[H]
     \centering
@@ -20,32 +34,29 @@
         24120010 & Trần Văn Tấn Khôi &
         \vspace{-0.5\baselineskip}
         \begin{itemize}[itemsep=0pt, topsep=0pt, partopsep=0pt, parsep=0pt]
-            \item Xây dựng Game Engine core, board parser, rules, advanced tiles.
-            \item Xử lý cơ chế Split switch \& teleport hai khối cube $1 \times 1 \times 1$.
-            \item Viết mục Problem Formalization trong báo cáo.
+            \item Game Engine core, board parser, rules, advanced tiles.
+            \item Cơ chế Split switch \& teleport hai khối cube $1 \times 1 \times 1$.
         \end{itemize} & 22\% \\ \hline
 
         24120035 & Lê Thành Đạt & 
         \vspace{-0.5\baselineskip}
         \begin{itemize}[itemsep=0pt, topsep=0pt, partopsep=0pt, parsep=0pt]
-            \item Cài đặt thuật toán UCS (đề xuất \& biện minh cost function).
-            \item Cài đặt thuật toán A* (thiết kế Heuristic h1, h2 \& chứng minh).
-            \item Viết mục thuật toán UCS/A* trong báo cáo.
+            \item Xây dựng Solver base, SearchProblem, Frontier, visited set.
+            \item Thuật toán BFS và DFS/IDS có kiểm soát chu trình.
         \end{itemize} & 21\% \\ \hline
 
         24120036 & Lê Văn Thành Đạt & 
         \vspace{-0.5\baselineskip}
         \begin{itemize}[itemsep=0pt, topsep=0pt, partopsep=0pt, parsep=0pt]
-            \item Xây dựng Solver base, SearchProblem, Frontier, visited set.
-            \item Cài đặt thuật toán BFS và DFS/IDS có kiểm soát chu trình.
-            \item Viết mục thuật toán BFS/DFS trong báo cáo.
+            \item Thuật toán UCS (đề xuất \& biện minh cost function).
+            \item Thuật toán A* (thiết kế Heuristic h1, h2 \& chứng minh).
         \end{itemize} & 19\% \\ \hline
 
         24120070 & Vương Hữu Khang &
         \vspace{-0.5\baselineskip}
         \begin{itemize}[itemsep=0pt, topsep=0pt, partopsep=0pt, parsep=0pt]
             \item Thiết lập hạ tầng repo, CI linting (Ruff) + testing (Pytest).
-            \item Xây dựng module Benchmark đo đạc (time, RAM tracemalloc, nodes, moves).
+            \item Module Benchmark đo đạc (time, RAM tracemalloc, nodes, moves).
             \item Thiết lập 10 Test Stages chuẩn 4 nhóm; Soạn khung báo cáo LaTeX.
             \item Viết scripts tự động kiểm tra \& đóng gói nộp bài (tools/package.py).
         \end{itemize} & 17\% \\ \hline
@@ -59,13 +70,3 @@
         \end{itemize} & 21\% \\ \hline
     \end{tabularx}
 \end{table}
-
-\section*{Lộ trình và Tiến độ thực tế}
-\addcontentsline{toc}{section}{Lộ trình và Tiến độ thực tế}
-\begin{enumerate}
-    \item \textbf{Tuần 1}: Phân tích yêu cầu, thiết kế cấu trúc dữ liệu bản đồ (JSON format) và lập trình Core Game Engine (kiểm thử bảng chuyển trạng thái Transition Table).
-    \item \textbf{Tuần 2}: Hoàn thiện xử lý các ô nâng cao (Fragile tiles, Bridges, Switches, Split block) và cài đặt 4 thuật toán tìm kiếm (BFS, DFS, UCS, A*).
-    \item \textbf{Tuần 2.5}: Phát triển giao diện người dùng GUI, tích hợp các Solver và tính năng phát lại (replay/animation) lời giải.
-    \item \textbf{Tuần 3}: Thiết kế bộ dữ liệu kiểm thử phân tầng độ khó, chạy thực nghiệm tự động bằng thư viện \texttt{benchmark}, vẽ biểu đồ so sánh.
-    \item \textbf{Tuần 3.5}: Hoàn tất Báo cáo kỹ thuật, quay Video thuyết minh trên YouTube và đóng gói mã nguồn nộp bài.
-\end{enumerate}

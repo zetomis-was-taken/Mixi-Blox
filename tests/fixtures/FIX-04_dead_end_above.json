@@ -1,0 +1,22 @@
+{
+  "id": "FIX-04",
+  "name": "Dead end above",
+  "group": "L1",
+  "source": "original",
+  "grid": [
+    "....o....",
+    "....o....",
+    "....o....",
+    "....o....",
+    ".Sooo....",
+    "....o....",
+    "....o....",
+    "....G....",
+    "........."
+  ],
+  "switches": [],
+  "bridges": [],
+  "expected": {
+    "optimal_cost": 4
+  }
+}

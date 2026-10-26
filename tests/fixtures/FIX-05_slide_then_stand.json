@@ -1,0 +1,18 @@
+{
+  "id": "FIX-05",
+  "name": "Slide, then stand",
+  "group": "L1",
+  "source": "original",
+  "grid": [
+    ".....",
+    ".SoG.",
+    ".ooo.",
+    ".ooo.",
+    "....."
+  ],
+  "switches": [],
+  "bridges": [],
+  "expected": {
+    "optimal_cost": 4
+  }
+}

@@ -126,9 +126,9 @@ nên mọi đường đơn đều dài 4.
 .....
 ```
 
-Phòng 3×3, `S = (1,1)`, `G = (1,3)`. Đích nằm ngay cạnh chỗ xuất phát, nhưng block
-không "bước" được: mỗi nước đi đổi giữa đứng và nằm, nên muốn đứng trên ô bên cạnh phải
-đi vòng.
+Phòng 3×3, `S = (1,1)`, `G = (1,3)`. Đích nằm trên cùng hàng, cách chỗ xuất phát hai
+cột, nhưng block không "bước" thẳng tới được: nó lăn theo hướng hiện tại, và khi đang nằm
+thì lăn ngang chỉ trượt sang bên mà vẫn giữ tư thế nằm. Muốn đứng trên ô đích phải đi vòng.
 
 | # | Trạng thái | Nước đi |
 |---|---|---|

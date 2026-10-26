@@ -15,11 +15,11 @@ Ký hiệu: `U` đứng (1 ô), `H` nằm ngang (2 ô), `V` nằm dọc (2 ô).
 
 ```
 ............
-.SoooooooG.
+.SooooooooG.
 ............
 ```
 
-`S = (1,1)`, `G = (1,10)`. Hành lang thẳng 9 ô.
+`S = (1,1)`, `G = (1,10)`. Hành lang thẳng 10 ô, cột 1 đến 10.
 
 | # | Trạng thái | Nước đi |
 |---|---|---|

@@ -2,7 +2,8 @@
 
 ``--gui`` launches the Ursina game (#28). It boots into the title screen, then the level select;
 ``--stage`` skips both menus and opens that level directly. The four solvers (#18-#23) are not here
-yet, so ``--solver`` still reports that.
+yet, so ``--solver`` still reports that. ``--replay-demo`` is a development aid: it hands the GUI a
+throwaway BFS (``gui/demo_solver.py``) so the solver playback can be watched before those land.
 """
 
 from __future__ import annotations
@@ -31,6 +32,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="launch the Ursina game (title screen, level select, or --stage for one level)",
     )
+    parser.add_argument(
+        "--replay-demo",
+        action="store_true",
+        help="dev aid: give --gui a demo BFS for its Solve panel (real solvers land in #18-#23)",
+    )
     return parser
 
 
@@ -41,7 +47,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.gui:
         from bloxorz.gui.app import run
 
-        return run(args.stage)
+        solve = None
+        if args.replay_demo:
+            from bloxorz.gui.demo_solver import ALGORITHMS
+
+            solve = ALGORITHMS
+        return run(args.stage, solve=solve)
 
     if args.stage is None:
         parser.print_help()

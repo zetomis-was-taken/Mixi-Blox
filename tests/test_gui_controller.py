@@ -356,3 +356,73 @@ def test_playback_refuses_an_illegal_pair_and_a_second_roll() -> None:
 
     assert controller.play(next_state, action) is True
     assert controller.play(next_state, action) is False, "one roll at a time"
+
+
+def test_a_run_can_be_snapshotted_and_restored_after_playback() -> None:
+    stage = load_stage(STAGES / "L1-01_long_corridor.json")
+    board = Board(stage)
+    block = FakeBlock()
+    controller = PlayerController(board, block, lambda: None)
+
+    path = _path_to(board, board.is_goal)
+    for _, direction in path[:2]:
+        assert controller.move(direction) is True
+        block.finish()
+    controller.tick(3.5)
+    run = controller.snapshot()
+
+    # Playback starts the stage over before it rolls the solver's path.
+    assert controller.retry() is True
+    assert controller.moves == 0
+    assert controller.state == board.start()
+
+    assert controller.restore(run) is True
+    assert controller.state == run.state
+    assert controller.moves == 2
+    assert controller.elapsed == 3.5
+    assert len(controller.history) == 2
+    assert controller.active == run.active
+    assert block.state == run.state
+
+    # The restored run is live again: the next move continues from it.
+    assert controller.move(path[2][1]) is True
+    assert controller.moves == 3
+
+
+def test_restoring_a_run_is_refused_while_a_roll_plays() -> None:
+    stage = load_stage(STAGES / "L1-01_long_corridor.json")
+    board = Board(stage)
+    block = FakeBlock()
+    controller = PlayerController(board, block, lambda: None)
+
+    run = controller.snapshot()
+    assert controller.move(_path_to(board, board.is_goal)[0][1]) is True
+    assert controller.restore(run) is False
+    assert controller.animating is True
+
+    block.finish()
+    assert controller.restore(run) is True
+    assert controller.state == run.state
+
+
+def test_restoring_puts_a_solved_board_back_in_play() -> None:
+    stage = load_stage(STAGES / "L1-01_long_corridor.json")
+    board = Board(stage)
+    block = FakeBlock()
+    controller = PlayerController(board, block, lambda: None)
+
+    path = _path_to(board, board.is_goal)
+    for _, direction in path[:-1]:
+        assert controller.move(direction) is True
+        block.finish()
+    run = controller.snapshot()
+
+    assert controller.move(path[-1][1]) is True
+    block.finish()
+    assert controller.cleared is True
+
+    # This is the way out of a solver card: the board goes back to the player's run.
+    assert controller.restore(run) is True
+    assert controller.cleared is False
+    assert controller.state == run.state
+    assert controller.moves == len(path) - 1

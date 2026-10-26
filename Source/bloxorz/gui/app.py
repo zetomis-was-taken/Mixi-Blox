@@ -30,19 +30,21 @@ from ursina import (
 )
 from ursina.shaders import unlit_shader
 
-from bloxorz.core.contracts import Direction, Stage
+from bloxorz.core.contracts import Caps, Direction, SearchResult, Stage
 from bloxorz.core.engine import Board
 from bloxorz.core.stage import load_stage
 
-from . import catalog, dot_shader, framing, parallax, theme
+from . import catalog, dot_shader, framing, parallax, results, theme
 from .block_view import BlockView
 from .board_view import BoardView
-from .controller import PlayerController
+from .controller import PlayerController, Run
 from .hud import Hud
 from .intro import IntroTiming, LoadIntro
 from .layout import TILE_SIZE, board_center, cell_to_world
 from .level_select import LevelSelectScene
-from .replay import Solve
+from .replay import Algorithms, Replay
+from .solver_overlay import SolverOverlay
+from .solver_panel import SolverPanel
 from .title import TitleScene
 from .win_overlay import WinOverlay
 
@@ -120,11 +122,11 @@ def _projected_bounds(stage: Stage) -> tuple[float, float, float, float] | None:
 class Game:
     """The scene on screen, and the levels cleared in this session."""
 
-    def __init__(self, stages: tuple[Stage, ...], solve: Solve | None = None) -> None:
+    def __init__(self, stages: tuple[Stage, ...], solve: Algorithms | None = None) -> None:
         self.catalog = stages
         self.cleared: set[str] = set()
         # How a level asks for an answer. It belongs to the session, not to one transition, so the
-        # next-level chain keeps the same solver.
+        # next-level chain keeps the same solvers.
         self.solve = solve
         self.scene: Entity | None = None
 
@@ -151,13 +153,13 @@ class Game:
 class PrototypeScene(Entity):
     """The scene's update owner. ``Ursina`` itself is a singleton and cannot be subclassed."""
 
-    def __init__(self, stage: Stage, game: Game, solve: Solve | None = None) -> None:
+    def __init__(self, stage: Stage, game: Game, solve: Algorithms | None = None) -> None:
         super().__init__(name="prototype")
 
         self.stage = stage
         self.game = game
-        # ``None`` means the scene offers no way to ask for a solution; what is built around this
-        # callable is the solver panel, and until then nothing reads it.
+        # Display name -> solver, in card order, or ``None`` when the level offers no Solve control.
+        # Nothing else in the scene knows which algorithms exist.
         self.solve = solve
         self.board = Board(stage)
         self.board_view = BoardView(stage)
@@ -181,6 +183,17 @@ class PrototypeScene(Entity):
         # decides how much of the frame the board fills, so the framing is redone when it happens.
         application.base.accept("aspectRatioChanged", self._mark_reframe)
         self.hud = Hud(stage)
+
+        # Solver playback. The panel is the only way in; a replay borrows the board and the run is
+        # kept aside so stopping or closing the card puts the player back exactly.
+        self.panel = SolverPanel(tuple(solve), self._solve_with) if solve else None
+        self.solver_overlay: SolverOverlay | None = None
+        self.replay: Replay | None = None
+        self.algorithm: str | None = None
+        self._solved_result: SearchResult | None = None
+        self._run: Run | None = None
+        self._pending: str | None = None
+        self._pending_delay = 0
 
         # Optional presentation effects: remove either call to switch that effect off.
         self.parallax = parallax.ParallaxBackground()
@@ -278,14 +291,23 @@ class PrototypeScene(Entity):
         self._reframe_pending = True
 
     def input(self, key: str) -> None:
-        """Every action the level takes: roll, switch cube, undo, retry.
+        """Every action the level takes: roll, switch cube, undo, retry, and playback control.
 
         This is the whole input path, one press per action. A press is dropped — not queued — while
-        the load animation plays or once the level is won, and ``PlayerController`` refuses the four
-        actions while a roll is still animating, so nothing arriving mid-roll survives to the next
-        frame.
+        the load animation plays, once the level is won, while the solver card is up, and while a
+        solver movie is playing: only stop and pause are read then, so a direction key cannot
+        corrupt the planned path. ``PlayerController`` refuses its four actions while a roll is
+        still animating, so nothing arriving mid-roll survives to the next frame.
         """
-        if not self.intro.finished or self.controller.cleared:
+        if self.solver_overlay is not None or not self.intro.finished:
+            return
+        if self.replay is not None:
+            if key == "escape":
+                self._stop_replay()
+            elif key == "space":
+                self._toggle_pause()
+            return
+        if self.controller.cleared:
             return
         if key in KEY_BINDINGS:
             self.controller.move(KEY_BINDINGS[key])
@@ -301,11 +323,14 @@ class PrototypeScene(Entity):
             # One reframe per frame at most: dragging a window edge fires an event per pixel.
             self._reframe_pending = False
             self._frame_camera(self.stage)
+        if self._pending is not None:
+            self._run_pending()
         self.block_view.update(time.dt)
         if not self.intro.finished:
             self.intro.advance(time.dt)
             self.board_view.update_intro(self.intro)
             self.block_view.update_intro(self.intro)
+        self._drive_replay(time.dt)
         self.board_view.refresh(self.controller.state)
         self.board_view.update(time.dt)
         self.block_view.set_active(self.controller.active)
@@ -315,14 +340,22 @@ class PrototypeScene(Entity):
             self.controller.split,
             self.controller.active,
         )
-        # The clock runs only while the level is being played: it starts once the load animation has
-        # played and stops once the block is home, since the overlay is modal from then on.
-        if not self.intro.finished or self.controller.cleared:
+        self.hud.show_replay(self._replay_line())
+        self._show_panel_if_idle()
+        # The clock runs only while the player is playing: it starts once the load animation has
+        # played, stops once the block is home, and pauses while a solver movie borrows the board.
+        if not self.intro.finished or self.controller.cleared or self.replay is not None:
             return
         self.controller.tick(time.dt)
 
     def _level_cleared(self) -> None:
-        """Raise the results card: what the level cost, and the three ways out of it."""
+        """Raise the results card: what the level cost, and the three ways out of it.
+
+        A solver movie lands the block on the goal too, but that is not the player's clear: the
+        solver card reports it, and closing that card restores the player's own run.
+        """
+        if self.replay is not None:
+            return
         self.game.level_cleared(self.stage)
         following = catalog.next_stage(self.game.catalog, self.stage)
         self.overlay = WinOverlay(
@@ -350,11 +383,156 @@ class PrototypeScene(Entity):
             destroy(self.overlay)
             self.overlay = None
 
+    def _show_panel_if_idle(self) -> None:
+        """The Solve cards belong to a loaded, unsolved level that is not mid-movie."""
+        if self.panel is None:
+            return
+        idle = (
+            self.intro.finished
+            and not self.controller.cleared
+            and self.replay is None
+            and self.solver_overlay is None
+            and self._pending is None
+        )
+        if idle:
+            self.panel.show()
+        else:
+            self.panel.hide()
+
+    def _solve_with(self, algorithm: str) -> None:
+        """Ask for a run; the search itself starts on a later frame.
+
+        The delay is deliberate: Ursina runs one thread, so a search started inside the click
+        handler would freeze the window before the busy card was ever drawn.
+        """
+        if self.solve is None or self._pending is not None or self.replay is not None:
+            return
+        if self.solver_overlay is not None or not self.intro.finished or self.controller.cleared:
+            return
+        if self.controller.animating:
+            return
+        self._pending = algorithm
+        self._pending_delay = 1
+        if self.panel is not None:
+            self.panel.set_busy(algorithm)
+
+    def _run_pending(self) -> None:
+        """Run the queued algorithm once a frame has drawn the busy card; this call blocks."""
+        if self._pending_delay > 0:
+            self._pending_delay -= 1
+            return
+        algorithm, self._pending = self._pending, None
+        result = self.solve[algorithm](self.stage, Caps())
+        if self.panel is not None:
+            self.panel.set_busy(None)
+        self._start_replay(algorithm, result)
+
+    def _start_replay(self, algorithm: str, result: SearchResult) -> None:
+        """Roll the answer, or raise the card when there is no movie to play."""
+        replay = Replay(self.board, result, theme.REPLAY_PAUSE_SECONDS)
+        if not replay.playable:
+            self._raise_solver_overlay(algorithm, result)
+            return
+        run = self._run if self._run is not None else self.controller.snapshot()
+        if not self.controller.retry():
+            return
+        self._run = run
+        self.algorithm = algorithm
+        self._solved_result = result
+        self.replay = replay
+        replay.start()
+
+    def _drive_replay(self, dt: float) -> None:
+        """Feed the movie: report landings, then start the next roll once the beat is due."""
+        if self.replay is None:
+            return
+        if not self.controller.animating and self.replay.roll_finished():
+            self._finish_replay()
+            return
+        if self.replay.phase != "playing":
+            return
+        step = self.replay.advance(dt)
+        if step is None:
+            return
+        _, next_state, action = step
+        if not self.controller.play(next_state, action):
+            self._stop_replay()
+
+    def _finish_replay(self) -> None:
+        """The last roll landed: report the run, leaving the player's own run behind the card."""
+        result, algorithm = self._solved_result, self.algorithm
+        self.replay = None
+        if result is not None and algorithm is not None:
+            self._raise_solver_overlay(algorithm, result)
+
+    def _toggle_pause(self) -> None:
+        if self.replay is None:
+            return
+        if self.replay.phase == "paused":
+            self.replay.resume()
+        else:
+            self.replay.pause()
+
+    def _stop_replay(self) -> None:
+        """Abandon the movie and hand the board back. A stop mid-roll is dropped, like any press."""
+        if self.replay is None or self.controller.animating:
+            return
+        self.replay = None
+        self._solved_result = None
+        self.algorithm = None
+        self._restore_run()
+
+    def _restore_run(self) -> None:
+        """Put the player's own run back, if a solver session is holding one."""
+        if self._run is not None and self.controller.restore(self._run):
+            self._run = None
+
+    def _replay_line(self) -> str | None:
+        """The HUD's playback line, or ``None`` when no movie is running."""
+        if self.replay is None or self.algorithm is None:
+            return None
+        step, total = self.replay.progress
+        paused = self.replay.phase == "paused"
+        return results.replay_line(self.algorithm, step, total, paused)
+
+    def _raise_solver_overlay(self, algorithm: str, result: SearchResult) -> None:
+        """Show the outcome; "watch again" exists only when there is a path to roll."""
+        self._dismiss_solver_overlay()
+        self.algorithm = algorithm
+        self._solved_result = result
+        self.solver_overlay = SolverOverlay(
+            stage=self.stage,
+            algorithm=algorithm,
+            result=result,
+            on_replay=(self._replay_again if result.path else None),
+            on_close=self._close_solver_overlay,
+            on_levels=self.game.show_level_select,
+        )
+
+    def _replay_again(self) -> None:
+        result, algorithm = self._solved_result, self.algorithm
+        if result is None or algorithm is None:
+            return
+        self._dismiss_solver_overlay()
+        self._start_replay(algorithm, result)
+
+    def _close_solver_overlay(self) -> None:
+        """Dismiss the card and hand the board back to the player's own run."""
+        self._dismiss_solver_overlay()
+        self._restore_run()
+        self._solved_result = None
+        self.algorithm = None
+
+    def _dismiss_solver_overlay(self) -> None:
+        if self.solver_overlay is not None:
+            destroy(self.solver_overlay)
+            self.solver_overlay = None
+
     def teardown(self) -> None:
         """Remove everything this scene put on screen: board and block are children, UI is not."""
         application.base.ignore("aspectRatioChanged")
         self.hud.teardown()
-        for entity in (self.overlay, self.parallax):
+        for entity in (self.overlay, self.solver_overlay, self.panel, self.parallax):
             if entity is not None:
                 destroy(entity)
         destroy(self)
@@ -363,12 +541,12 @@ class PrototypeScene(Entity):
 def build(
     stage_path: str | Path | None = None,
     window_type: str = "onscreen",
-    solve: Solve | None = None,
+    solve: Algorithms | None = None,
 ) -> tuple[Ursina, Game]:
     """Open the window, then boot the title screen — or ``stage_path`` when one is given.
 
-    ``solve`` is the solver every level scene is offered; ``None`` leaves the game exactly as it
-    plays today, with no way to ask for a solution.
+    ``solve`` is the algorithms every level scene offers; ``None`` leaves the game exactly as it
+    plays today, with no Solve control.
     """
     app = Ursina(
         title=WINDOW_TITLE,
@@ -392,7 +570,7 @@ def build(
     return app, game
 
 
-def run(stage_path: str | Path | None = None, solve: Solve | None = None) -> int:
+def run(stage_path: str | Path | None = None, solve: Algorithms | None = None) -> int:
     app, _ = build(stage_path, solve=solve)
     app.run()
     return 0

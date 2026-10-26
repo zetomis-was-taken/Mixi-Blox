@@ -15,7 +15,7 @@ which is the scene's cue to show a results card instead of a movie.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Literal
 
 from bloxorz.core.contracts import Action, Caps, SearchResult, Stage, State
@@ -26,6 +26,8 @@ Phase = Literal["ready", "playing", "paused", "finished", "aborted"]
 Step = tuple[State, State, Action]
 # How the GUI asks for an answer: the frozen ``solve`` signature of ``docs/contracts.md``.
 Solve = Callable[[Stage, Caps], SearchResult]
+# What the Solve control offers: display name -> solver, in card order.
+Algorithms = Mapping[str, Solve]
 
 
 class Replay:

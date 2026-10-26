@@ -117,6 +117,10 @@ for a bridge. Both ease at a constant step (`reaction.approach`) rather than a f
 so a mechanism takes the same time to move whatever distance it has left and the animation does not
 change with the frame rate.
 
+The player's own motion is `ROLL_SECONDS` (0.22 s per quarter-turn, linear angular speed). Solver
+playback reuses that roll unchanged and adds only `REPLAY_PAUSE_SECONDS` (0.12 s) between two
+rolls, so the movie reads as steps and a speed change never alters the roll geometry.
+
 A fragile panel never breaks on screen: a standing block on fragile is an illegal move
 ([ADR-003](../decisions/ADR-003-fragile-under-lone-cube.md)), so no state exists in which the panel
 has given way. The crack opens and shuts with the weight.

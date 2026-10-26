@@ -38,7 +38,8 @@ class SolverPanel(Entity):
         self._busy: str | None = None
         self._shown = False
         self._build()
-        self.hide()
+        # The panel is built visible, so hide it directly rather than through the guarded ``hide``.
+        self.enabled = False
 
     def _build(self) -> None:
         Text(
@@ -62,10 +63,14 @@ class SolverPanel(Entity):
             )
 
     def show(self) -> None:
+        if self._shown:
+            return
         self._shown = True
         self.enabled = True
 
     def hide(self) -> None:
+        if not self._shown:
+            return
         self._shown = False
         self.enabled = False
 

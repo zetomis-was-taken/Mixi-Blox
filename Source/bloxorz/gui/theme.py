@@ -71,3 +71,6 @@ CRACK_OPEN = 0.8  # extra crack depth at full load, as a fraction of the slot's 
 
 # One quarter-turn per action, at a constant angular speed so the block visibly rolls.
 ROLL_SECONDS = 0.22
+
+# The beat between two rolls of a solver replay, so the movie reads as steps rather than a blur.
+REPLAY_PAUSE_SECONDS = 0.12

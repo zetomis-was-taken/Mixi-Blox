@@ -16,11 +16,14 @@ what the GUI already provides, what an algorithm has to return, and where the tw
 | `Replay` | `gui/replay.py` | Turns `SearchResult.path` into `(start, landing, action)` steps and paces them, one roll in flight at a time |
 | `PlayerController.play` | `gui/controller.py` | Applies one planned `(next_state, action)`; costs the player nothing (`moves`, `elapsed`, `history` untouched) |
 | `BlockView.animate` | `gui/block_view.py` | The existing quarter-turn animation; playback reuses it, so there is no second animation path |
-| Injection point | `gui/app.py` | `run(..., solve=…)` → `build(..., solve=…)` → `Game(stages, solve)` → `PrototypeScene(stage, game, solve)` |
+| Injection point | `gui/app.py` | `run(..., solve=…)` → `build(..., solve=…)` → `Game(stages, solve)` → `PrototypeScene(stage, game, solve)`; `solve` is an `Algorithms` mapping (card name → solver) |
+| `SolverPanel` / `SolverOverlay` | `gui/solver_panel.py`, `gui/solver_overlay.py` | The four Solve cards, and the result card with the counts |
 | `theme.ROLL_SECONDS` | `gui/theme.py` | `0.22` s for a quarter-turn; playback does not change it |
+| `theme.REPLAY_PAUSE_SECONDS` | `gui/theme.py` | `0.12` s between two rolls of a movie |
 
-The GUI still needs the panel, the HUD line, the result card and the input gate (planned in
-`SOLVER_GUI_TODO.md` phases D–E). Everything below states where those slot in.
+The panel, the HUD replay line, the result card, the input gate and a demo flag already exist. What
+is missing is the algorithms themselves: everything below is what a new one has to do to appear on
+screen.
 
 ## The boundary: one function, one value
 
@@ -64,30 +67,36 @@ def solve(stage: Stage, caps: Caps = Caps()) -> SearchResult:
     start = board.start()
     t0 = perf_counter()
 
+    # ``Counts`` is frozen: the running totals are locals, and a value is built only at a return.
+    expanded, generated, frontier_peak = 0, 1, 1
+
+    def counts() -> Counts:
+        return Counts(expanded, generated, frontier_peak)
+
     frontier = deque([(start, (), 0.0)])
     seen = {start.key()}
-    counts = Counts(expanded=0, generated=1, frontier_peak=1)
 
     while frontier:
         if caps.time_s is not None and (perf_counter() - t0) >= caps.time_s:
-            return SearchResult("cap", (), 0.0, counts)
+            return SearchResult("cap", (), 0.0, counts())
 
         state, path, cost = frontier.popleft()
         if board.is_goal(state):
-            return SearchResult("solved", path, cost, counts)
-        if caps.node_cap is not None and counts.expanded >= caps.node_cap:
-            return SearchResult("cap", (), 0.0, counts)
-        counts.expanded += 1
+            return SearchResult("solved", path, cost, counts())
+        if caps.node_cap is not None and expanded >= caps.node_cap:
+            return SearchResult("cap", (), 0.0, counts())
+
+        expanded += 1
         for next_state, action in board.successors(state):
             if next_state.key() in seen:
                 continue
             seen.add(next_state.key())
-            counts.generated += 1
+            generated += 1
             cost_after = cost + board.step_cost(state, action, next_state)
             frontier.append((next_state, path + (action,), cost_after))
-            counts.frontier_peak = max(counts.frontier_peak, len(frontier))
+            frontier_peak = max(frontier_peak, len(frontier))
 
-    return SearchResult("unsolvable", (), 0.0, counts)
+    return SearchResult("unsolvable", (), 0.0, counts())
 ```
 
 Follow the loop shape in `docs/contracts.md` exactly — the goal test before the cap check is what
@@ -126,24 +135,25 @@ and this `Solve` are the same signature; the alias is duplicated because `solver
 
 ## Step 3 — inject the solver
 
-`run` and `build` already take the callable, defaulting to `None` (no Solve panel):
+`run` and `build` take an `Algorithms` mapping (`replay.py`: `Mapping[str, Solve]`), defaulting to
+`None` — no mapping, no Solve control, exactly the game as it plays today. Passing the mapping is
+the whole wiring:
 
 ```python
-# Source/main.py — when the panel lands
+# Source/main.py — the mapping goes straight through
 from bloxorz.gui.app import run
 from bloxorz.solvers import ALGORITHMS
 
-return run(args.stage, solve=ALGORITHMS["A*"])
+return run(args.stage, solve=ALGORITHMS)
 ```
 
-Or pass the whole mapping and let the panel choose. Prefer the second: one callable means one
-algorithm, and the rubric asks for four buttons. The clean shape is `solve: Mapping[str, Solve]`
-instead of `Solve | None`; change the type in `replay.py` and `app.py` together, and keep `None`
-meaning "no solver available yet" — which is the state of `main` today.
+The keys are the card labels and their insertion order is the card order, so the four cards come
+from the four dictionary entries and nothing in `gui/` needs to change when one is added.
 
-Do **not** import `bloxorz.solvers` at module scope anywhere in `gui/` until the package exists:
-`gui/app.py` imports `Solve` from `gui/replay.py` and never touches the solvers package. A guarded
-or lazy import in the panel keeps the GUI runnable if #18–#23 are not merged yet.
+Keep the import lazy, as `main.py` already does, until #18–#23 merge: `gui/` imports
+`bloxorz.core` and `gui.replay` only, never the solvers package at module scope. To watch the loop
+before then, `python Source/main.py --gui --replay-demo` injects `gui/demo_solver.py`'s throwaway
+BFS — a development aid, not the submission's BFS; delete both when #18 merges.
 
 ## Step 4 — turn the answer into a movie
 
@@ -155,7 +165,7 @@ result = self.solve[self.algorithm](self.stage, Caps(node_cap=self.node_cap))
 self.replay = Replay(
     self.board,
     result,
-    theme.REPLAY_PAUSE_SECONDS,   # add beside ROLL_SECONDS
+    theme.REPLAY_PAUSE_SECONDS,   # 0.12 s between rolls
     restore=self.controller.state,  # what Esc puts back
 )
 if not self.replay.playable:
@@ -211,9 +221,11 @@ a player clear. Playback that reaches the goal should raise the solver card, not
 ## Step 6 — input, split stages, and stopping
 
 - While a replay is playing or paused, ignore direction keys, `Tab`, `Z` and `R`; accept only the
-  stop/pause key(s). The scene already drops input mid-roll; extend the same gate.
-- `stop()` returns the state to restore. Snap the view back (`block_view.sync`, like `retry` does)
-  and retarget mechanisms in the same frame, so bridges and plates ease while the board lands.
+  stop/pause keys (`Esc` and `Space` in the current scene). The scene already drops input mid-roll;
+  the same gate drops a stop that arrives mid-roll.
+- A stop is not a retry. The scene holds a `PlayerController.snapshot()` from before playback and
+  puts it back with `restore`, which also restores the move count, the clock and the undo stack and
+  re-syncs the view, so bridges and plates retarget in the same frame.
 - Split stages: do nothing special. The action carries its cube index, `controller.play` follows
   `_active_after`, and `BlockView.animate` rolls exactly that cube. Split, merge and teleport
   transitions snap instead of rolling — an existing, documented limitation that playback inherits.

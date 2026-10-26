@@ -193,21 +193,44 @@ argument at every step, so `run()`/`build()` with no `solve` builds the same gam
 
 ## 6. Phase E — wiring, input gating, and the traps
 
-- [ ] `PrototypeScene.input`: while a replay is active or paused, ignore direction keys, `Tab`,
+- [x] `PrototypeScene.input`: while a replay is active or paused, ignore direction keys, `Tab`,
       `Z`, `R` — and accept **only** the stop/pause key(s). Same reasoning as "a press mid-roll is
-      dropped", not queued.
-- [ ] `PrototypeScene.update`: drive `replay.advance(dt)`; start the next roll from the callback of
-      the previous one. One action in flight at a time.
-- [ ] Clock: `controller.tick(dt)` keeps running today. Pause it during playback (or accept it
-      running and never present it as replay time — pick one and say so in the doc).
-- [ ] Stop/`Esc`: restore the pre-solve `State`, re-sync `block_view`/`board_view` (mechanisms
-      retarget in the same frame, like `retry`/`undo`), clear the replay.
-- [ ] Leaving the level (`teardown`, next level, level select) cancels the replay and removes its
-      UI, like `Hud.teardown` / `WinOverlay` destruction.
-- [ ] Never add solver clears to `Game.cleared` (per §1.2).
-- [ ] **Do not measure time or memory in the GUI.** `tests/test_contract.py` allows `perf_counter`
+      dropped", not queued. `Esc` stops, `Space` pauses; nothing but the card's own keys is read
+      while the solver card is up.
+- [x] `PrototypeScene.update`: drive `replay.advance(dt)`; start the next roll from the callback of
+      the previous one. One action in flight at a time. **Deviation:** landing is observed through
+      `controller.animating` (the one flag a roll already clears) rather than through the
+      animation's callback, because `PlayerController`'s callback is the goal hook itself. The
+      observation costs a frame and `roll_finished()` is idempotent.
+- [x] Clock: `controller.tick(dt)` keeps running today. Pause it during playback (or accept it
+      running and never present it as replay time — pick one and say so in the doc). **Chosen:
+      paused** — the scene skips `tick` while a replay is held, and `restore` puts the player's
+      elapsed time back anyway.
+- [x] Stop/`Esc`: restore the pre-solve `State`, re-sync `block_view`/`board_view` (mechanisms
+      retarget in the same frame, like `retry`/`undo`), clear the replay. Implemented as
+      `PlayerController.snapshot`/`restore`, which also puts the move count, clock and undo stack
+      back — a stop is not the same thing as a retry.
+- [x] Leaving the level (`teardown`, next level, level select) cancels the replay and removes its
+      UI, like `Hud.teardown` / `WinOverlay` destruction. The panel and the solver card are
+      destroyed in `teardown`; the replay is simply dropped with the scene.
+- [x] Never add solver clears to `Game.cleared` (per §1.2). `_level_cleared` returns early while a
+      replay is held, so neither the level select nor `WinOverlay` hears about a solver run.
+- [x] **Do not measure time or memory in the GUI.** `tests/test_contract.py` allows `perf_counter`
       only in `bench/` and `solvers/` (rule 5); `Stats` is harness-built. Show `Counts` only, or
-      source stats from the bench harness later.
+      source stats from the bench harness later. The demo solver ignores `Caps.time_s` for exactly
+      this reason.
+
+Also wired here, from the earlier deferrals:
+
+- [x] Panel visibility: built hidden, shown only when the intro has finished, the level is unsolved
+      and nothing is playing; hidden again while a run/solve/card is in progress.
+- [x] "Solving…" frame: a click queues the algorithm and the blocking `solve` runs one frame later,
+      so the busy card is drawn before Ursina freezes.
+- [x] The demo path: `python Source/main.py --gui --replay-demo` injects `gui/demo_solver.py`'s
+      throwaway BFS (Phase C's `[~]`), so the loop can be watched before #18–#23 land.
+- [~] Solver memory (`{stage_id: {algorithm: SearchResult}}`): **dropped, not deferred.** A search
+      on these boards is instant, and a cache would add state to reason about (when to invalidate,
+      what a "cancel" even means) for no visible gain.
 
 ---
 

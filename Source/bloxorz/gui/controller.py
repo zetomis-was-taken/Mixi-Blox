@@ -14,18 +14,31 @@ It is also the level's memory: the move count, the clock the scene ticks, a stac
 move passed through with the action that left each one (``undo``), and ``cleared`` once the block
 stands on the goal. Puzzle recovery — retry and undo — lives here rather than in the views, so both
 are covered headless. An undo hands the view the same quarter-turn in reverse, so the block rolls
-back instead of snapping.
+back instead of snapping. ``snapshot``/``restore`` do the same for a whole run, which is what lets a
+solver movie borrow the board and hand it back untouched.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 
 from bloxorz.core.contracts import Action, Direction, State
 from bloxorz.core.engine import Board, roll
 
 # The direction that rolls a move back. An undo is the same quarter-turn, mirrored.
 OPPOSITE: dict[Direction, Direction] = {"U": "D", "D": "U", "L": "R", "R": "L"}
+
+
+@dataclass(frozen=True)
+class Run:
+    """A player's progress, held aside while solver playback borrows the board."""
+
+    state: State
+    active: int
+    moves: int
+    elapsed: float
+    history: tuple[tuple[State, Action], ...]
 
 
 class PlayerController:
@@ -149,6 +162,27 @@ class PlayerController:
         self.elapsed = 0.0
         self.cleared = False
         self._active = 0
+        self.block.sync(self.state)
+        return True
+
+    def snapshot(self) -> Run:
+        """The run as it stands, for ``restore`` after solver playback borrowed the board."""
+        return Run(self.state, self.active, self.moves, self.elapsed, tuple(self.history))
+
+    def restore(self, run: Run) -> bool:
+        """Put a snapshot back exactly, view included. Refused while a roll is still playing.
+
+        This is the way out of a solver movie: playback starts the stage over, so the player's own
+        moves, clock and undo stack are put back by value rather than rolled back one by one.
+        """
+        if self.animating:
+            return False
+        self.state = run.state
+        self._active = run.active
+        self.moves = run.moves
+        self.elapsed = run.elapsed
+        self.history = list(run.history)
+        self.cleared = False
         self.block.sync(self.state)
         return True
 

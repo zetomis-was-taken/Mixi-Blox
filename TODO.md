@@ -93,7 +93,7 @@ was needed: at 16:10 the fit only moves `L2-02` (22.50 → 23.88) and `L3-01` (2
       16:10, against 0.976 for `L2-02` — so the fit, not per-stage tuning, is what guarantees the
       frame.)
 
-## 8. Polish (only after 1-7)
+<!-- ## 8. Polish (only after 1-7)
 
 - [ ] Sound cues for roll, switch and bridge.
 - [ ] A short "stage cleared" transition.
@@ -110,4 +110,4 @@ was needed: at 16:10 the fit only moves `L2-02` (22.50 → 23.88) and `L3-01` (2
 - [ ] `pytest -q` green, GUI tests still headless (no Ursina import under `tests/`).
 - [ ] `ruff check .` green (line length 100).
 - [ ] `docs/gui/gui-scaffold.md` and `README.md` status reflect what changed.
-- [ ] One concern per PR; put each `Closes #n` on its own line.
+- [ ] One concern per PR; put each `Closes #n` on its own line. -->

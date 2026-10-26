@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 
 import pytest
-from search_helpers import FIXTURES, STAGES, GraphBoard, remaining_costs, replay
+from search_helpers import FIXTURE_IDS, FIXTURES, STAGES, GraphBoard, remaining_costs, replay
 
 from bloxorz.core.contracts import Caps
 from bloxorz.core.engine import Board
@@ -13,7 +13,7 @@ from bloxorz.core.stage import load_stage
 from bloxorz.solvers import base, ucs
 
 
-@pytest.mark.parametrize("name", ["FIX-01", "FIX-02", "FIX-03"])
+@pytest.mark.parametrize("name", FIXTURE_IDS)
 def test_hand_computed_fixture_cost_and_replayed_path(name) -> None:
     stage = load_stage(next(FIXTURES.glob(f"{name}_*.json")))
     result = ucs.solve(stage)

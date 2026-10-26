@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import deque
 
 import pytest
-from search_helpers import FIXTURES, STAGES, replay
+from search_helpers import FIXTURE_IDS, FIXTURES, STAGES, replay
 
 from bloxorz.core.contracts import Caps, State
 from bloxorz.core.engine import Board
@@ -63,7 +63,7 @@ def _shortest_moves(board: Board) -> int:
     return min(depth for state, depth in distance.items() if board.is_goal(state))
 
 
-@pytest.mark.parametrize("name", ["FIX-01", "FIX-02", "FIX-03"])
+@pytest.mark.parametrize("name", FIXTURE_IDS)
 def test_hand_computed_fixture_move_count_and_replayed_path(name) -> None:
     stage = load_stage(next(FIXTURES.glob(f"{name}_*.json")))
     board = Board(stage)

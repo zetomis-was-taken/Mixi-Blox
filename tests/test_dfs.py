@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from search_helpers import FIXTURES, STAGES, replay
+from search_helpers import FIXTURE_IDS, FIXTURES, STAGES, replay
 
 from bloxorz.core.contracts import Caps, State
 from bloxorz.core.engine import Board
@@ -60,7 +60,7 @@ class LoopBoard(_GraphBoard):
     edges = {"S": ("A",), "A": ("B",), "B": ("A",)}
 
 
-@pytest.mark.parametrize("name", ["FIX-01", "FIX-02", "FIX-03"])
+@pytest.mark.parametrize("name", FIXTURE_IDS)
 def test_hand_solved_fixtures_are_reached_and_replayed(name) -> None:
     stage = load_stage(next(FIXTURES.glob(f"{name}_*.json")))
     board = Board(stage)

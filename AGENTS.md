@@ -53,7 +53,8 @@ tools/                         transcribe_levels.py (game data -> stage JSON),
                                verify_submission.py (rubric pre-flight, run in CI),
                                package.py (submission ZIP builder).
 docs/                          contracts.md (the frozen spec), decisions/ADR-*.md,
-                               gui/gui-scaffold.md, gui/theme.md, gui/window.md.
+                               gui/gui-scaffold.md, gui/theme.md, gui/window.md,
+                               gui/solver-integration.md.
 Report/                        LaTeX report; tables/, figures/ and data/ are benchmark outputs.
 ```
 

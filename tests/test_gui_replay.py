@@ -25,16 +25,17 @@ PAUSE = 0.1
 def _solved(board: Board) -> SearchResult:
     """A mock solver: BFS from the start, returned in the shape ``solve()`` must produce."""
     start = board.start()
-    seen: dict[tuple[object, ...], tuple[Action, ...]] = {start.key(): ()}
+    seen: dict[tuple[object, ...], tuple[tuple[Action, ...], float]] = {start.key(): ((), 0.0)}
     queue = deque([start])
     while queue:
         state = queue.popleft()
+        path, cost = seen[state.key()]
         if board.is_goal(state):
-            path = seen[state.key()]
-            return SearchResult("solved", path, float(len(path)), Counts(len(seen), len(seen), 1))
+            return SearchResult("solved", path, cost, Counts(len(seen), len(seen), 1))
         for next_state, action in board.successors(state):
             if next_state.key() not in seen:
-                seen[next_state.key()] = seen[state.key()] + (action,)
+                step_cost = board.step_cost(state, action, next_state)
+                seen[next_state.key()] = (path + (action,), cost + step_cost)
                 queue.append(next_state)
     raise AssertionError("stage is unsolvable")
 

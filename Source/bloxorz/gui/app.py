@@ -42,6 +42,7 @@ from .hud import Hud
 from .intro import IntroTiming, LoadIntro
 from .layout import TILE_SIZE, board_center, cell_to_world
 from .level_select import LevelSelectScene
+from .replay import Solve
 from .title import TitleScene
 from .win_overlay import WinOverlay
 
@@ -119,9 +120,12 @@ def _projected_bounds(stage: Stage) -> tuple[float, float, float, float] | None:
 class Game:
     """The scene on screen, and the levels cleared in this session."""
 
-    def __init__(self, stages: tuple[Stage, ...]) -> None:
+    def __init__(self, stages: tuple[Stage, ...], solve: Solve | None = None) -> None:
         self.catalog = stages
         self.cleared: set[str] = set()
+        # How a level asks for an answer. It belongs to the session, not to one transition, so the
+        # next-level chain keeps the same solver.
+        self.solve = solve
         self.scene: Entity | None = None
 
     def show_title(self) -> None:
@@ -131,7 +135,7 @@ class Game:
         self._show(LevelSelectScene(self.catalog, self.cleared, self.play))
 
     def play(self, stage: Stage) -> None:
-        self._show(PrototypeScene(stage, self))
+        self._show(PrototypeScene(stage, self, self.solve))
 
     def level_cleared(self, stage: Stage) -> None:
         """Remember a cleared level so the level select can show it."""
@@ -147,11 +151,14 @@ class Game:
 class PrototypeScene(Entity):
     """The scene's update owner. ``Ursina`` itself is a singleton and cannot be subclassed."""
 
-    def __init__(self, stage: Stage, game: Game) -> None:
+    def __init__(self, stage: Stage, game: Game, solve: Solve | None = None) -> None:
         super().__init__(name="prototype")
 
         self.stage = stage
         self.game = game
+        # ``None`` means the scene offers no way to ask for a solution; what is built around this
+        # callable is the solver panel, and until then nothing reads it.
+        self.solve = solve
         self.board = Board(stage)
         self.board_view = BoardView(stage)
         self.board_view.root.parent = self
@@ -354,9 +361,15 @@ class PrototypeScene(Entity):
 
 
 def build(
-    stage_path: str | Path | None = None, window_type: str = "onscreen"
+    stage_path: str | Path | None = None,
+    window_type: str = "onscreen",
+    solve: Solve | None = None,
 ) -> tuple[Ursina, Game]:
-    """Open the window, then boot the title screen — or ``stage_path`` when one is given."""
+    """Open the window, then boot the title screen — or ``stage_path`` when one is given.
+
+    ``solve`` is the solver every level scene is offered; ``None`` leaves the game exactly as it
+    plays today, with no way to ask for a solution.
+    """
     app = Ursina(
         title=WINDOW_TITLE,
         borderless=False,
@@ -371,7 +384,7 @@ def build(
     Entity.default_shader = unlit_shader
     window.color = theme.BACKGROUND
 
-    game = Game(catalog.load_catalog())
+    game = Game(catalog.load_catalog(), solve)
     if stage_path is None:
         game.show_title()
     else:
@@ -379,7 +392,7 @@ def build(
     return app, game
 
 
-def run(stage_path: str | Path | None = None) -> int:
-    app, _ = build(stage_path)
+def run(stage_path: str | Path | None = None, solve: Solve | None = None) -> int:
+    app, _ = build(stage_path, solve=solve)
     app.run()
     return 0

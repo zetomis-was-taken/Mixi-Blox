@@ -115,22 +115,31 @@ illegal pair and second-roll refusal).
 The GUI must not import a solver module that does not exist, and must not grow a fake algorithm
 inside `bloxorz.solvers/` (that package is owned by #18–#23 and policed by `tests/test_contract.py`).
 
-- [ ] `PrototypeScene(stage, game, solve=None)` — a `Callable[[Stage, Caps], SearchResult] | None`.
-      `None` hides the Solve panel.
-- [ ] `Game.play(stage, solve=None)` and `build(..., solve=None)` thread it through; `run()` passes
-      `None` for now.
-- [ ] A dev-only demo path so the animation can be eyeballed before #18 lands: either a
+- [x] `PrototypeScene(stage, game, solve=None)` — a `Callable[[Stage, Caps], SearchResult] | None`.
+      `None` hides the Solve panel. The callable's type is `replay.Solve`, defined once beside the
+      module that consumes a solver's answer.
+- [x] `build(..., solve=None)` and `run(..., solve=None)` thread it through; `run()` passes `None`
+      for now. **Deviation:** the callable is stored on `Game` (`Game(stages, solve=None)`) rather
+      than taken by `Game.play(stage, solve=None)`, because the session — not a single transition —
+      owns it; otherwise the "next level" card would silently drop the solver and the next stage
+      would lose its Solve panel.
+- [~] A dev-only demo path so the animation can be eyeballed before #18 lands: either a
       `--replay-demo` flag on `main.py` (dev-only, documented as temporary) or a test-only scene
       that builds offscreen. The fixed action sequence for `L1-01` is a 7-move win per the
       scaffold probe; **verify it against `board.successors` before committing it**.
-- [ ] The mock returns a real `SearchResult`: `status="solved"`, `path` as a `tuple[Action, ...]`,
-      `cost` summed from `engine.step_cost`, and a plausible `Counts`.
-- [ ] The mock lives in `tests/` (or the dev flag), never in `Source/bloxorz/solvers/`.
-- [ ] Import `SearchResult` / `Caps` from `bloxorz.core.contracts`. **Never** from
+      *Deferred to Phase E:* until the scene actually consumes `self.solve`, such a flag would do
+      nothing when run, which is worse than no flag. The mock below already gives Phase E a
+      validated path to feed, and the offscreen probe is where the animation gets eyeballed.
+- [x] The mock returns a real `SearchResult`: `status="solved"`, `path` as a `tuple[Action, ...]`,
+      `cost` summed from `engine.step_cost`, and a plausible `Counts`
+      (`tests/test_gui_replay.py::_solved`).
+- [x] The mock lives in `tests/` (or the dev flag), never in `Source/bloxorz/solvers/`.
+- [x] Import `SearchResult` / `Caps` from `bloxorz.core.contracts`. **Never** from
       `bloxorz.bench` — the layer rule is `gui -> core + solvers`.
 
 **Done when:** deleting the flag/mock leaves the game exactly as today, and adding the real
-`bfs/dfs/ucs/astar` later means only passing a different callable.
+`bfs/dfs/ucs/astar` later means only passing a different callable. ✅ The injection is a default
+argument at every step, so `run()`/`build()` with no `solve` builds the same game as before.
 
 ---
 

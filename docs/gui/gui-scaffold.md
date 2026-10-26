@@ -417,5 +417,6 @@ count.
 
 - [`theme.md`](theme.md) — the palette and which colour every cell kind uses.
 - [`window.md`](window.md) — how the game window is created and configured (Ursina/Panda3D).
+- [`solver-integration.md`](solver-integration.md) — how an algorithm reaches the board as a replay.
 - [`contracts.md`](../contracts.md) — frozen core API and layer rules.
 - [`decisions/ADR-002-gui-stack.md`](../decisions/ADR-002-gui-stack.md) — why Ursina.

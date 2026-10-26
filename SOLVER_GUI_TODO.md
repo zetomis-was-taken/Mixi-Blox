@@ -147,35 +147,47 @@ argument at every step, so `run()`/`build()` with no `solve` builds the same gam
 
 ### D1. Solve panel (level scene)
 
-- [ ] Four cards (BFS / DFS / UCS / A\*) from `widgets.py`, in `theme` colours, placed so they do
+- [x] Four cards (BFS / DFS / UCS / A\*) from `widgets.py`, in `theme` colours, placed so they do
       not cover the board or the HUD; hidden while `LoadIntro` is running and once the level is
-      cleared.
-- [ ] Palette additions go in `gui/theme.py` and get a row in `docs/gui/theme.md` — no colours in
-      the panel file.
-- [ ] A "solving…" state: Ursina is single-threaded, so a long search freezes the frame. Show the
+      cleared. `gui/solver_panel.py` builds the cards, starts hidden and offers `show`/`hide`;
+      *when* the scene calls them (intro finished, level cleared) is Phase E.
+- [x] Palette additions go in `gui/theme.py` and get a row in `docs/gui/theme.md` — no colours in
+      the panel file. **No additions were needed:** the cards reuse the existing menu pair
+      (`TILE_FLOOR` with `BACKGROUND` labels, `TILE_HEAVY` while busy), so `theme.md` is unchanged.
+- [x] A "solving…" state: Ursina is single-threaded, so a long search freezes the frame. Show the
       card state **before** calling `solve` (build/label/refresh, then the blocking call), or the
-      user sees a dead window.
-- [ ] Solver memory: `{stage_id: {algorithm: SearchResult}}` on `Game`, so the panel can show a
+      user sees a dead window. `SolverPanel.set_busy` provides it; the scene must draw one frame
+      with it set before calling `solve` (Phase E).
+- [~] Solver memory: `{stage_id: {algorithm: SearchResult}}` on `Game`, so the panel can show a
       previous run instead of re-solving after a cancel. Optional, one dict, no persistence.
+      *Deferred to Phase E*, where the first thing that would read it exists; adding it now would
+      be an unused dictionary.
 
 ### D2. Replay HUD line
 
-- [ ] Show `"BFS replay — move 4 of 19"` style text (or paused/finished variants) in the HUD's
+- [x] Show `"BFS replay — move 4 of 19"` style text (or paused/finished variants) in the HUD's
       empty region. Extend `Hud.refresh` with optional parameters, or add a dedicated
-      `Hud.show_replay(...)`; **do not** overload the player's move/clock line.
-- [ ] Wording comes from `results.py` (pure module) so tests read it headless and the card cannot
-      drift from the HUD — same rule as `result_line`.
+      `Hud.show_replay(...)`; **do not** overload the player's move/clock line. (`Hud.show_replay`,
+      a separate line on the right under the counter.)
+- [x] Wording comes from `results.py` (pure module) so tests read it headless and the card cannot
+      drift from the HUD — same rule as `result_line`. (`replay_line`, tested in
+      `tests/test_gui_results.py`.)
 
 ### D3. Result card
 
-- [ ] New overlay (or an extended `WinOverlay`) for solver runs: algorithm, `status`, solution
+- [x] New overlay (or an extended `WinOverlay`) for solver runs: algorithm, `status`, solution
       length, `cost`, `Counts`, and the exits (replay again / back to level select / stop).
-- [ ] For `cap` and `unsolvable`, present the outcome **without** playing a movie: a card that
+      `gui/solver_overlay.py`: Watch again / Close / Levels, Enter and Esc.
+- [x] For `cap` and `unsolvable`, present the outcome **without** playing a movie: a card that
       states which limit was hit (or that no solution exists) plus the counts collected.
-- [ ] A solver run reaching the goal must not raise the `Level cleared` card with the player's
+      (`results.solver_detail` supplies the line; the card never starts a replay on its own.)
+- [x] A solver run reaching the goal must not raise the `Level cleared` card with the player's
       counter at 0 moves — that reads as a bug. Either reuse `WinOverlay` with explicit
       solver-labelled numbers or add the solver card; decide in §1.2 and be consistent.
-- [ ] `solved` with empty path: card straight away, no rolls.
+      A separate card was chosen; `SolverOverlay` never calls `game.level_cleared`, so the level
+      select still credits only player clears.
+- [x] `solved` with empty path: card straight away, no rolls.
+      (`Replay.playable` is false and `solver_detail` reads "already at the goal — nothing to roll".)
 
 ---
 

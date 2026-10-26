@@ -70,12 +70,15 @@ Ursina needs Python `< 3.14` (see `requirements.txt`). The level select lists ev
 | `Source/bloxorz/gui/level_select.py` | The level select: a card per stage, grouped by stage group, cleared ones tinted |
 | `Source/bloxorz/gui/parallax.py` | Scrolling tiled square backdrop in two depth layers |
 | `Source/bloxorz/gui/reaction.py` | Which mechanisms the block loads, and how their value eases there (no Ursina) |
-| `Source/bloxorz/gui/results.py` | The move/clock line the HUD and the win overlay show (no Ursina) |
+| `Source/bloxorz/gui/replay.py` | Solver playback: `SearchResult.path` planned into paced steps (no Ursina) |
+| `Source/bloxorz/gui/results.py` | Move/clock and solver-run text the HUD, win overlay and solver card show (no Ursina) |
+| `Source/bloxorz/gui/solver_overlay.py` | Solver result card: outcome, counts, watch again / close / levels |
+| `Source/bloxorz/gui/solver_panel.py` | The level's Solve control: one card per algorithm, plus the "solving" state |
 | `Source/bloxorz/gui/theme.py` | Palette (mapped in [`theme.md`](theme.md)), reaction timing and roll timing |
 | `Source/bloxorz/gui/title.py` | The title screen: wordmark, play and quit cards, `Enter` / `Esc` |
 | `Source/bloxorz/gui/widgets.py` | The flat card + label both menu screens are built from |
 | `Source/bloxorz/gui/win_overlay.py` | The results card: cost of the level, next/retry/levels, `Enter`/`R`/`Esc` |
-| `tests/test_gui_layout.py`, `tests/test_gui_controller.py`, `tests/test_gui_intro.py`, `tests/test_gui_framing.py`, `tests/test_gui_reaction.py`, `tests/test_gui_catalog.py`, `tests/test_gui_results.py` | Headless pose, controller, load-timeline, camera-fit, mechanism, catalog and result-text checks |
+| `tests/test_gui_layout.py`, `tests/test_gui_controller.py`, `tests/test_gui_intro.py`, `tests/test_gui_framing.py`, `tests/test_gui_reaction.py`, `tests/test_gui_catalog.py`, `tests/test_gui_results.py`, `tests/test_gui_replay.py` | Headless pose, controller, load-timeline, camera-fit, mechanism, catalog, result-text and replay-driver checks |
 
 The controller never builds a `State` and never re-implements a transition: it asks the engine for
 legal successors and turns a key into one concrete `(next_state, action)` pair, which is also the

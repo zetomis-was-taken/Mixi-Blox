@@ -35,7 +35,10 @@ Source/bloxorz/gui/            Ursina prototype (issue #28).
   level_select.py              Boot screen: a card per stage, grouped L1-L4, cleared ones tinted.
   parallax.py                  Camera-attached scrolling square backdrop, two depth layers.
   reaction.py                  Which mechanisms the block loads, and how they ease (no Ursina).
-  results.py                   Move/clock text for the win overlay (no Ursina import).
+  replay.py                    Solver playback: SearchResult.path -> paced steps (no Ursina).
+  results.py                   Move/clock and solver-run text for the HUD and cards (no Ursina).
+  solver_overlay.py            Solver result card: outcome, counts, watch again/close/levels.
+  solver_panel.py              The Solve control: one card per algorithm, "solving" state.
   theme.py                     Palette (mapped in docs/gui/theme.md) and animation timing.
   title.py                     Boot screen: wordmark, play/quit cards, Enter/Esc.
   widgets.py                   The flat card + label both menu screens are built from.

@@ -1,9 +1,10 @@
 """The corner HUD: what level this is, what it has cost so far, and what the keys do.
 
-Four fixed-position ``Text`` entities: the level name and the live move/clock counter in the two top
-corners, the key hints under the name, and the active cube on a split stage. Colour comes from
-``theme.TEXT`` like every other HUD line, and the counter's wording comes from ``results.py``, so
-the overlay and the HUD cannot describe the same run differently.
+Five fixed-position ``Text`` entities: the level name and the live move/clock counter in the two top
+corners, the key hints under the name, the active cube on a split stage, and — only while a solver
+run is being replayed — its progress on the right, under the counter. Colour comes from
+``theme.TEXT`` like every other HUD line, and the counter's and replay line's wording comes from
+``results.py``, so the cards and the HUD cannot describe the same run differently.
 
 The counter is rewritten only when its rendered text changes — the clock is shown to the second, so
 a frame that changes nothing never touches the font layout.
@@ -61,7 +62,15 @@ class Hud:
             color=theme.TEXT,
             scale=SMALL_SCALE,
         )
-        self.texts = (self.level, self.status, self.keys, self.cube)
+        # Playback progress sits on the opposite side, under the player's counter, so the two
+        # numbers are never mistaken for each other.
+        self.replay = Text(
+            position=(RIGHT_X, HINT_Y),
+            origin=(0.5, 0.5),
+            color=theme.TEXT,
+            scale=SMALL_SCALE,
+        )
+        self.texts = (self.level, self.status, self.keys, self.cube, self.replay)
 
     def refresh(self, moves: int, seconds: float, split: bool, active: int) -> None:
         """Show the run so far, and which cube the next input moves on a split stage."""
@@ -69,6 +78,12 @@ class Hud:
         self.cube.enabled = split
         if split:
             _retitle(self.cube, f"Cube {active + 1} of 2  |  Tab to switch")
+
+    def show_replay(self, text: str | None) -> None:
+        """Show playback progress on its own line; ``None`` hides it."""
+        self.replay.enabled = text is not None
+        if text is not None:
+            _retitle(self.replay, text)
 
     def teardown(self) -> None:
         """Remove every line; UI text is not a child of the scene it belongs to."""

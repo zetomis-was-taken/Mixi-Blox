@@ -1,0 +1,39 @@
+\subsubsection{Hàm chi phí không đồng nhất}
+\label{sec:bloxorz-action-cost}
+Gọi $O(s)$ là tập ô bị chiếm trong trạng thái $s$ và $F$ là tập ô dễ vỡ. Chi phí
+của cạnh hợp lệ $(s,a,s')$ được định nghĩa:
+\begin{equation}
+  c(s,a,s')=1+\left|\bigl(O(s')\setminus O(s)\bigr)\cap F\right|.
+  \label{eq:bloxorz-action-cost}
+\end{equation}
+Mỗi lần lăn có chi phí nền $1$; mỗi ô dễ vỡ mới tiếp xúc cộng thêm $1$.
+Khối chiếm nhiều nhất hai ô nên chi phí thuộc $\{1,2,3\}$ và
+$c_{\min}=1>0$. Chính sách nằm tại \path{bloxorz.core.costs};
+\texttt{Board.step\_cost} chỉ gọi chính sách này. Điều chỉnh trọng số không đòi
+hỏi sửa luật chuyển trạng thái hoặc vòng lặp tìm kiếm.
+
+Phụ phí thể hiện ưu tiên hạn chế tiếp xúc bề mặt dễ vỡ, theo ví dụ của đề bài.
+Đây là mục tiêu tối ưu được thiết kế, không phải xác suất rơi: trò chơi vẫn xác
+định. Hệ số $1$ tạo đánh đổi dễ giải thích, trong đó tránh một tiếp xúc tương
+đương giảm một lần lăn thường; không lựa chọn hệ số bằng cách tối ưu kết quả
+thực nghiệm. Lập phương đứng yên trên ô dễ vỡ không làm tăng chi phí mọi bước
+của lập phương còn lại. Đích dịch chuyển được xét như tiếp xúc mới; cầu và công
+tắc không có phụ phí riêng.
+
+Trong mười màn chính thức hiện tại, phụ phí chỉ phát sinh trên L2-01 và L2-02.
+Tám màn còn lại có chi phí đồng nhất bằng $1$, nên UCS có cùng thứ tự với FIFO
+khi dùng cách phá hòa hiện tại. Chính sách này không bảo đảm đường UCS rẻ hơn
+đường ít bước nhất trên mọi màn; tác động cần được đối chiếu theo từng màn.
+
+Hợp đồng hành động hiện hành không có cạnh đổi điều khiển độc lập. Vì vậy,
+không thêm cạnh chi phí $0$ hoặc $1$ cho việc chọn lập phương; mọi cạnh di
+chuyển thực sự vẫn có chi phí ít nhất $c_{\min}$. Tổng chi phí $g$ là tổng trọng số cạnh, còn độ
+dài lời giải là \texttt{len(path)}; hai đại lượng không được đánh đồng.
+
+
+Đối với hàm ước lượng dựa trên khoảng cách, cận số bước phải được nhân với
+$c_{\min}$ để thành cận chi phí. Chẳng hạn, trên màn không dịch chuyển, nếu
+$d$ giảm nhiều nhất hai ô sau mỗi lần lăn thì $h=c_{\min}d/2$ không vượt
+chi phí còn lại. Khi có dịch chuyển, lập luận hình học này cần được thay thế
+bằng một cận đã chứng minh; $h=0$ luôn là lựa chọn an toàn. Phần A* sẽ trình
+bày thiết kế và kiểm chứng cụ thể.

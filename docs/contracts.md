@@ -111,6 +111,8 @@ class Board:
 
     def successors(self, state: State) -> list[tuple[State, Action]]: ...
 
+    def outcome(self, state: State, action: Action) -> Outcome: ...
+
     def step_cost(self, state: State, action: Action, next_state: State) -> float: ...
 
     def passable(self, cell: Cell, orientation: Orientation,
@@ -129,6 +131,30 @@ may be shared across solvers and runs.
 
 `is_goal` is stated here because #31's loop calls it and no clause defined it: it is #8's Stage
 rule §2.4, namely `orientation == "standing"` on a goal cell of an unsplit block.
+
+`outcome` is the three-way answer `successors` cannot give, because it reports only the first and
+one silence covers both the others. It returns an `Outcome`:
+
+```python
+Verdict = Literal["moves", "refused", "fatal"]
+
+@dataclass(frozen=True)
+class Outcome:
+    kind: Verdict
+    state: State | None            # the successor, or the state a fall happens in
+```
+
+- `moves` carries the successor, and it is the same transition `successors` emits. Both read one
+  pipeline, so "legal there, fatal here" cannot happen.
+- `refused` is a wall — void, a closed bridge, a cell the other cube already occupies — and carries
+  no state, because nothing happened.
+- `fatal` is a fall: a fragile tile giving way under a standing block (§2.5), or a switch closing
+  the bridge under the block (ADR-005). Its state is a rendering prop, not a state of play — it is
+  precisely a state `successors` refuses to generate, so expanding it reaches nothing. Both readings
+  are ADR-010's decision.
+
+Neither the generated actions nor the reachable state set change: a fatal action is still absent
+from `successors`, which ignores the verdict and keeps only `moves`.
 
 | Glyph | Kind | Passable: standing / lying / lone cube | Activates when |
 | --- | --- | --- | --- |
@@ -154,8 +180,13 @@ Rules:
   rather than passable-then-detect-the-loss. A **switch** action is filtered the same way:
   `bridges` is updated first, and if the result leaves an occupied cell over a closed bridge, the
   action is not generated (ADR-005: a switch may not close a bridge under the block).
-- `step_cost` defaults to `1.0` for every action (#7); non-uniform weights are policy, so tuning
-  them never edits engine code.
+- Absence is the **search-side** reading, not the whole story (ADR-010). A player does not see two
+  of those refusals as walls: a fragile tile breaks under a standing block (§2.5), and a switch that
+  closes the bridge under the block drops it (ADR-005). `outcome` reports which of the three things a
+  pressed action does, so a renderer can tell a wall from a fall without re-deriving the transition.
+- `step_cost` is the only place a transition is priced (#7). The policy in `core/costs.py` charges
+  `1` per roll plus `1` per newly contacted fragile tile, so a price lies in `{1, 2, 3}` and
+  `c_min = 1`. Non-uniform weights are policy: tuning them never edits engine code.
 - `passable` is the only place passability is decided. A cell declares exactly one kind, so it
   never has to reconcile two.
 - The block starts **standing upright on `S`** — `AI - Project 1.pdf` §2.1, and standing occupies a
@@ -469,6 +500,8 @@ Consumers: #24 tabulates `status` with no special-casing; #21 replays `path` whe
 
 §2.5 leaves six interactions unstated. All six now have an answer: #11 by ADR-005, #12 by ADR-003,
 #13 by ADR-006, #14 by ADR-007, #15 by ADR-008, #16 by ADR-004. None of them changes a signature.
+#65 asks the same question of a teleport that cannot land, and needs no new rule: the block is never
+placed, so it is void contact, which ADR-004 already covers.
 
 | Issue | Outcome | Where it is assumed | Status |
 | --- | --- | --- | --- |
@@ -478,6 +511,7 @@ Consumers: #24 tabulates `status` with no special-casing; #21 replays `path` whe
 | #14 merge orientation | decided by the pair's adjacency axis | `successors`, "merging" rule | answered, ADR-007 |
 | #15 split switch re-trigger | always fires for a full block, inert for a lone cube | the `Y` activation rule | answered, ADR-008 |
 | #16 one cube falls off | the move is not generated, equivalent to immediate loss | `successors` legality | answered as subsumed by #11, ADR-004 |
+| #65 a split's teleport cannot land | the move is not generated, and there is no fall to animate | `successors` legality | answered as subsumed by ADR-004 |
 
 ## Obligations
 

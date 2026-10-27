@@ -1,14 +1,16 @@
 """Entry point. Puts ``Source/`` on ``sys.path`` (§ Layout, rule 1) and reports a stage.
 
-``--gui`` launches the Ursina game (#28). It boots into the title screen, then the level select;
-``--stage`` skips both menus and opens that level directly. The four solvers (#18-#23) are not here
-yet, so ``--solver`` still reports that. ``--replay-demo`` is a development aid: it hands the GUI a
-throwaway BFS (``gui/demo_solver.py``) so the solver playback can be watched before those land.
+``--solver`` runs one of the four search algorithms (#18-#23) through the frozen API and prints the
+``SearchResult`` as JSON. ``--gui`` launches the Ursina game (#28): it boots into the title screen,
+then the level select; ``--stage`` skips both menus and opens that level directly.
+``--replay-demo`` is a development aid: it hands the GUI a throwaway BFS (``gui/demo_solver.py``)
+so solver playback can be watched before it is wired to ``bloxorz.solvers``.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -19,7 +21,7 @@ if str(SOURCE) not in sys.path:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="main.py", description="Mixi-Blox: load a stage and show its legal moves."
+        prog="main.py", description="Mixi-Blox: inspect a stage or run a search algorithm."
     )
     parser.add_argument("--stage", metavar="FILE", help="path to a stage JSON file")
     parser.add_argument(
@@ -37,6 +39,8 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="dev aid: give --gui a demo BFS for its Solve panel (real solvers land in #18-#23)",
     )
+    parser.add_argument("--node-cap", type=int, help="maximum completed expansions")
+    parser.add_argument("--time-cap", type=float, help="search deadline in seconds")
     return parser
 
 
@@ -55,13 +59,34 @@ def main(argv: list[str] | None = None) -> int:
         return run(args.stage, solve=solve)
 
     if args.stage is None:
+        if args.solver:
+            parser.error("--solver requires --stage")
         parser.print_help()
         return 0
 
-    from bloxorz.core.engine import Board, cells
-    from bloxorz.core.stage import load_stage
+    from dataclasses import asdict
 
-    stage = load_stage(args.stage)
+    from bloxorz.core.contracts import Caps
+    from bloxorz.core.engine import Board, cells
+    from bloxorz.core.stage import StageError, load_stage
+    from bloxorz.solvers import astar, bfs, dfs, ucs
+
+    try:
+        stage = load_stage(args.stage)
+        if args.solver:
+            solvers = {
+                "bfs": bfs.solve,
+                "dfs": dfs.solve,
+                "ucs": ucs.solve,
+                "astar": astar.solve,
+            }
+            if args.solver not in solvers:
+                parser.error(f"{args.solver} is not registered yet")
+            result = solvers[args.solver](stage, Caps(args.node_cap, args.time_cap))
+            print(json.dumps(asdict(result), ensure_ascii=True))
+            return 0 if result.status == "solved" else 1
+    except (StageError, OSError, ValueError) as exc:
+        parser.error(str(exc))
     board = Board(stage)
     start = board.start()
     moves = board.successors(start)
@@ -71,8 +96,6 @@ def main(argv: list[str] | None = None) -> int:
     print(f"start {cells(start)[0]}  goal {stage.index.goal}  legal moves {len(moves)}")
     for state, action in moves:
         print(f"  {action[1]} -> {cells(state)}")
-    if args.solver:
-        print(f"{args.solver} is not registered yet: solvers land in #18-#23")
     return 0
 
 

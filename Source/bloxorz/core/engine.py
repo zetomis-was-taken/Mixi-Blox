@@ -6,7 +6,19 @@ Transitions need stage data a state does not carry, so they hang off a board bui
 
 from __future__ import annotations
 
-from bloxorz.core.contracts import Action, Cell, Cube, Direction, Kind, Orientation, Stage, State
+from bloxorz.core.contracts import (
+    Action,
+    Cell,
+    Cube,
+    Direction,
+    Kind,
+    Orientation,
+    Outcome,
+    Stage,
+    State,
+    Verdict,
+)
+from bloxorz.core.costs import action_cost
 
 DIRECTIONS: tuple[Direction, ...] = ("U", "D", "L", "R")
 
@@ -106,18 +118,40 @@ class Board:
         Illegal actions are absent, not generated-and-lost: void, a closed bridge, two cubes on one
         cell, a move that would park the block over a bridge the same action closes (ADR-005), and
         a standing block on fragile (ADR-003).
+
+        Absent here means absent from *search*. Two of those refusals are not walls to a player —
+        a fragile tile breaks, and a bridge closes under the block — and ``outcome`` reports them
+        as fatal. This keeps only `moves`, so the reachable state set is unchanged.
         """
         found: list[tuple[State, Action]] = []
         for index in range(len(state.cubes)):
             for direction in DIRECTIONS:
-                next_state = self._advance(state, index, direction)
-                if next_state is not None:
+                verdict, next_state = self._resolve(state, index, direction)
+                if verdict == "moves" and next_state is not None:
                     found.append((next_state, (index, direction)))
         return found
 
+    def outcome(self, state: State, action: Action) -> Outcome:
+        """What one pressed action does: it moves, it is refused, or it is fatal.
+
+        The two answers ``successors`` cannot give, because it reports only the first and one
+        silence covers both the others. *Refused* is a wall — void, a closed bridge, a cell the
+        other cube occupies — and carries no state, since nothing happened. *Fatal* is a fall, from
+        a fragile tile breaking under a standing block (§2.5, ADR-003) or from a switch closing the
+        bridge under the block (ADR-005), and carries the state the fall happens **in**: the block
+        where it now is and the bridges as it now has them, so a renderer can animate both.
+
+        That state is a rendering prop, not a state of play. It is exactly one ``successors``
+        refuses to generate, so expanding it reaches nothing. Search never calls this.
+
+        Fatality is a render-side reading of a search-side absence, which is ADR-010's decision.
+        """
+        verdict, next_state = self._resolve(state, *action)
+        return Outcome(kind=verdict, state=next_state)
+
     def step_cost(self, state: State, action: Action, next_state: State) -> float:
-        """One action costs one move. Weights are policy, not engine code (#7)."""
-        return 1.0
+        """Delegate legal transition prices to the cost policy (#7)."""
+        return action_cost(self._stage, state, action, next_state)
 
     def passable(
         self, cell: Cell, orientation: Orientation, bridge_state: tuple[bool, ...]
@@ -147,48 +181,55 @@ class Board:
             return "void"
         return self._index.kind[row * self._index.cols + col]
 
-    def is_fatal(self, state: State, action: Action) -> bool:
-        """True when the action is legal except that it closes a bridge under the block (ADR-005).
+    def _resolve(
+        self, state: State, index: int, direction: Direction
+    ) -> tuple[Verdict, State | None]:
+        """The one transition pipeline, and which of the three things it says happened.
 
-        The renderer asks this to animate the fall that interactive play shows. Search never calls
-        it, because ``successors`` drops the action instead.
+        ``successors`` reads this and keeps only ``moves``; ``outcome`` reads all three. Because
+        they share it, "fatal, and yet absent from ``successors``" cannot become false.
+
+        The two fatal sites are disjoint by construction. A fragile tile gives way at the *first*
+        passability check, and only for a single-cell result — a standing block, two units on one
+        tile (§2.5, ADR-003). A bridge closing under the block is only visible *after* the switches
+        fire, and needs the bridges to have changed (ADR-005). Neither can borrow the other's
+        trigger: a standing piece on fragile occupies no bridge, and a merge always yields a lying
+        block, which fragile accepts.
         """
-        index, direction = action
         if index >= len(state.cubes):
-            return False
-        split = len(state.cubes) == 2
-        moved = roll(state.cubes[index], direction, split)
-        if moved is None:
-            return False
-        before = set(cells(state))
-        cubes = [*state.cubes]
-        cubes[index] = moved
-        if not self._passable_cubes(cubes, state.bridges) or self._shares_a_cell(cubes):
-            return False
-        cubes, bridges = self._fire(cubes, list(state.bridges), set(moved) - before, before)
-        if tuple(bridges) == state.bridges:
-            return False
-        return not self._passable_cubes(_merge(cubes), tuple(bridges))
-
-    def _advance(self, state: State, index: int, direction: Direction) -> State | None:
+            return "refused", None
         split = len(state.cubes) == 2
         before = set(cells(state))
         moved = roll(state.cubes[index], direction, split)
         if moved is None:
-            return None
+            return "refused", None
         cubes = [*state.cubes]
         cubes[index] = moved
         if not self._passable_cubes(cubes, state.bridges):
-            return None
+            if self._breaks_under_standing_load(cubes):
+                return "fatal", State(cubes=tuple(cubes), bridges=state.bridges)
+            return "refused", None
         if self._shares_a_cell(cubes):
-            return None
+            return "refused", None
         cubes, bridges = self._fire(cubes, list(state.bridges), set(moved) - before, before)
         cubes = _merge(cubes)
         if not self._passable_cubes(cubes, tuple(bridges)):
-            return None
+            if tuple(bridges) != state.bridges:
+                return "fatal", State(cubes=tuple(cubes), bridges=tuple(bridges))
+            return "refused", None
         if self._shares_a_cell(cubes):
-            return None
-        return State(cubes=tuple(cubes), bridges=tuple(bridges))
+            return "refused", None
+        return "moves", State(cubes=tuple(cubes), bridges=tuple(bridges))
+
+    def _breaks_under_standing_load(self, cubes: list[Cube]) -> bool:
+        """True when the refusal that just happened is a fragile tile giving way (§2.5, ADR-003).
+
+        Read as load, per ADR-003: an unsplit block on one cell is two units on one tile, and that
+        is the only load fragile refuses. The predicate is exact, not "any cell is fragile": an
+        unsplit standing result occupies exactly one cell, so when the passability check failed,
+        that cell is the reason. A lying block spanning two fragile tiles still moves.
+        """
+        return len(cubes) == 1 and len(cubes[0]) == 1 and self.kind(cubes[0][0]) == "fragile"
 
     def _fire(
         self,

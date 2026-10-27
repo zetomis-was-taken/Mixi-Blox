@@ -18,6 +18,7 @@ Kind = Literal[
     "void", "floor", "start", "goal", "fragile", "bridge", "soft", "heavy", "split"
 ]
 Status = Literal["solved", "cap", "unsolvable"]
+Verdict = Literal["moves", "refused", "fatal"]
 
 
 @dataclass(frozen=True)
@@ -45,6 +46,19 @@ class State:
             object.__setattr__(
                 self, "cubes", tuple(sorted(self.cubes, key=lambda cube: min(cube)))
             )
+
+
+@dataclass(frozen=True)
+class Outcome:
+    """What one pressed action does, and the state it computed (§ Board).
+
+    ``moves`` carries the successor, ``refused`` carries nothing because nothing happened, and
+    ``fatal`` carries the state the fall happens in — a rendering prop, not a state of play, since
+    it is one ``successors`` refuses to generate.
+    """
+
+    kind: Verdict
+    state: State | None
 
 
 @dataclass(frozen=True)

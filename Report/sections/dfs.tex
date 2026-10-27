@@ -1,0 +1,59 @@
+\subsection{Tìm kiếm theo chiều sâu (Depth-First Search, DFS)}
+\label{sec:bloxorz-dfs}
+
+\subsubsection{Biến thể đã chọn: DFS lặp với ngăn xếp}
+DFS được cài đặt dưới dạng lặp, dùng ngăn xếp LIFO tường minh thay cho đệ quy.
+Lớp \texttt{StackFrontier} kế thừa \texttt{Frontier} của vòng lặp chung và chỉ
+đổi thao tác lấy nút: nút được đưa vào gần nhất được mở rộng trước. Cách này
+tránh giới hạn độ sâu đệ quy của Python trên màn lớn và giữ nguyên chính sách
+trạng thái lặp, bộ đếm cùng các giới hạn của hạ tầng dùng chung. Bộ giải vẫn
+theo giao diện \texttt{solve(stage, caps)} đã đóng băng.
+
+Nhóm chọn DFS thay vì IDS và ghi lại lựa chọn này. Trên mười màn chính thức,
+DFS trả tổng $701$ bước, còn phép duyệt FIFO trong kiểm thử trả $328$ bước,
+tức $2{,}1$ lần; mức tệ nhất là L4-02 với $168$ bước so với $24$. Độ dài tăng
+đều như vậy vẫn đọc được như một đặc điểm của chiến lược duyệt sâu, không phải
+hiện tượng đường đi dài bất thường, nên việc mở rộng lại của IDS không cần
+thiết để so sánh ở mục thực nghiệm.
+
+\subsubsection{Trạng thái lặp, tính kết thúc và tính tối ưu}
+Mỗi trạng thái được đưa vào ngăn xếp nhiều nhất một lần. \texttt{Frontier.push}
+từ chối khóa đã gặp, kể cả khi nút tương ứng còn đang chờ hoặc đã được mở rộng,
+nên tập đã gặp chính là cơ chế chặn chu trình. Trên đồ thị hữu hạn, ngăn xếp
+cạn dần và tìm kiếm kết thúc bằng nghiệm hoặc kết luận không có nghiệm; không
+nhánh nào quay lại vô hạn.
+
+DFS đầy đủ nhưng không tối ưu. Nó trả nghiệm đầu tiên chạm đích theo thứ tự
+ngăn xếp, nên cả số bước lẫn chi phí đều có thể lớn hơn nghiệm tối ưu. Trên
+L1-02, DFS trả $50$ bước với chi phí $50$, trong khi UCS ở
+mục~\ref{sec:bloxorz-ucs} trả $22$ bước với chi phí $22$. Vì vậy DFS chỉ dùng
+để kiểm chứng yêu cầu về duyệt sâu, không dùng thay UCS hay A* khi cần nghiệm
+tối ưu.
+
+\subsubsection{Kiểm chứng trên bộ dữ liệu}
+Kiểm thử phát lại mọi đường đi qua \texttt{Board} và so chi phí với chi phí
+tính lại, nên đường không hợp lệ hoặc chi phí sai đều bị bắt. Ba màn nhỏ có
+đáp án tính tay đều được giải với $6$, $4$ và $4$ bước, khớp đáp án. Vì DFS
+không bảo đảm tối ưu, kiểm thử chỉ ràng buộc độ dài không nhỏ hơn đáp án tối
+ưu chứ không khẳng định bằng.
+
+Hai bàn tổng hợp kiểm tra đúng phần đặc trưng của DFS. Bàn thứ nhất có chu
+trình nhưng không có đích: tìm kiếm trả \texttt{unsolvable} sau khi mở rộng
+đúng ba trạng thái, thay vì quay vòng. Bàn thứ hai có hai đường tới đích: DFS
+đi đường $5$ bước trong khi vòng lặp FIFO đi đường $2$ bước, xác nhận thứ tự
+LIFO chứ không chỉ xác nhận có tìm ra nghiệm.
+
+Trên mười màn chính thức, DFS giải được cả mười và mọi đường đi phát lại hợp
+lệ. DFS mở rộng ít nút hơn UCS ở $8/10$ màn vì dừng ngay khi chạm đích, nhưng
+đỉnh ngăn xếp lại lớn hơn ở cả $10/10$ màn.
+
+\subsubsection{Giới hạn và phạm vi kết luận}
+Các số trên là kết quả của bộ giải, không phải phép đo thời gian hay bộ nhớ;
+phép đo thuộc công cụ chung và chưa được thực hiện ở đây.
+
+Việc ngăn xếp đạt đỉnh lớn hơn không đủ để kết luận DFS dùng nhiều bộ nhớ hơn:
+cả DFS lẫn UCS đều giữ tập trạng thái đã gặp với $O(V)$ bộ nhớ, và đỉnh frontier
+chỉ là một phần của mức dùng thực tế. Lý thuyết DFS chỉ giữ một nhánh không còn
+đúng khi bắt buộc phải có tập đã gặp. Với $V$ trạng thái và $E$ cạnh đạt được,
+thời gian là $O(V+E)$ vì mỗi trạng thái được mở rộng nhiều nhất một lần; bộ nhớ
+là $O(V)$ cho tập đã gặp cộng với ngăn xếp.

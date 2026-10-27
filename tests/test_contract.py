@@ -33,6 +33,7 @@ FROZEN_DEFINITIONS = {
     "SearchResult": "Source/bloxorz/core/contracts.py",
     "Caps": "Source/bloxorz/core/contracts.py",
     "Expected": "Source/bloxorz/core/contracts.py",
+    "Outcome": "Source/bloxorz/core/contracts.py",
     "Switch": "Source/bloxorz/core/contracts.py",
     "Bridge": "Source/bloxorz/core/contracts.py",
     "Board": "Source/bloxorz/core/engine.py",

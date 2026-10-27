@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted — closes #16 as subsumed by #11. Confirms `docs/contracts.md` § Board.
+Accepted — closes #16 as subsumed by #11, and answers #65. Confirms `docs/contracts.md` § Board.
 
 ## Date
 
@@ -49,3 +49,7 @@ to the merged block alike.
 - `Status` stays three-valued. Nothing gains a `"lost"` state.
 - If #11 chooses "persists until the next move", #16 stays closed — persistence is not "one cube
   falls off".
+- #65 asks the same of a split switch whose landing cells are void or a closed bridge. It is a
+  refusal, not a fall: the block is never placed, so nothing drops. `Board.outcome` reports
+  `refused`, and the action stays absent from `successors` — the reasoning ADR-010 applies to the
+  two cases that *are* falls.

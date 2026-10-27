@@ -5,22 +5,43 @@ Bloxorz game and solver — BFS, DFS, UCS, and A* (CSC14003, Project 1).
 ## Status
 
 The v1 core is frozen and complete: types, stage loader, transition model, and the 10 benchmark
-stages in `Source/bloxorz/core/stages/` (provenance in [`CREDITS.md`](CREDITS.md)). The Ursina
-game (#28) — a title screen, level select, playable stages, split-cube control, undo/retry, a live
-move/clock HUD, a Solve panel that replays a solver's path as a movie and reports the run on a
-card, a results screen and a board framing that survives a resize — its headless
-geometry/controller/catalog/reaction/framing/replay tests, and the benchmark harness (#24) with its
-CSV/JSON/LaTeX and chart exporters are in place. `pytest -q` runs 165 tests.
+stages in `Source/bloxorz/core/stages/` (provenance in [`CREDITS.md`](CREDITS.md)). The solvers are
+in too: a shared search loop (`bloxorz.solvers.base`) with BFS, DFS, UCS and A*. UCS and A* use the
+#7 non-uniform cost policy; BFS and DFS use the same loop with a FIFO or LIFO frontier, so BFS
+minimises move count while DFS only returns the first goal it reaches.
+
+The Ursina game (#28) — a title screen, level select, playable stages, split-cube control,
+undo/retry, a live move/clock HUD, a Solve panel that replays a solver's path as a movie and reports
+the run on a card, a results screen and a board framing that survives a resize — and its headless
+geometry/controller/catalog/reaction/framing/replay tests, plus the benchmark harness (#24) with its
+CSV/JSON/LaTeX and chart exporters, are in place. `pytest -q` runs 302 tests.
 
 Still missing:
 
-- `bloxorz.solvers` (#18-#23). Until `bfs`, `dfs`, `ucs` and `astar` exist, `main.py --solver` is a
-  stub and `python -m bloxorz.bench.run_all` exits without running, so `Report/` holds no measured
-  results yet. Playback is already wired, so the panel and the movie can be watched today with
-  `python Source/main.py --gui --replay-demo`, which injects a throwaway BFS
-  (`Source/bloxorz/gui/demo_solver.py`, deleted when #18 lands); the real package only has to be
-  passed to `run()` as its `ALGORITHMS` mapping.
+- The GUI's Solve panel is still fed by the dev-only demo BFS: `python Source/main.py --gui
+  --replay-demo` injects a throwaway search (`Source/bloxorz/gui/demo_solver.py`, deleted when #18
+  lands). Handing `run()` the `ALGORITHMS` mapping from `bloxorz.solvers` is all that is left.
+- `Report/` therefore still holds no measured results: `python -m bloxorz.bench.run_all` can now
+  run end to end, but the charts and tables have not been regenerated from a full run.
 
+## Run a solver (Python 3.11+)
+
+```powershell
+python -m Source.main --stage Source/bloxorz/core/stages/L2-02_fragile_ring.json --solver ucs
+python -m Source.main --stage Source/bloxorz/core/stages/L2-02_fragile_ring.json --solver astar
+python -m Source.main --stage Source/bloxorz/core/stages/L2-02_fragile_ring.json --solver bfs
+python -m Source.main --stage Source/bloxorz/core/stages/L1-02_two_flights.json --solver dfs
+python -m pytest -q
+python -m ruff check .
+```
+
+The CLI prints a JSON `SearchResult`; moves are `len(path)` and `cost` is weighted total cost.
+`--node-cap` limits completed expansions and `--time-cap` sets a search deadline in seconds.
+Exit codes: 0 solved, 1 cap/unsolvable, 2 invalid input or unregistered solver.
+See the [UCS report and integration notes](docs/ucs_vi.md) and [cost policy](docs/action_cost_vi.md).
+The [A* report and proofs](docs/astar_vi.md) cover admissibility, consistency and the teleport fallback.
+The [BFS notes](docs/bfs_vi.md) record the move/cost split and the frontier tests.
+The [DFS notes](docs/dfs_vi.md) record the DFS-vs-IDS decision and the cycle test.
 
 ## Contributing
 

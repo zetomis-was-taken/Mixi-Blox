@@ -1,0 +1,69 @@
+\subsection{Tìm kiếm theo chiều rộng (Breadth-First Search, BFS)}
+\label{sec:bloxorz-bfs}
+
+BFS sử dụng chung \texttt{State}, \texttt{Action}, \texttt{Board} và vòng lặp tìm kiếm
+chung của solver cơ sở. Sự khác biệt của BFS nằm ở chính sách lấy các node: hàng đợi
+FIFO.
+
+\subsubsection{Thứ tự FIFO và chiến lược}
+
+Đối với BFS, frontier là hàng đợi FIFO. Hai phương thức quan trọng trong hàng đợi gồm
+\texttt{push} và \texttt{pop}. Trong đó, \texttt{push} sẽ không duyệt lại các node đã
+gặp và \texttt{pop} sẽ lấy phần tử cũ nhất ra khỏi frontier. Các node được đánh dấu là
+đã gặp tại thời điểm sinh node, không phải lúc mở rộng frontier. Do đó mà mỗi trạng thái
+chỉ vào frontier đúng một lần nên vòng lặp tìm kiếm không phụ thuộc vào chu trình.
+
+Kiểm tra đích diễn ra khi lấy nút ra, và các nút được lấy theo độ sâu không giảm. Nút
+đích đầu tiên được lấy ra có độ sâu nhỏ nhất; vì BFS không đọc chi phí, mỗi cạnh trong
+cây tìm kiếm đúng bằng một bước, nên độ sâu chính là số bước. Do đó BFS bảo đảm tính đầy
+đủ trên đồ thị hữu hạn và trả về đường ít bước nhất. \texttt{bfs.py} chỉ gọi lại
+\texttt{search(stage, caps, frontier=Frontier())}: luật trò chơi nằm ở
+\texttt{Board.successors}, còn \texttt{Frontier()} đã là hàng đợi FIFO.
+
+\subsubsection{Quan hệ với mô hình chi phí}
+
+BFS dùng FIFO và không đọc \texttt{step\_cost}, nên thuật toán chỉ tối ưu số bước di
+chuyển, không tối ưu chi phí. Trên các màn chỉ gồm ô thường, mọi bước đi đều có giá trị
+1, nên số bước trùng với chi phí và BFS tối ưu cả hai. Trên màn có ô dễ vỡ, chi phí mỗi
+bước không còn bằng 1 nên hai mục tiêu tách nhau: BFS có thể trả về đường ít bước hơn
+nhưng đắt hơn UCS (ví dụ ở mục~\ref{sec:bloxorz-ucs}).
+
+\subsubsection{Vòng lặp chung, bộ đếm và giới hạn}
+
+Phần cài đặt của BFS gọi \texttt{base.search(stage, caps, frontier=Frontier())}, khai
+báo frontier tường minh và đối xứng với \texttt{ucs.py} và \texttt{astar.py}, dù
+\texttt{Frontier()} vốn đã là FIFO mặc định. Theo quy ước của \#18, \texttt{generated}
+đếm cả các node bị frontier từ chối, \texttt{expanded} tăng trước \texttt{successors};
+\texttt{frontier\_peak} là số node sống.
+
+Giới hạn thời gian được kiểm tra trước khi lấy nút; giới hạn số nút nằm sau kiểm tra
+đích và trước khi tăng \texttt{expanded}. Mọi kết quả giải được, đạt giới hạn hay không
+có nghiệm đều trả \texttt{Counts}. Bộ giải chỉ dùng đồng hồ để thực thi giới hạn; thời
+gian và bộ nhớ thực nghiệm do công cụ đo chung phụ trách, nên mục này không nêu số đo.
+Gọi $V$ và $E$ là số trạng thái và cạnh đạt được: BFS chạy trong $O(V+E)$ thời gian,
+dùng $O(V)$ bộ nhớ cho tập trạng thái đã gặp và frontier, và không có hàng đợi ưu tiên
+nên không phát sinh thừa số $\log$.
+
+\subsubsection{Kiểm chứng và kết quả}
+
+Ba màn có đáp án tính tay cho kết quả 6, 4 và 4 bước, trùng với
+\texttt{expected.optimal\_cost}. Với mỗi màn, đường đi trả về được phát lại trên
+\texttt{Board}; trạng thái cuối là đích và chi phí phát lại khớp chi phí bộ giải báo.
+Trên mười màn chính thức, số bước của BFS được đối chiếu với một phép duyệt theo chiều
+rộng viết độc lập ngay trong kiểm thử, không đi qua \texttt{base.search}; hai kết quả
+khớp trên cả mười màn.
+
+Hai kiểm thử nhỏ khoá hành vi của frontier. Màn thứ nhất đặt đích là nút con đầu tiên và
+một nhánh năm bước là nút con thứ hai: FIFO lấy đích ngay và trả một bước, trong khi
+LIFO sẽ đi hết nhánh và trả sáu bước. Màn thứ hai chứa chu trình $A\to B\to A$: vì trạng
+thái được đánh dấu ngay khi sinh, $A$ bị từ chối ở lần gặp thứ hai, vòng lặp dừng và mỗi
+trạng thái chỉ được mở rộng một lần, với ba nút mở rộng và năm nút sinh.
+
+So với UCS, BFS cho cùng số nút mở rộng, số nút sinh và đỉnh frontier trên chín trong
+mười màn. Ở các màn đó đường ít bước nhất cũng là đường rẻ nhất, nên hai chiến lược duyệt
+cùng một tập nút dù BFS không đọc chi phí. Màn L2-02 là ngoại lệ: BFS mở rộng 134 nút,
+sinh 286 nút, đỉnh frontier 9; UCS là 135, 288 và 10. BFS duyệt ít hơn nhưng trả đường
+đắt hơn, vì mục tiêu số bước và mục tiêu chi phí đã tách nhau từ khi có ô dễ vỡ
+(Mục~\ref{sec:bloxorz-ucs}). Đây là kiểm tra tính đúng, không phải số đo thời gian hay bộ
+nhớ; chưa thể kết luận BFS nhanh hơn hay tốn ít bộ nhớ hơn UCS trước khi có số đo của
+công cụ chung.

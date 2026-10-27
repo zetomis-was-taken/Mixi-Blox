@@ -8,21 +8,24 @@ The v1 core is frozen and complete: types, stage loader, transition model, and t
 stages in `Source/bloxorz/core/stages/` (provenance in [`CREDITS.md`](CREDITS.md)). The solvers are
 in too: a shared search loop (`bloxorz.solvers.base`) with BFS, DFS, UCS and A*. UCS and A* use the
 #7 non-uniform cost policy; BFS and DFS use the same loop with a FIFO or LIFO frontier, so BFS
-minimises move count while DFS only returns the first goal it reaches.
+minimises move count while DFS only returns the first goal it reaches. `bloxorz.solvers.ALGORITHMS`
+is the registry the game reads: display name -> solver, in Solve-card order.
 
 The Ursina game (#28) — a title screen, level select, playable stages, split-cube control,
-undo/retry, a live move/clock HUD, a Solve panel that replays a solver's path as a movie and reports
-the run on a card, a results screen and a board framing that survives a resize — and its headless
-geometry/controller/catalog/reaction/framing/replay tests, plus the benchmark harness (#24) with its
-CSV/JSON/LaTeX and chart exporters, are in place. `pytest -q` runs 302 tests.
+undo/retry, a live move/clock HUD, a Solve panel with one card per real algorithm that replays its
+path as a movie and reports the run on a card, a results screen and a board framing that survives a
+resize — and its headless geometry/controller/catalog/reaction/framing/replay tests, plus the
+benchmark harness (#24) with its CSV/JSON/LaTeX and chart exporters, are in place. `pytest -q` runs
+315 tests.
+
+`python Source/main.py --gui` hands every level scene `bloxorz.solvers.ALGORITHMS`, so the Solve
+panel offers BFS, DFS, UCS and A*; `python Source/main.py --stage FILE --solver NAME` runs one
+algorithm headlessly and prints its `SearchResult` as JSON.
 
 Still missing:
 
-- The GUI's Solve panel is still fed by the dev-only demo BFS: `python Source/main.py --gui
-  --replay-demo` injects a throwaway search (`Source/bloxorz/gui/demo_solver.py`, deleted when #18
-  lands). Handing `run()` the `ALGORITHMS` mapping from `bloxorz.solvers` is all that is left.
-- `Report/` therefore still holds no measured results: `python -m bloxorz.bench.run_all` can now
-  run end to end, but the charts and tables have not been regenerated from a full run.
+- `Report/` holds no measured results yet: `python -m bloxorz.bench.run_all` runs end to end, but
+  the charts and tables have not been regenerated from a full run and committed.
 
 ## Run a solver (Python 3.11+)
 

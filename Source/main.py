@@ -2,9 +2,9 @@
 
 ``--solver`` runs one of the four search algorithms (#18-#23) through the frozen API and prints the
 ``SearchResult`` as JSON. ``--gui`` launches the Ursina game (#28): it boots into the title screen,
-then the level select; ``--stage`` skips both menus and opens that level directly.
-``--replay-demo`` is a development aid: it hands the GUI a throwaway BFS (``gui/demo_solver.py``)
-so solver playback can be watched before it is wired to ``bloxorz.solvers``.
+then the level select; ``--stage`` skips both menus and opens that level directly. Every level
+scene is handed ``bloxorz.solvers.ALGORITHMS``, so its Solve panel offers the real BFS, DFS, UCS
+and A*.
 """
 
 from __future__ import annotations
@@ -34,11 +34,6 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="launch the Ursina game (title screen, level select, or --stage for one level)",
     )
-    parser.add_argument(
-        "--replay-demo",
-        action="store_true",
-        help="dev aid: give --gui a demo BFS for its Solve panel (real solvers land in #18-#23)",
-    )
     parser.add_argument("--node-cap", type=int, help="maximum completed expansions")
     parser.add_argument("--time-cap", type=float, help="search deadline in seconds")
     return parser
@@ -50,13 +45,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.gui:
         from bloxorz.gui.app import run
+        from bloxorz.solvers import ALGORITHMS
 
-        solve = None
-        if args.replay_demo:
-            from bloxorz.gui.demo_solver import ALGORITHMS
-
-            solve = ALGORITHMS
-        return run(args.stage, solve=solve)
+        return run(args.stage, solve=ALGORITHMS)
 
     if args.stage is None:
         if args.solver:

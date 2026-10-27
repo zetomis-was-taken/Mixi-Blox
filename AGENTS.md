@@ -27,7 +27,6 @@ Source/bloxorz/gui/            Ursina prototype (issue #28).
   block_view.py                Player boxes and pivot-based roll animation.
   catalog.py                   Stage play order, groups and next level (no Ursina import).
   controller.py                Current State, active cube, moves/clock, undo, retry, goal callback.
-  demo_solver.py               Dev-only BFS behind --replay-demo (deleted when #18 lands).
   dot_shader.py                Screen-space halftone shader for tiles and player.
   framing.py                   How far to push the camera out so the board fits (no Ursina).
   hud.py                       Corner HUD: level name, live moves/clock, key hints, active cube.
@@ -49,8 +48,11 @@ Source/bloxorz/bench/          Benchmark harness (issue #24).
   stats.py                     BenchmarkRecord plus CSV/JSON/LaTeX exporters.
   plots.py                     matplotlib charts (optional import).
   run_all.py                   End-to-end benchmark run; writes into Report/.
-Source/bloxorz/solvers/        Planned one-module-per-algorithm package (#18-#23).
-                               NOT committed yet: no solve() exists, so bench exits early.
+Source/bloxorz/solvers/        One module per algorithm plus the shared loop (#18-#23).
+  base.py                      The search loop, frontier, duplicate policy, counts, caps.
+  bfs.py dfs.py ucs.py astar.py  One frontier ordering each; solve(stage, caps) -> SearchResult.
+  cost_frontier.py             g-ordered frontier shared by UCS and A*.
+  __init__.py                  ALGORITHMS: display name -> solver, in Solve-card order.
 tests/                         pytest suite (contract, stage, engine, GUI layout/controller/
                                catalog/results/intro/reaction, bench smoke) plus tests/fixtures/*.json.
 tools/                         transcribe_levels.py (game data -> stage JSON),
@@ -66,7 +68,9 @@ Data flow: stage JSON -> `load_stage` validates and compiles `StageIndex` once, 
 measured window -> `Board(stage)` is O(1) and answers transitions -> a solver returns
 `SearchResult` -> the bench harness measures around `solve()` and builds `Stats`/`BenchmarkRecord`
 -> exporters and plots write into `Report/`. The GUI reads `bloxorz.core` only and renders states;
-it never re-implements a transition.
+it never re-implements a transition, and it takes a solver from `bloxorz.solvers.ALGORITHMS` only
+as an injected `Mapping[str, Solve]` (`run(..., solve=…)`), so it still never imports a search path
+into its own module graph.
 
 # Commands
 
@@ -79,8 +83,9 @@ ruff check .                                # lint (E, F, I; line length 100)
 python Source/main.py --stage Source/bloxorz/core/stages/L1-01_long_corridor.json
 python Source/main.py --gui                 # Ursina game, boots the title screen
 python Source/main.py --gui --stage FILE    # one level, no menus
+python Source/main.py --stage FILE --solver ucs     # one solver run, JSON SearchResult
 
-PYTHONPATH=Source python -m bloxorz.bench.run_all   # fails until bloxorz.solvers exists
+PYTHONPATH=Source python -m bloxorz.bench.run_all   # writes Report/data, tables and figures
 python tools/verify_submission.py .         # CI also runs this on every push/PR
 python tools/package.py [student_id ...]    # builds the submission ZIP
 ```
@@ -118,8 +123,8 @@ are WASD/arrows (`Tab` swaps the active cube on a split stage, `Z` undoes a move
 level and replays its load animation), one roll per key press — holding a direction does not repeat
 — the block rolls a real quarter-turn and an undo rolls it back the same way, the HUD counts moves
 and time, and the goal raises a win overlay with next level / retry / level select. When the app is
-given an algorithms mapping (`--replay-demo` today, `bloxorz.solvers` later), a Solve panel replays
-the chosen path as a movie: `Space` pauses, `Esc` stops and restores the player's own run, and a
-solver run never counts as a clear. The camera fits each board to the window and refits after a
-resize. Camera constants, roll geometry, level flow, and known limitations are documented in
-`docs/gui/gui-scaffold.md`; palette changes belong in `gui/theme.py`.
+given an algorithms mapping (`--gui` passes `bloxorz.solvers.ALGORITHMS`, one card per algorithm),
+a Solve panel replays the chosen path as a movie: `Space` pauses, `Esc` stops and restores the
+player's own run, and a solver run never counts as a clear. The camera fits each board to the
+window and refits after a resize. Camera constants, roll geometry, level flow, and known
+limitations are documented in `docs/gui/gui-scaffold.md`; palette changes belong in `gui/theme.py`.

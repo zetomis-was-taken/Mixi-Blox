@@ -16,14 +16,14 @@ what the GUI already provides, what an algorithm has to return, and where the tw
 | `Replay` | `gui/replay.py` | Turns `SearchResult.path` into `(start, landing, action)` steps and paces them, one roll in flight at a time |
 | `PlayerController.play` | `gui/controller.py` | Applies one planned `(next_state, action)`; costs the player nothing (`moves`, `elapsed`, `history` untouched) |
 | `BlockView.animate` | `gui/block_view.py` | The existing quarter-turn animation; playback reuses it, so there is no second animation path |
-| Injection point | `gui/app.py` | `run(..., solve=…)` → `build(..., solve=…)` → `Game(stages, solve)` → `PrototypeScene(stage, game, solve)`; `solve` is an `Algorithms` mapping (card name → solver) |
+| Injection point | `gui/app.py` | `run(..., solve=…)`, fed by `Source/main.py` from `bloxorz.solvers.ALGORITHMS` → `build(..., solve=…)` → `Game(stages, solve)` → `PrototypeScene(stage, game, solve)`; `solve` is an `Algorithms` mapping (card name → solver) |
 | `SolverPanel` / `SolverOverlay` | `gui/solver_panel.py`, `gui/solver_overlay.py` | The four Solve cards, and the result card with the counts |
 | `theme.ROLL_SECONDS` | `gui/theme.py` | `0.22` s for a quarter-turn; playback does not change it |
 | `theme.REPLAY_PAUSE_SECONDS` | `gui/theme.py` | `0.12` s between two rolls of a movie |
 
-The panel, the HUD replay line, the result card, the input gate and a demo flag already exist. What
-is missing is the algorithms themselves: everything below is what a new one has to do to appear on
-screen.
+The panel, the HUD replay line, the result card, the input gate and the `ALGORITHMS` registry are
+in place, and `main.py --gui` passes that registry, so the four cards are live. This document is
+now the recipe for whoever adds or changes an algorithm.
 
 ## The boundary: one function, one value
 
@@ -113,7 +113,7 @@ The level scene needs a list of choices to draw. Keep it in the solvers package 
 import and no knowledge of module names:
 
 ```python
-# Source/bloxorz/solvers/__init__.py  (sketch — #18 owns the final shape)
+# Source/bloxorz/solvers/__init__.py — the registry the panel reads
 from collections.abc import Callable
 
 from bloxorz.core.contracts import Caps, SearchResult, Stage
@@ -150,10 +150,9 @@ return run(args.stage, solve=ALGORITHMS)
 The keys are the card labels and their insertion order is the card order, so the four cards come
 from the four dictionary entries and nothing in `gui/` needs to change when one is added.
 
-Keep the import lazy, as `main.py` already does, until #18–#23 merge: `gui/` imports
-`bloxorz.core` and `gui.replay` only, never the solvers package at module scope. To watch the loop
-before then, `python Source/main.py --gui --replay-demo` injects `gui/demo_solver.py`'s throwaway
-BFS — a development aid, not the submission's BFS; delete both when #18 merges.
+`main.py` keeps the import inside its `--gui` branch: `gui/` imports `bloxorz.core` and
+`gui.replay` only, never the solvers package at module scope, and a CLI solver run never pays for
+Ursina. Changing which algorithms the panel offers is therefore an edit to `ALGORITHMS` alone.
 
 ## Step 4 — turn the answer into a movie
 
@@ -256,7 +255,7 @@ Headless first, per the project's GUI rule (never import Ursina in `tests/`):
 | A `cap` result plays a movie | The scene branched on `path` instead of `status`; `cap` and `unsolvable` carry an empty path |
 | `node_cap` returns one more expansion than expected | The cap is checked before the increment, so it is the number of completed expansions |
 | A long DFS freezes the window | `solve` is synchronous and Ursina is single-threaded; show the "solving" state first, and give the panel a `Caps(node_cap=…)` |
-| `ImportError: bloxorz.solvers` | The panel imported the package at module scope before #18–#23 merged; import lazily or keep `solve=None` |
+| `ImportError: bloxorz.solvers` | Something in `gui/` imported the solvers package at module scope; the mapping belongs to the caller (`main.py`) and reaches the scene through `run(..., solve=…)` |
 | `perf_counter` flagged by the contract test | Timing belongs to `bench/` or `solvers/`, never the GUI |
 
 ## Checklist for adding an algorithm

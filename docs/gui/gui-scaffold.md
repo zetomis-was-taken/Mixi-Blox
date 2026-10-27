@@ -16,11 +16,11 @@ the art direction ([`theme.md`](theme.md)).
   drops in from above. Input is blocked until the animation has fully played.
 - Renders the board as flat tiles: a dark tile per walkable cell, butted together with a faint
   translucent teal grid line, on a dark base that gives the platform visible thickness, a raised
-  detail piece on switch cells, a bare peach tile that twists in place on fragile cells, no tile at
-  the goal, and no mark on the start (see [`theme.md`](theme.md)).
-- Reacts to the block: switch plates sink while it bears on them, the fragile tile wiggles about
-  its Y axis under the weight, and a bridge eases between its open and closed height with its tint
-  following it ([`theme.md`](theme.md#reactions)).
+  detail piece on switch cells, a bare peach tile that bobs up and down while idle on fragile
+  cells, no tile at the goal, and no mark on the start (see [`theme.md`](theme.md)).
+- Reacts to the block: switch plates sink while it bears on them, fragile tiles stop bobbing and
+  hold still once the block stands on them, and a bridge eases between its open and closed height
+  with its tint following it ([`theme.md`](theme.md#reactions)).
 - Rolls the block on every move: the animation is a real quarter-turn about the tile edge, driven by
   the translation, not a canned loop.
 - Rolls once per key press: a direction key is read as one `input()` event, so holding it down does
@@ -199,7 +199,7 @@ never derives a transition of its own:
 | Mechanism | Reaction |
 | --- | --- |
 | soft / heavy / split plate | sinks by `theme.PRESS_DEPTH` while loaded, rises when the block steps off |
-| fragile tile | twists up to `±theme.FRAGILE_WOBBLE_DEGREES` about Y while loaded, one swing per `theme.FRAGILE_WOBBLE_SECONDS`; flat again when the block steps off |
+| fragile tile | bobs `±theme.FRAGILE_WOBBLE_HEIGHT` on Y while idle, one cycle per `theme.FRAGILE_WOBBLE_SECONDS`; pinned still while loaded |
 | bridge | eases between its open and closed height; its tint follows the height (`TILE_FLOOR` → `TILE_BRIDGE`) |
 
 A heavy plate only answers to the full standing block, which is the weight rule the engine fires it
@@ -328,8 +328,9 @@ stage. Adjust `CAMERA_FOV` only when the amount of perspective distortion also n
 ## Visual style
 
 `theme.py` holds the palette and the mapping is documented in [`theme.md`](theme.md): flat tile
-colours plus a raised detail piece for switch cells and a loose twist for fragile ones. The goal cell has no tile, so the
-cream background shows through as a hole, and the start is an ordinary tile. Rendering stays
+colours plus a raised detail piece for switch cells and an idle bob for fragile ones. The goal
+cell has no tile, so the cream background shows through as a hole, and the start is an ordinary
+tile. Rendering stays
 deliberately simple — no lights, shadows, fog, gradients or textures. Entities use the
 `unlit_shader`, except the board objects and player when the optional dotted shader is enabled.
 Values are written with `color.rgb32(...)` because Ursina's `color.rgb()` expects floats in `0–1`;
@@ -379,8 +380,8 @@ count.
 - Holding a direction key does not repeat: a long corridor is tapped out key press by key press.
 - Split/merge/teleport changes snap instead of rolling — forward, when undone, and during a movie.
 - A fragile panel never breaks on screen. A standing block on fragile is an illegal move
-  (ADR-003), so no state exists in which the panel has given way; the tile only twists back and
-  forth with the weight.
+  (ADR-003), so no state exists in which the panel has given way; an idle tile bobs on the spot
+  and the weight pins it still.
 - The HUD shows during the load animation, where the counter reads `0 moves | 0:00` because the
   clock only starts once input is accepted.
 - The HUD's placement and sizes are constants in `gui/hud.py`; they are not adjustable at runtime.

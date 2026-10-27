@@ -11,9 +11,9 @@ line along every shared edge marks the grid; lines follow their tile's height, s
 the load animation and sink with a closing bridge.
 
 Mechanisms react to the block: a switch plate sinks while the block bears on it, a fragile tile
-twists in place under the weight, and a bridge eases between its two heights with its tint
-following the height. Which cells carry load is decided in ``reaction.py``; this module only draws
-the answer.
+bobs up and down while nothing stands on it and holds still once it does, and a bridge eases
+between its two heights with its tint following the height. Which cells carry load is decided in
+``reaction.py``; this module only draws the answer.
 
 Tiles, lines and details are placed through :meth:`BoardView._place_tiles` and
 :meth:`BoardView._place_details`, which stack the bridge height (eased) and the load-animation
@@ -72,7 +72,7 @@ class _Detail(NamedTuple):
 
 
 # Plain floor, bridges and fragile cells carry no detail: colour, height and the fragile tile's
-# own twist already say what they are.
+# own wobble already say what they are.
 DETAILS: dict[Kind, tuple[_Detail, ...]] = {
     # A soft switch is a small button, a heavy switch a wide plate, and a split switch two halves
     # with a visible seam between them.
@@ -129,7 +129,7 @@ class BoardView:
         self._line_at: dict[Cell, list[Entity]] = {}
         self._intro_offsets: list[float] = []
         self._detail_intro_offsets: list[float] = []
-        # Fragile tiles twist in place; every other sort of tile stays square to the grid.
+        # Fragile tiles bob while idle; every other sort of tile rests on the platform.
         self._fragile_cells: set[Cell] = set()
         self._elapsed = 0.0
         # Mechanism state: the load already shown, and where each mechanism is heading.
@@ -304,21 +304,23 @@ class BoardView:
 
     def _place_tiles(self) -> None:
         for index, (cell, tile) in enumerate(self.tiles.items()):
-            tile.y = self._rest_y[cell] + self._intro_offsets[index]
-            tile.rotation_y = self._wobble(cell)
+            tile.y = self._rest_y[cell] + self._intro_offsets[index] + self._wiggle(cell)
             self._tile_bases[cell].y = tile.y + TILE_BASE_DROP
             if cell in self._bridge_targets:
                 tile.color = _bridge_color(self._rest_y[cell])
             for line in self._line_at.get(cell, ()):
                 line.y = self._line_y(tile.y)
 
-    def _wobble(self, cell: Cell) -> float:
-        """Yaw of a fragile tile under its current load, in degrees; flat for every other kind."""
-        load = self._load.get(cell, 0.0)
-        if cell not in self._fragile_cells or load == 0.0:
+    def _wiggle(self, cell: Cell) -> float:
+        """Vertical offset of a fragile tile: bobbing while idle, still once it takes weight.
+
+        The load eases in, so the bob fades out as the block arrives and comes back when it leaves.
+        """
+        if cell not in self._fragile_cells:
             return 0.0
+        idle = 1.0 - self._load.get(cell, 0.0)
         phase = math.tau * self._elapsed / theme.FRAGILE_WOBBLE_SECONDS
-        return theme.FRAGILE_WOBBLE_DEGREES * load * math.sin(phase)
+        return theme.FRAGILE_WOBBLE_HEIGHT * idle * math.sin(phase)
 
     def _place_details(self) -> None:
         for view, offset in zip(self.details, self._detail_intro_offsets):

@@ -54,7 +54,7 @@ mechanisms.
 | `floor` (`o`) | `TILE_FLOOR` `#46425e` | none |
 | `start` (`S`) | `TILE_FLOOR` `#46425e` | none — the start is an ordinary tile with no mark |
 | `goal` (`G`) | **no tile** | none — the cream background shows through, like the original game's hole |
-| `fragile` (`F`) | `TILE_FRAGILE` `#ffb0a3` | none — the bare tile twists under load |
+| `fragile` (`F`) | `TILE_FRAGILE` `#ffb0a3` | none — the bare tile bobs up and down while idle |
 | `bridge` (`=`) | `TILE_BRIDGE` `#00b9be` when open, `TILE_FLOOR` `#46425e` when closed | none; height carries the state |
 | `soft` (`+`) | `TILE_SOFT` `#00b9be` | 0.45 × 0.45 cream plate (small button) |
 | `heavy` (`X`) | `TILE_HEAVY` `#15788c` | 0.80 × 0.80 cream plate (wide pressure plate) |
@@ -91,7 +91,7 @@ colours belong to the palette. All pieces are thin (`theme.TRIM_HEIGHT`) cubes r
 
 - **soft / heavy / split** — cream plates, sized and split as described above.
 - **floor / start / bridge / fragile** — no detail; colour, height and, for fragile, the tile's
-  own twist already carry their meaning.
+  own wobble already carry their meaning.
 - **goal** — no tile, so there is nothing to detail.
 
 Because every detail is a separate entity, the load animation can float the tiles in first and the
@@ -106,7 +106,7 @@ controller already holds (`reaction.py`). No colour is added for these states �
 | Mechanism | Resting | Under the block | Why |
 | --- | --- | --- | --- |
 | soft / heavy / split plate | flush on the tile | sunk by `theme.PRESS_DEPTH` | The plate is a button: it goes down when weight is on it. |
-| fragile tile | square to the grid | twists up to `±theme.FRAGILE_WOBBLE_DEGREES` about its Y axis, one swing per `theme.FRAGILE_WOBBLE_SECONDS` | The panel rocks on its supports under load, so a fragile tile looks like it is about to give. |
+| fragile tile | bobs `±theme.FRAGILE_WOBBLE_HEIGHT` on Y, one cycle per `theme.FRAGILE_WOBBLE_SECONDS` | stops at its resting height and holds still | A tile that never settles reads as loose, and the weight pinning it flat shows how fragile it is. |
 | bridge | open: level with the floor, `TILE_BRIDGE`; closed: sunk, `TILE_FLOOR` | eases between the two | A bridge is one object moving, so its tint follows its height instead of snapping ahead of it. |
 
 Two rules keep the picture honest:
@@ -127,7 +127,7 @@ rolls, so the movie reads as steps and a speed change never alters the roll geom
 
 A fragile panel never breaks on screen: a standing block on fragile is an illegal move
 ([ADR-003](../decisions/ADR-003-fragile-under-lone-cube.md)), so no state exists in which the panel
-has given way. The tile only twists back and forth with the weight.
+has given way. An idle tile bobs on the spot and the weight pins it still.
 
 ## Changing the palette
 

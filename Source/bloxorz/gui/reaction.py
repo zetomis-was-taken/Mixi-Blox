@@ -10,12 +10,12 @@ from __future__ import annotations
 from bloxorz.core.contracts import Cell, Kind, Stage, State
 from bloxorz.core.engine import orientation
 
-# Cells whose detail piece answers to the block: the three switches and the fragile panel.
+# Cells that answer to the block: the three switch plates and the fragile tile's own wobble.
 REACTIVE_KINDS: frozenset[Kind] = frozenset({"fragile", "soft", "heavy", "split"})
 
 
 def reactive_cells(stage: Stage) -> set[Cell]:
-    """Every cell of ``stage`` that carries a detail piece able to react."""
+    """Every cell of ``stage`` that carries a mechanism able to react."""
     index = stage.index
     return {
         (row, col)

@@ -61,7 +61,13 @@ class WinOverlay(Entity):
             self.on_levels()
 
     def _build(self, stage: Stage, moves: int, seconds: float) -> None:
-        Entity(parent=self, model="quad", color=theme.OVERLAY_PANEL, scale=PANEL_SCALE)
+        Entity(
+            parent=self,
+            model="quad",
+            color=theme.OVERLAY_PANEL,
+            scale=PANEL_SCALE,
+            z=widgets.PANEL_Z,
+        )
         Text(
             parent=self,
             text=TITLE,

@@ -62,7 +62,13 @@ class SolverOverlay(Entity):
             self.on_close()
 
     def _build(self, stage: Stage, algorithm: str, result: SearchResult) -> None:
-        Entity(parent=self, model="quad", color=theme.OVERLAY_PANEL, scale=PANEL_SCALE)
+        Entity(
+            parent=self,
+            model="quad",
+            color=theme.OVERLAY_PANEL,
+            scale=PANEL_SCALE,
+            z=widgets.PANEL_Z,
+        )
         Text(
             parent=self,
             text=results.solver_heading(algorithm, result.status),

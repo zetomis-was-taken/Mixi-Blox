@@ -31,6 +31,10 @@ mechanisms.
 - Detail pieces are raised `theme.TRIM_LIFT` + `theme.TRIM_HEIGHT` above the tile's top face, so
   they never z-fight with it.
 - Detail geometry is stated as fractions of a full tile (`TILE_SIZE`), because tiles have no gap.
+- Menu panels are drawn *behind* their cards and labels (`widgets.PANEL_Z`). UI depth grows away
+  from the camera, so a translucent panel sharing a card's depth would paint over it and wash the
+  card, and its label's colour, out — which is exactly the "off" look a wrong depth produces even
+  though every colour constant is correct.
 
 ## Colour assignments
 

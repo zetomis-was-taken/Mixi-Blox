@@ -49,7 +49,13 @@ class PauseOverlay(Entity):
         self._build(stage)
 
     def _build(self, stage: Stage) -> None:
-        Entity(parent=self, model="quad", color=theme.OVERLAY_PANEL, scale=PANEL_SCALE)
+        Entity(
+            parent=self,
+            model="quad",
+            color=theme.OVERLAY_PANEL,
+            scale=PANEL_SCALE,
+            z=widgets.PANEL_Z,
+        )
         Text(parent=self, text=TITLE, origin=(0, 0), y=TITLE_Y, scale=1.4, color=theme.TEXT)
         Text(
             parent=self,

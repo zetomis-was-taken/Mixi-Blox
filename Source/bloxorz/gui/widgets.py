@@ -20,6 +20,11 @@ TEXT_SCALE = 0.7
 CARD_Z = 0.01
 TEXT_Z = -0.01
 
+# Depth grows away from the UI camera, so a panel that backs a set of cards must be further out
+# than the cards themselves. A panel at the cards' depth would draw over them and, because the
+# panel is translucent cream, wash every card and its label out.
+PANEL_Z = 0.02
+
 
 def card(
     parent: Entity,

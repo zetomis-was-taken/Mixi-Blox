@@ -49,6 +49,9 @@ the art direction ([`theme.md`](theme.md)).
   so playback can be exercised before `bloxorz.solvers` (#18–#23) lands.
 - Ends a level on a win overlay: the move count and elapsed time, then next level, retry and back to
   the level select — as cards or as `Enter` / `R` / `Esc`.
+- Pauses a level: `Esc` puts a card over the frozen board with continue and level select, as cards
+  or as `Enter` / `Esc` / `L`. Movement keys are dropped and the clock stops while it is up; the
+  load animation, a solver movie and a result card are never interrupted by it.
 - Draws an optional parallax backdrop: two regular grids of filled and outlined `#15788c` squares,
   scrolling top-left → bottom-right at different speeds (`parallax.py`).
 - Can apply an optional dotted halftone shader to the tiles and the player only (`dot_shader.py`).
@@ -83,6 +86,7 @@ Ursina needs Python `< 3.14` (see `requirements.txt`). The level select lists ev
 | `Source/bloxorz/gui/layout.py` | Grid ↔ world geometry and pose derivation (no Ursina) |
 | `Source/bloxorz/gui/level_select.py` | The level select: a card per stage, grouped by stage group, cleared ones tinted |
 | `Source/bloxorz/gui/parallax.py` | Scrolling tiled square backdrop in two depth layers |
+| `Source/bloxorz/gui/pause_overlay.py` | Pause card over the frozen board: continue / level select, `Enter` / `Esc` / `L` |
 | `Source/bloxorz/gui/reaction.py` | Which mechanisms the block loads, and how their value eases there (no Ursina) |
 | `Source/bloxorz/gui/replay.py` | Solver playback: `SearchResult.path` planned into paced steps (no Ursina) |
 | `Source/bloxorz/gui/results.py` | Move/clock and solver-run text the HUD, win overlay and solver card show (no Ursina) |
@@ -109,7 +113,7 @@ is built, so two screens never share the window.
 | --- | --- | --- |
 | Title | `TitleScene` — the boot screen | play card or `Enter` → level select; quit card or `Esc` → `application.quit()` |
 | Level select | `LevelSelectScene`, from `catalog.load_catalog()` | a stage card → that level |
-| Level | `PrototypeScene` | the win overlay: next level, retry, or back to the level select |
+| Level | `PrototypeScene` | the win overlay: next level, retry, or back to the level select; the pause card: continue or back to the level select |
 
 `--stage FILE` skips the first two rows and builds the level scene directly. The title screen is
 given only the callback that opens the level select, so it reads no stage and no cleared-level data.
@@ -371,6 +375,8 @@ count.
   GUI may not start a clock around a search (contract rule 5).
 - The level select shows stage ids only: the stage names appear once a level is open.
 - The level select has no way back to the title screen, so the quit card is reachable only at boot.
+- The pause card is not offered during the load animation, a solver movie or a result card: `Esc`
+  already stops a movie and leaves a result card for the level select.
 - Holding a direction key does not repeat: a long corridor is tapped out key press by key press.
 - Split/merge/teleport changes snap instead of rolling — forward, when undone, and during a movie.
 - A fragile panel never breaks on screen. A standing block on fragile is an illegal move

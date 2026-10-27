@@ -42,6 +42,7 @@ from .hud import Hud
 from .intro import IntroTiming, LoadIntro
 from .layout import TILE_SIZE, board_center, cell_to_world
 from .level_select import LevelSelectScene
+from .pause_overlay import PauseOverlay
 from .replay import Algorithms, Replay
 from .solver_overlay import SolverOverlay
 from .solver_panel import SolverPanel
@@ -169,6 +170,7 @@ class PrototypeScene(Entity):
             self.board, self.block_view, self._level_cleared
         )
         self.overlay: WinOverlay | None = None
+        self.pause: PauseOverlay | None = None
         self._reframe_pending = False
         window.title = f"{WINDOW_TITLE}  |  {stage.id} {stage.name}"
 
@@ -291,14 +293,18 @@ class PrototypeScene(Entity):
         self._reframe_pending = True
 
     def input(self, key: str) -> None:
-        """Every action the level takes: roll, switch cube, undo, retry, and playback control.
+        """Every action the level takes: roll, switch cube, undo, retry, pause, and playback.
 
         This is the whole input path, one press per action. A press is dropped — not queued — while
         the load animation plays, once the level is won, while the solver card is up, and while a
         solver movie is playing: only stop and pause are read then, so a direction key cannot
-        corrupt the planned path. ``PlayerController`` refuses its four actions while a roll is
+        corrupt the planned path. While the pause card is up, only its own keys are read and
+        everything else is dropped. ``PlayerController`` refuses its four actions while a roll is
         still animating, so nothing arriving mid-roll survives to the next frame.
         """
+        if self.pause is not None:
+            self._pause_input(key)
+            return
         if self.solver_overlay is not None or not self.intro.finished:
             return
         if self.replay is not None:
@@ -317,6 +323,15 @@ class PrototypeScene(Entity):
             self.controller.undo()
         elif key == "r":
             self._retry()
+        elif key == "escape":
+            self._pause()
+
+    def _pause_input(self, key: str) -> None:
+        """The pause card's keys, mirroring its two buttons: continue, or leave for the levels."""
+        if key in ("escape", "enter"):
+            self._resume()
+        elif key == "l":
+            self.game.show_level_select()
 
     def update(self) -> None:
         if self._reframe_pending:
@@ -343,8 +358,14 @@ class PrototypeScene(Entity):
         self.hud.show_replay(self._replay_line())
         self._show_panel_if_idle()
         # The clock runs only while the player is playing: it starts once the load animation has
-        # played, stops once the block is home, and pauses while a solver movie borrows the board.
-        if not self.intro.finished or self.controller.cleared or self.replay is not None:
+        # played, stops once the block is home, and pauses while a solver movie borrows the board
+        # or the pause card holds the level.
+        if (
+            not self.intro.finished
+            or self.controller.cleared
+            or self.replay is not None
+            or self.pause is not None
+        ):
             return
         self.controller.tick(time.dt)
 
@@ -366,6 +387,24 @@ class PrototypeScene(Entity):
             on_retry=self._retry,
             on_levels=self.game.show_level_select,
         )
+
+    def _pause(self) -> None:
+        """Freeze the level behind the pause card; the Solve control waits behind it too.
+
+        A press that lands while the block is mid-roll, or while a solver run is being asked for,
+        is dropped like any other press that cannot be carried out yet.
+        """
+        if self._pending is not None or self.controller.animating:
+            return
+        if self.panel is not None:
+            self.panel.hide()
+        self.pause = PauseOverlay(self.stage, self._resume, self.game.show_level_select)
+
+    def _resume(self) -> None:
+        """Close the pause card; the next frame puts the Solve control back if it belongs."""
+        if self.pause is not None:
+            destroy(self.pause)
+            self.pause = None
 
     def _retry(self) -> None:
         """Start the level over: reset the run, then replay the load animation.
@@ -392,6 +431,7 @@ class PrototypeScene(Entity):
             and not self.controller.cleared
             and self.replay is None
             and self.solver_overlay is None
+            and self.pause is None
             and self._pending is None
         )
         if idle:
@@ -532,7 +572,7 @@ class PrototypeScene(Entity):
         """Remove everything this scene put on screen: board and block are children, UI is not."""
         application.base.ignore("aspectRatioChanged")
         self.hud.teardown()
-        for entity in (self.overlay, self.solver_overlay, self.panel, self.parallax):
+        for entity in (self.overlay, self.solver_overlay, self.pause, self.panel, self.parallax):
             if entity is not None:
                 destroy(entity)
         destroy(self)

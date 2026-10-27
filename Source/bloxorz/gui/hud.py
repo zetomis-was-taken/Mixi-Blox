@@ -28,7 +28,7 @@ CUBE_Y = 0.39
 SMALL_SCALE = 0.8
 
 ROLL_HINT = "WASD / arrow keys to roll"
-ACTION_HINT = "Z undo   |   R retry"
+ACTION_HINT = "Z undo   |   R retry   |   Esc pause"
 
 
 class Hud:

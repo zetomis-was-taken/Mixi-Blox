@@ -16,11 +16,11 @@ the art direction ([`theme.md`](theme.md)).
   drops in from above. Input is blocked until the animation has fully played.
 - Renders the board as flat tiles: a dark tile per walkable cell, butted together with a faint
   translucent teal grid line, on a dark base that gives the platform visible thickness, a raised
-  detail piece on fragile and switch cells, no tile at the goal, and no mark on the start (see
-  [`theme.md`](theme.md)).
-- Reacts to the block: switch plates sink while it bears on them, a fragile crack opens under the
-  weight, and a bridge eases between its open and closed height with its tint following it
-  ([`theme.md`](theme.md#reactions)).
+  detail piece on switch cells, a bare peach tile that twists in place on fragile cells, no tile at
+  the goal, and no mark on the start (see [`theme.md`](theme.md)).
+- Reacts to the block: switch plates sink while it bears on them, the fragile tile wiggles about
+  its Y axis under the weight, and a bridge eases between its open and closed height with its tint
+  following it ([`theme.md`](theme.md#reactions)).
 - Rolls the block on every move: the animation is a real quarter-turn about the tile edge, driven by
   the translation, not a canned loop.
 - Rolls once per key press: a direction key is read as one `input()` event, so holding it down does
@@ -157,7 +157,7 @@ the identical animation (with fresh random staggers) instead of jumping to its s
 1. every non-void tile floats up from below the board (`intro.tile_progress(index)`), each with its
    own random delay inside `IntroTiming.tile_delay_max_seconds`, so the platform assembles instead
    of popping in at once;
-2. the detail pieces resting on those tiles — switch plates and fragile cracks — rise
+2. the detail pieces resting on those tiles — the switch plates — rise
    (`intro.obstacle_progress(index)`), each with its own random delay inside
    `IntroTiming.obstacle_delay_max_seconds`. A stage with no detail pieces skips this phase;
 3. the player's block drops in from above (`intro.player_progress()`), starting only after the last
@@ -199,7 +199,7 @@ never derives a transition of its own:
 | Mechanism | Reaction |
 | --- | --- |
 | soft / heavy / split plate | sinks by `theme.PRESS_DEPTH` while loaded, rises when the block steps off |
-| fragile crack | opens to `1 + theme.CRACK_OPEN` of its depth under weight |
+| fragile tile | twists up to `±theme.FRAGILE_WOBBLE_DEGREES` about Y while loaded, one swing per `theme.FRAGILE_WOBBLE_SECONDS`; flat again when the block steps off |
 | bridge | eases between its open and closed height; its tint follows the height (`TILE_FLOOR` → `TILE_BRIDGE`) |
 
 A heavy plate only answers to the full standing block, which is the weight rule the engine fires it
@@ -328,7 +328,7 @@ stage. Adjust `CAMERA_FOV` only when the amount of perspective distortion also n
 ## Visual style
 
 `theme.py` holds the palette and the mapping is documented in [`theme.md`](theme.md): flat tile
-colours plus a raised detail piece for fragile and switch cells. The goal cell has no tile, so the
+colours plus a raised detail piece for switch cells and a loose twist for fragile ones. The goal cell has no tile, so the
 cream background shows through as a hole, and the start is an ordinary tile. Rendering stays
 deliberately simple — no lights, shadows, fog, gradients or textures. Entities use the
 `unlit_shader`, except the board objects and player when the optional dotted shader is enabled.
@@ -379,8 +379,8 @@ count.
 - Holding a direction key does not repeat: a long corridor is tapped out key press by key press.
 - Split/merge/teleport changes snap instead of rolling — forward, when undone, and during a movie.
 - A fragile panel never breaks on screen. A standing block on fragile is an illegal move
-  (ADR-003), so no state exists in which the panel has given way; the crack only opens and shuts
-  with the weight.
+  (ADR-003), so no state exists in which the panel has given way; the tile only twists back and
+  forth with the weight.
 - The HUD shows during the load animation, where the counter reads `0 moves | 0:00` because the
   clock only starts once input is accepted.
 - The HUD's placement and sizes are constants in `gui/hud.py`; they are not adjustable at runtime.
@@ -446,8 +446,9 @@ count.
   stage `L4-01`) is still open — see `SOLVER_GUI_TODO.md`.
 - Offscreen reaction probe — a heavy plate measured at `0.0250 → -0.0050` (`PRESS_DEPTH`) while
   the standing block is on it and back to `0.0250` after it leaves, an opened bridge at its floor
-  height and fully cyan, and a fragile crack measured at `0.1200 → 0.2160` (`×1.8`, `CRACK_OPEN`)
-  under a lying block.
+  height and fully cyan. (The probe also measured a fragile crack, which has since been replaced
+  by the tile's Y-axis twist; that reading no longer applies, and the twist has not been watched
+  on screen yet — it needs Python `< 3.14` with Ursina installed.)
 - A pivot-roll sweep across all stage files found a valid roll plan for every reachable unsplit
   transition (3,550 checked at the time).
 

@@ -6,7 +6,7 @@ The assignment of every colour to a cell kind, and the reasoning behind it, is i
 
 The goal is not drawn at all (the cream background shows through, as a hole would), and the start
 is an ordinary tile. The remaining kinds share the palette's accents and are told apart by their
-detail piece (see ``DETAILS`` in ``board_view.py``).
+detail piece or, for fragile cells, by their own twist (see ``DETAILS`` in ``board_view.py``).
 
 Values are 0-255 through ``color.rgb32``; ``color.rgb`` expects 0-1 floats.
 """
@@ -30,9 +30,8 @@ TILE_SPLIT = color.rgb32(0, 185, 190)  # #00b9be
 # thick block at its outer edges.
 TILE_SIDE = color.rgb32(70, 66, 94)  # #46425e, the same as TILE_FLOOR
 
-# Detail pieces: switch plates and fragile cracks.
+# Switch plates, the only detail pieces left once fragile cells went bare.
 TILE_MARK = color.rgb32(255, 238, 204)  # #ffeecc
-TILE_MARK_DARK = color.rgb32(70, 66, 94)  # #46425e
 
 # Parallax background squares: the deep teal, drawn at a low opacity by ``parallax.py``.
 PARALLAX_SQUARE = color.rgb32(21, 120, 140)  # #15788c
@@ -61,13 +60,14 @@ TILE_CAP_HEIGHT = 0.03
 TRIM_HEIGHT = 0.04
 TRIM_LIFT = 0.005
 
-# Mechanism reactions. A switch plate sinks while the block bears on it, a fragile crack opens as
-# the panel takes weight, and a bridge eases between its two heights — its tint follows the height,
-# so a moving bridge is one moving object rather than a colour and a body that disagree.
+# Mechanism reactions. A switch plate sinks while the block bears on it, a fragile tile twists in
+# place as the panel takes weight, and a bridge eases between its two heights — its tint follows the
+# height, so a moving bridge is one moving object rather than a colour and a body that disagree.
 PRESS_DEPTH = 0.03  # how far a plate sinks under the block, in world units
 PRESS_SECONDS = 0.08  # travel time for a plate, pressed or released
 BRIDGE_SECONDS = 0.18  # travel time for a bridge between open and closed
-CRACK_OPEN = 0.8  # extra crack depth at full load, as a fraction of the slot's depth
+FRAGILE_WOBBLE_DEGREES = 6.0  # yaw either way at full load, so the tile looks loose
+FRAGILE_WOBBLE_SECONDS = 0.45  # one full left-right swing under a standing block
 
 # One quarter-turn per action, at a constant angular speed so the block visibly rolls.
 ROLL_SECONDS = 0.22

@@ -1,8 +1,8 @@
 """Timeline for the stage-load animation.
 
 The sequence is: every tile floats up from below the board (each with its own random delay), then
-the detail pieces sitting on those tiles (switch plates and fragile cracks), then the player's
-block drops in from above. Only once the whole timeline has played may the game take input.
+the detail pieces sitting on those tiles (the switch plates), then the player's block drops in
+from above. Only once the whole timeline has played may the game take input.
 
 Pure Python on purpose: the Ursina views ask this object how far along each piece is, so the
 ordering and the input gate can be tested headless (``tests/test_gui_intro.py``) instead of by

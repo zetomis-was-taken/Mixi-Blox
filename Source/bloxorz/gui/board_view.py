@@ -10,9 +10,10 @@ the same dark tile colour, so the platform shows a solid 0.30-unit edge. A faint
 line along every shared edge marks the grid; lines follow their tile's height, so they rise with
 the load animation and sink with a closing bridge.
 
-Mechanisms react to the block: a switch plate sinks while the block bears on it, a fragile crack
-opens under the weight, and a bridge eases between its two heights with its tint following the
-height. Which cells carry load is decided in ``reaction.py``; this module only draws the answer.
+Mechanisms react to the block: a switch plate sinks while the block bears on it, a fragile tile
+twists in place under the weight, and a bridge eases between its two heights with its tint
+following the height. Which cells carry load is decided in ``reaction.py``; this module only draws
+the answer.
 
 Tiles, lines and details are placed through :meth:`BoardView._place_tiles` and
 :meth:`BoardView._place_details`, which stack the bridge height (eased) and the load-animation
@@ -21,6 +22,7 @@ offset (dynamic) on top of each piece's resting height, so the two cannot overwr
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import NamedTuple
 
@@ -69,9 +71,9 @@ class _Detail(NamedTuple):
     color: object
 
 
-# Plain floor and bridges carry no detail; their colour and height already say what they are.
+# Plain floor, bridges and fragile cells carry no detail: colour, height and the fragile tile's
+# own twist already say what they are.
 DETAILS: dict[Kind, tuple[_Detail, ...]] = {
-    "fragile": (_Detail((0.0, 0.0), (0.92, 0.12), theme.TILE_MARK_DARK),),
     # A soft switch is a small button, a heavy switch a wide plate, and a split switch two halves
     # with a visible seam between them.
     "soft": (_Detail((0.0, 0.0), (0.45, 0.45), theme.TILE_MARK),),
@@ -85,13 +87,11 @@ DETAILS: dict[Kind, tuple[_Detail, ...]] = {
 
 @dataclass(frozen=True)
 class _DetailView:
-    """One built piece, with the cell it sits on and its unladen footprint."""
+    """One built piece, with the cell it sits on and its resting height."""
 
     entity: Entity
     cell: Cell
-    kind: Kind
     rest_y: float
-    size: tuple[float, float]
 
 
 def _bridge_height(is_open: bool) -> float:
@@ -129,6 +129,9 @@ class BoardView:
         self._line_at: dict[Cell, list[Entity]] = {}
         self._intro_offsets: list[float] = []
         self._detail_intro_offsets: list[float] = []
+        # Fragile tiles twist in place; every other sort of tile stays square to the grid.
+        self._fragile_cells: set[Cell] = set()
+        self._elapsed = 0.0
         # Mechanism state: the load already shown, and where each mechanism is heading.
         self._state: State | None = None
         self._load: dict[Cell, float] = {}
@@ -176,6 +179,8 @@ class BoardView:
                 self.tiles[cell] = tile
                 self._tile_bases[cell] = base
                 self._rest_y[cell] = TILE_CAP_Y
+                if kind == "fragile":
+                    self._fragile_cells.add(cell)
 
                 built = self._build_details(cell, kind, x, z)
                 self.details.extend(built)
@@ -216,9 +221,7 @@ class BoardView:
                     ),
                 ),
                 cell=cell,
-                kind=kind,
                 rest_y=rest_y,
-                size=(detail.size[0] * _SURFACE, detail.size[1] * _SURFACE),
             )
             for number, detail in enumerate(DETAILS.get(kind, ()))
         ]
@@ -289,6 +292,7 @@ class BoardView:
 
     def update(self, dt: float) -> None:
         """Ease every mechanism toward its target, then redraw the pieces that carry them."""
+        self._elapsed += dt
         press_step = dt / theme.PRESS_SECONDS
         bridge_step = dt * BRIDGE_TRAVEL / theme.BRIDGE_SECONDS
         for cell, target in self._load_targets.items():
@@ -301,11 +305,20 @@ class BoardView:
     def _place_tiles(self) -> None:
         for index, (cell, tile) in enumerate(self.tiles.items()):
             tile.y = self._rest_y[cell] + self._intro_offsets[index]
+            tile.rotation_y = self._wobble(cell)
             self._tile_bases[cell].y = tile.y + TILE_BASE_DROP
             if cell in self._bridge_targets:
                 tile.color = _bridge_color(self._rest_y[cell])
             for line in self._line_at.get(cell, ()):
                 line.y = self._line_y(tile.y)
+
+    def _wobble(self, cell: Cell) -> float:
+        """Yaw of a fragile tile under its current load, in degrees; flat for every other kind."""
+        load = self._load.get(cell, 0.0)
+        if cell not in self._fragile_cells or load == 0.0:
+            return 0.0
+        phase = math.tau * self._elapsed / theme.FRAGILE_WOBBLE_SECONDS
+        return theme.FRAGILE_WOBBLE_DEGREES * load * math.sin(phase)
 
     def _place_details(self) -> None:
         for view, offset in zip(self.details, self._detail_intro_offsets):
@@ -324,11 +337,5 @@ class BoardView:
 
     @staticmethod
     def _place_detail(view: _DetailView, load: float, offset: float) -> None:
-        """Put one piece at its resting height, deformed by however hard it is being pressed."""
-        if view.kind == "fragile":
-            # The fracture opens along its depth as the panel takes weight.
-            view.entity.y = view.rest_y + offset
-            view.entity.scale_z = view.size[1] * (1.0 + theme.CRACK_OPEN * load)
-            return
-        # A plate sinks by however far into the press it has travelled.
+        """Put one piece at its resting height, sunk by however far it is being pressed."""
         view.entity.y = view.rest_y - theme.PRESS_DEPTH * load + offset

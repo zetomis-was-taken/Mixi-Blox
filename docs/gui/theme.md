@@ -40,7 +40,7 @@ mechanisms.
 
 | # | Hex | Constant(s) | Used for | Why |
 | --- | --- | --- | --- | --- |
-| 1 | `#46425e` | `TILE_FLOOR`, `TILE_SIDE`, `TEXT`, `TILE_MARK_DARK` | Every walkable tile (floor, start and tile sides), HUD text, fragile crack | The dark base of the board: it contrasts with the cream background and keeps the coral player and the accent-coloured mechanisms readable. |
+| 1 | `#46425e` | `TILE_FLOOR`, `TILE_SIDE`, `TEXT` | Every walkable tile (floor, start and tile sides), HUD text | The dark base of the board: it contrasts with the cream background and keeps the coral player and the accent-coloured mechanisms readable. |
 | 2 | `#15788c` | `TILE_HEAVY`, `GRID_LINE`, `PARALLAX_SQUARE` | Heavy switch base; the faint line between tiles; the parallax backdrop squares | Deep teal is the darker of the two mechanism accents, matching the heavy switch's "weight"; at ~35% opacity it also gives the gapless board its grid without becoming a stripe. The same hue, at a lower opacity, keeps the parallax squares behind the board. |
 | 3 | `#00b9be` | `TILE_BRIDGE`, `TILE_SOFT`, `TILE_SPLIT` | Open bridge, soft switch, split switch | Bright cyan is the "mechanism" accent; together with the detail shape it separates these cells from ordinary dark floor. |
 | 4 | `#ffeecc` | `BACKGROUND`, `TILE_MARK`, `OVERLAY_PANEL` | Window clear colour; switch plates; the win overlay's card | The light background the board sits on, the light plates that mark interactive cells, and the results card — nearly opaque so the solved board still shows at its edges. |
@@ -54,7 +54,7 @@ mechanisms.
 | `floor` (`o`) | `TILE_FLOOR` `#46425e` | none |
 | `start` (`S`) | `TILE_FLOOR` `#46425e` | none — the start is an ordinary tile with no mark |
 | `goal` (`G`) | **no tile** | none — the cream background shows through, like the original game's hole |
-| `fragile` (`F`) | `TILE_FRAGILE` `#ffb0a3` | one dark crack slot, 0.92 × 0.12 |
+| `fragile` (`F`) | `TILE_FRAGILE` `#ffb0a3` | none — the bare tile twists under load |
 | `bridge` (`=`) | `TILE_BRIDGE` `#00b9be` when open, `TILE_FLOOR` `#46425e` when closed | none; height carries the state |
 | `soft` (`+`) | `TILE_SOFT` `#00b9be` | 0.45 × 0.45 cream plate (small button) |
 | `heavy` (`X`) | `TILE_HEAVY` `#15788c` | 0.80 × 0.80 cream plate (wide pressure plate) |
@@ -89,9 +89,9 @@ before its plate is read.
 Geometry lives in `DETAILS` in `Source/bloxorz/gui/board_view.py`, not in `theme.py`: only the
 colours belong to the palette. All pieces are thin (`theme.TRIM_HEIGHT`) cubes resting on the tile:
 
-- **fragile** — a narrow dark slot across the peach tile; the "crack".
 - **soft / heavy / split** — cream plates, sized and split as described above.
-- **floor / start / bridge** — no detail; colour and height already carry their meaning.
+- **floor / start / bridge / fragile** — no detail; colour, height and, for fragile, the tile's
+  own twist already carry their meaning.
 - **goal** — no tile, so there is nothing to detail.
 
 Because every detail is a separate entity, the load animation can float the tiles in first and the
@@ -106,7 +106,7 @@ controller already holds (`reaction.py`). No colour is added for these states �
 | Mechanism | Resting | Under the block | Why |
 | --- | --- | --- | --- |
 | soft / heavy / split plate | flush on the tile | sunk by `theme.PRESS_DEPTH` | The plate is a button: it goes down when weight is on it. |
-| fragile crack | one thin slot | the slot opens to `1 + theme.CRACK_OPEN` of its depth | The fracture widens under load, so a fragile tile looks like it is about to give. |
+| fragile tile | square to the grid | twists up to `±theme.FRAGILE_WOBBLE_DEGREES` about its Y axis, one swing per `theme.FRAGILE_WOBBLE_SECONDS` | The panel rocks on its supports under load, so a fragile tile looks like it is about to give. |
 | bridge | open: level with the floor, `TILE_BRIDGE`; closed: sunk, `TILE_FLOOR` | eases between the two | A bridge is one object moving, so its tint follows its height instead of snapping ahead of it. |
 
 Two rules keep the picture honest:
@@ -127,7 +127,7 @@ rolls, so the movie reads as steps and a speed change never alters the roll geom
 
 A fragile panel never breaks on screen: a standing block on fragile is an illegal move
 ([ADR-003](../decisions/ADR-003-fragile-under-lone-cube.md)), so no state exists in which the panel
-has given way. The crack opens and shuts with the weight.
+has given way. The tile only twists back and forth with the weight.
 
 ## Changing the palette
 

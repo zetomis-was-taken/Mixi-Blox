@@ -1,15 +1,55 @@
-% Benchmark results placeholder
-% Real measurements will be populated by the benchmark runner (Issue #24) once solvers are integrated.
 \begin{table}[htbp]
 \centering
-\caption{Bảng kết quả đo lường thực nghiệm (Chờ tích hợp solvers theo Issue \#24)}
+\caption{Bảng so sánh kết quả thực nghiệm 4 thuật toán tìm kiếm trên các nhóm màn chơi}
 \label{tab:benchmark_results}
 \small
 \begin{tabular}{lllcccc}
 \toprule
 \textbf{Thuật toán} & \textbf{Nhóm} & \textbf{Màn chơi} & \textbf{Thời gian (ms)} & \textbf{RAM (KB)} & \textbf{Số nút duyệt} & \textbf{Số bước đi} \\
 \midrule
-\multicolumn{7}{c}{\textit{[Dữ liệu thực nghiệm đang chờ đo lường thực tế từ các thuật toán tìm kiếm]}} \\
+BFS & L1 & Long corridor & 41.03 & 62.13 & 64 & 7 \\
+DFS & L1 & Long corridor & 50.36 & 64.57 & 82 & 7 \\
+UCS & L1 & Long corridor & 41.71 & 64.69 & 64 & 7 \\
+A* & L1 & Long corridor & 19.98 & 42.89 & 27 & 7 \\
+BFS & L1 & Two flights & 57.47 & 76.63 & 103 & 22 \\
+DFS & L1 & Two flights & 79.89 & 61.46 & 58 & 50 \\
+UCS & L1 & Two flights & 58.98 & 84.59 & 103 & 22 \\
+A* & L1 & Two flights & 62.72 & 90.75 & 102 & 22 \\
+BFS & L1 & Side rooms & 59.44 & 76.79 & 106 & 35 \\
+DFS & L1 & Side rooms & 41.90 & 63.80 & 77 & 51 \\
+UCS & L1 & Side rooms & 61.11 & 85.53 & 106 & 35 \\
+A* & L1 & Side rooms & 60.88 & 91.77 & 105 & 35 \\
+\midrule
+BFS & L2 & Fragile shelves & 40.61 & 50.59 & 69 & 28 \\
+DFS & L2 & Fragile shelves & 45.92 & 72.26 & 83 & 39 \\
+UCS & L2 & Fragile shelves & 39.83 & 58.64 & 69 & 28 \\
+A* & L2 & Fragile shelves & 40.14 & 62.41 & 69 & 28 \\
+BFS & L2 & Fragile ring & 70.39 & 89.64 & 134 & 46 \\
+DFS & L2 & Fragile ring & 69.62 & 96.02 & 129 & 57 \\
+UCS & L2 & Fragile ring & 76.51 & 101.80 & 135 & 49 \\
+A* & L2 & Fragile ring & 78.35 & 106.83 & 130 & 49 \\
+\midrule
+BFS & L3 & Bridge under a heavy switch & 90.50 & 115.30 & 177 & 44 \\
+DFS & L3 & Bridge under a heavy switch & 87.86 & 112.38 & 153 & 69 \\
+UCS & L3 & Bridge under a heavy switch & 161.01 & 138.35 & 177 & 44 \\
+A* & L3 & Bridge under a heavy switch & 95.92 & 144.49 & 177 & 44 \\
+BFS & L3 & A one-way bridge & 88.30 & 112.42 & 186 & 47 \\
+DFS & L3 & A one-way bridge & 84.67 & 102.75 & 168 & 49 \\
+UCS & L3 & A one-way bridge & 95.23 & 132.96 & 186 & 47 \\
+A* & L3 & A one-way bridge & 116.42 & 142.77 & 186 & 47 \\
+BFS & L3 & Two heavy switches & 163.27 & 214.30 & 320 & 65 \\
+DFS & L3 & Two heavy switches & 150.32 & 219.86 & 306 & 113 \\
+UCS & L3 & Two heavy switches & 182.95 & 232.16 & 320 & 65 \\
+A* & L3 & Two heavy switches & 171.78 & 233.07 & 298 & 65 \\
+\midrule
+BFS & L4 & Split into the far room & 700.31 & 363.70 & 532 & 10 \\
+DFS & L4 & Split into the far room & 114.96 & 214.46 & 114 & 98 \\
+UCS & L4 & Split into the far room & 666.94 & 376.60 & 532 & 10 \\
+A* & L4 & Split into the far room & 696.04 & 379.31 & 532 & 10 \\
+BFS & L4 & Split across the middle & 839.30 & 384.07 & 741 & 24 \\
+DFS & L4 & Split across the middle & 284.19 & 400.15 & 275 & 168 \\
+UCS & L4 & Split across the middle & 892.54 & 413.38 & 741 & 24 \\
+A* & L4 & Split across the middle & 933.49 & 414.70 & 741 & 24 \\
 \bottomrule
 \end{tabular}
 \end{table}

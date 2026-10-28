@@ -100,7 +100,7 @@
     \begin{minipage}{0.48\textwidth}
         \textbf{\large Giảng viên phụ trách:}\\
         ThS. [Tên Giảng Viên]\\
-        [Tên Giảng Viên Thực Hành]
+        {[Tên Giảng Viên Thực Hành]}
     \end{minipage}
     \hfill
     \begin{minipage}{0.48\textwidth}
@@ -258,19 +258,24 @@ Nằm dọc $V(r, c)$ & $S(r-1, c)$ & $S(r+2, c)$ & $V(r, c-1)$ & $V(r, c+1)$ \\
 \section{Thiết kế kịch bản thực nghiệm (Experimental Setup)}
 
 \subsection{Phân loại bộ dữ liệu kiểm thử (Test Cases)}
-Bộ dữ liệu gồm 10 màn chơi được phân loại theo 4 cấp độ phức tạp tăng dần:
+Bộ dữ liệu gồm 10 màn chơi chuẩn được chia thành 4 cấp độ phức tạp tăng dần (tỷ lệ 3/2/3/2 theo thiết kế kiểm thử đồ án):
 \begin{itemize}
-    \item \textbf{Nhóm 1 (Cơ bản)}: Màn chơi chỉ gồm các ô sàn kiên cố, không có ô chức năng đặc biệt (Level 1, Level 2).
-    \item \textbf{Nhóm 2 (Ô dễ vỡ - Fragile Tiles)}: Màn chơi có các dải ô cam dễ vỡ buộc khối phải đi qua ở tư thế nằm (Level 3, Level 4).
-    \item \textbf{Nhóm 3 (Cầu \& Công tắc)}: Màn chơi có hệ thống cầu đóng/mở được điều khiển bởi Soft Switches và Heavy Switches (Level 5, Level 6, Level 7).
-    \item \textbf{Nhóm 4 (Phức tạp \& Phân tách khối)}: Màn chơi quy mô lớn kết hợp Split Switches, tách 2 khối nhỏ điều khiển độc lập và ghép nối lại (Level 8, Level 9, Level 10).
+    \item \textbf{Nhóm 1 (Cơ bản - L1, 3 màn)}: \texttt{L1-01\_long\_corridor}, \texttt{L1-02\_two\_flights}, \texttt{L1-03\_side\_rooms}. Bản đồ chỉ gồm các ô sàn kiên cố tiêu chuẩn, kiểm tra khả năng điều hướng cơ bản và không gian trạng thái định hướng (Standing, Horizontal, Vertical).
+    \item \textbf{Nhóm 2 (Ô dễ vỡ - L2, 2 màn)}: \texttt{L2-01\_fragile\_shelves}, \texttt{L2-02\_fragile\_ring}. Bản đồ chứa các dải ô cam dễ vỡ (Fragile tiles), buộc khối chỉ được phép lăn qua ở tư thế nằm (ngang/dọc), khối sẽ rơi và thua ngay nếu đứng thẳng lên ô này.
+    \item \textbf{Nhóm 3 (Cầu \& Công tắc - L3, 3 màn)}: \texttt{L3-01\_bridge\_under\_a\_heavy\_switch}, \texttt{L3-02\_a\_one-way\_bridge}, \texttt{L3-03\_two\_heavy\_switches}. Bản đồ tích hợp các công tắc mềm (Soft switch - kích hoạt bởi mọi tư thế) và công tắc nặng (Heavy switch - chỉ kích hoạt khi khối đứng thẳng) để bật/tắt các nhịp cầu (Bridges).
+    \item \textbf{Nhóm 4 (Phức tạp \& Tách khối - L4, 2 màn)}: \texttt{L4-01\_split\_into\_the\_far\_room}, \texttt{L4-02\_split\_across\_the\_middle}. Bản đồ diện tích lớn chứa công tắc phân tách (Split switch), tách khối $1 \times 1 \times 2$ thành hai khối lập phương $1 \times 1 \times 1$ điều khiển độc lập qua các khu vực riêng biệt trước khi tái hợp nhất (Merge).
 \end{itemize}
 
-\subsection{Môi trường thực nghiệm}
+\subsection{Môi trường thực nghiệm \& Phương pháp đo lường}
 \begin{itemize}
-    \item \textbf{Phần cứng}: CPU AMD/Intel [Ghi rõ cấu hình máy của bạn], RAM 16GB.
-    \item \textbf{Hệ điều hành}: Windows 11 64-bit.
-    \item \textbf{Công cụ đo lường}: Module \texttt{time.perf_counter} (thời gian chính xác cao) và module \texttt{tracemalloc} (đo RAM đỉnh thực tế).
+    \item \textbf{Cấu hình phần cứng}: Vi xử lý Intel(R) Core(TM) Architecture AMD64 (Family 6 Model 58), RAM 16GB.
+    \item \textbf{Hệ điều hành \& Nền tảng}: Windows 10 64-bit (build 10.0.19045), Python 3.11.2 (CPython).
+    \item \textbf{Phương pháp đo đạc (Methodology)}:
+    \begin{itemize}
+        \item \textbf{Thời gian thực thi}: Sử dụng bộ đếm xung độ chính xác cao \texttt{time.perf\_counter}. Để triệt tiêu nhiễu từ hệ thống và cơ chế thu hồi bộ nhớ (garbage collection), mỗi thuật toán được đo độc lập 3 lần trên từng màn chơi và lấy giá trị trung vị (\textit{median-of-3}).
+        \item \textbf{Bộ nhớ tiêu thụ}: Sử dụng module \texttt{tracemalloc.get\_traced\_memory} đo lượng RAM đỉnh (\textit{peak memory consumption}) trong suốt quá trình tìm kiếm.
+        \item \textbf{Cô lập tiến trình}: Mỗi tác vụ giải được thực thi trong một quy trình con riêng biệt nhằm tránh rò rỉ bộ nhớ hoặc chia sẻ bộ đệm giữa các thuật toán.
+    \end{itemize}
 \end{itemize}
 
 % ==============================================================================
@@ -279,33 +284,74 @@ Bộ dữ liệu gồm 10 màn chơi được phân loại theo 4 cấp độ ph
 \section{Kết quả thực nghiệm \& Phân tích đánh giá (Experimental Results)}
 
 \subsection{Bảng số liệu tổng hợp}
-Bảng \ref{tab:benchmark_results} là khung dữ liệu thực nghiệm tiêu chuẩn (sẽ được cập nhật tự động khi chạy bộ đo đạc thực nghiệm toàn diện theo Issue \#24):
+Bảng \ref{tab:benchmark_results} tổng hợp kết quả đo đạc thực tế của 4 thuật toán tìm kiếm (BFS, DFS, UCS, A*) trên toàn bộ 10 màn chơi kiểm thử:
 
 \input{tables/benchmark_results.tex}
 
 \subsection{Biểu đồ so sánh trực quan}
-\textit{[Các biểu đồ so sánh trực quan hiệu năng sẽ được công cụ vẽ đồ thị sinh tự động từ dữ liệu thực nghiệm thực tế sau khi các thuật toán tìm kiếm được tích hợp hoàn chỉnh theo Issue \#24.]}
+Hình \ref{fig:benchmark_charts} minh họa trực quan các chỉ số hiệu năng (thời gian thực thi, bộ nhớ RAM đỉnh, số trạng thái mở rộng và số bước đi của lời giải) giữa 4 thuật toán qua các nhóm màn chơi:
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/benchmark_time.pdf}
+    \caption{Thời gian thực thi (ms)}
+    \label{fig:bench_time}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/benchmark_memory.pdf}
+    \caption{Bộ nhớ RAM đỉnh (KB)}
+    \label{fig:bench_memory}
+\end{subfigure}
+\\[0.3cm]
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/benchmark_nodes.pdf}
+    \caption{Số nút mở rộng (Nodes)}
+    \label{fig:bench_nodes}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/benchmark_moves.pdf}
+    \caption{Số bước đi của lời giải (Moves)}
+    \label{fig:bench_moves}
+\end{subfigure}
+\caption{Biểu đồ so sánh hiệu năng tổng thể giữa 4 thuật toán BFS, DFS, UCS, A* qua 4 cấp độ màn chơi}
+\label{fig:benchmark_charts}
+\end{figure}
 
 \subsection{Phân tích \& Nhận xét chuyên sâu}
+Từ dữ liệu thực nghiệm tại Bảng \ref{tab:benchmark_results} và đồ thị Hình \ref{fig:benchmark_charts}, nhóm rút ra các phân tích chuyên sâu sau:
+
 \begin{enumerate}
-    \item \textbf{Về số lượng nút mở rộng và thời gian tìm kiếm}:
+    \item \textbf{Về số lượng nút mở rộng (Expanded Nodes) và hàm Heuristic}:
     \begin{itemize}
-        \item Thuật toán \textbf{A*} thể hiện sự vượt trội rõ rệt về số nút duyệt nhờ hàm heuristic định hướng tìm kiếm trực tiếp về phía ô đích. Số nút duyệt của A* ít hơn từ 40\% đến 70\% so với BFS và UCS trên các bản đồ lớn.
-        \item \textbf{BFS và UCS} duyệt theo đường mức (contour) nên phải mở rộng một lượng lớn trạng thái ở các hướng ngược lại với đích.
-        \item \textbf{DFS} duyệt rất sâu theo một nhánh ngẫu nhiên, dẫn đến số nút mở rộng biến động mạnh và thời gian tìm kiếm không ổn định.
+        \item \textbf{A* với hàm heuristic}: Hàm heuristic hướng đích thể hiện sức mạnh rõ nét trên các màn chơi có cấu trúc mở. Ví dụ tiêu biểu ở màn \texttt{Long corridor} (L1), A* chỉ cần mở rộng \textbf{27 nút} so với \textbf{64 nút} của BFS và UCS (tiết kiệm đến \textbf{57.8\%} không gian tìm kiếm).
+        \item \textbf{Ảnh hưởng của chướng ngại vật \& Cầu}: Ở các màn chơi thuộc nhóm L3 (cầu và công tắc) và L4 (tách khối), không gian trạng thái bị phân mảnh bởi điều kiện chuyển đổi (phải đi ngược hướng đích để đạp công tắc mở cầu). Khi đó hàm khoảng cách Manhattan đơn thuần không thể định hướng xuyên qua khoảng trống, khiến số nút mở rộng của A* và UCS tiệm cận nhau (ví dụ tại \texttt{Bridge under a heavy switch}: BFS, UCS và A* đều mở rộng 177 nút; tại \texttt{Split across the middle}: cả ba cùng duyệt 741 nút).
+        \item \textbf{BFS và UCS}: Do bản chất duyệt theo đường mức đẳng chi phí (\textit{contour-based search}), BFS và UCS luôn mở rộng một rẻ quạt trạng thái rộng về mọi hướng.
+        \item \textbf{Đặc tính của DFS}: DFS có hành vi tìm kiếm bất định do phụ thuộc hoàn toàn vào thứ tự nhánh con trong tập kế thừa (Left, Right, Up, Down). Khi may mắn đâm thẳng vào nhánh dẫn tới đích sớm, DFS mở rộng rất ít nút (ví dụ chỉ 114 nút ở màn \texttt{Split into the far room} so với 532 nút của BFS/UCS/A*). Ngược lại, nếu chọn sai nhánh, DFS duyệt sâu vào các ngõ cụt gây lãng phí bộ nhớ và thời gian.
     \end{itemize}
 
-    \item \textbf{Về tính tối ưu của lời giải}:
+    \item \textbf{Về tính tối ưu của lời giải (Optimality) và hàm chi phí}:
     \begin{itemize}
-        \item \textbf{BFS} và \textbf{A* (với Heuristic admissible)} luôn đảm bảo tìm được số bước đi ngắn nhất.
-        \item \textbf{UCS} tìm được lời giải có tổng chi phí $g(n)$ tối thiểu theo hàm chi phí định sẵn, thành công trong việc tránh các ô có rủi ro cao.
-        \item \textbf{DFS} thường trả về các đường đi vòng vèo, số bước đi lớn hơn đáng kể so với nghiệm tối ưu.
+        \item \textbf{BFS}: Luôn bảo đảm tìm được lời giải có \textbf{số bước đi (Moves) ít nhất} trên mọi màn chơi (ví dụ 7 bước ở L1-01, 22 bước ở L1-02, 10 bước ở L4-01).
+        \item \textbf{UCS và A*}: Luôn bảo đảm tối ưu hóa theo \textbf{tổng chi phí hành động $g(n)$}. Điểm khác biệt mấu chốt được kiểm chứng rõ rệt ở màn \texttt{Fragile ring} (L2):
+        \begin{itemize}
+            \item BFS tìm đường ngắn nhất về số bước là \textbf{46 bước}, nhưng chấp nhận lăn qua các ô mỏng fragile.
+            \item UCS và A* tìm đường có \textbf{49 bước} (dài hơn 3 bước) nhằm né tránh các ô fragile có trọng số chi phí cao (cost = 3), chứng minh hàm chi phí và hàng đợi ưu tiên của UCS/A* hoạt động hoàn toàn chính xác theo đúng mô hình bài toán.
+        \end{itemize}
+        \item \textbf{DFS}: Tuyệt đối \textbf{không đảm bảo tính tối ưu}. Lời giải của DFS thường xuyên vòng vèo và dư thừa bước đi nghiêm trọng: ở màn \texttt{Two flights} mất 50 bước (so với tối ưu 22 bước), ở màn \texttt{Split into the far room} mất 98 bước (gấp gần 10 lần mức tối ưu 10 bước), và ở màn \texttt{Split across the middle} mất tới 168 bước (so với tối ưu 24 bước).
     \end{itemize}
 
-    \item \textbf{Về sử dụng bộ nhớ}:
+    \item \textbf{Về thời gian thực thi (Runtime) và bộ nhớ RAM đỉnh (Peak Memory)}:
     \begin{itemize}
-        \item DFS tiêu tốn ít bộ nhớ nhất trong lý thuyết; tuy nhiên khi áp dụng visited set để tránh lặp chu trình, mức tiêu hao bộ nhớ của DFS tăng lên tương đương các thuật toán khác.
-        \item BFS và UCS tiêu tốn nhiều bộ nhớ nhất do Frontier phải lưu trữ toàn bộ các nút ở mức sâu hiện tại.
+        \item \textbf{Thời gian thực thi}: Cả 4 thuật toán đều hoàn thành việc giải trong thời gian dưới 1 giây trên toàn bộ 10 màn chơi. Thời gian tăng dần từ ~20--60 ms (L1, L2) lên ~80--180 ms (L3) và đạt đỉnh ở ~700--930 ms (L4, do không gian trạng thái tách 2 khối $1 \times 1 \times 1$ có kích thước lớn hơn đáng kể).
+        \item \textbf{Bộ nhớ RAM đỉnh}: Đo lường bằng \texttt{tracemalloc} cho thấy mức tiêu thụ RAM tỉ lệ thuận với số trạng thái sinh ra trong tập \texttt{visited} và hàng đợi \texttt{Frontier}. Mức RAM đỉnh duy trì ổn định trong khoảng \textbf{42 KB đến 415 KB}. 
+        \item Dù DFS trên lý thuyết chỉ cần lưu nhánh hiện tại trên Stack, nhưng do phải duy trì tập \texttt{visited} đầy đủ để triệt tiêu vòng lặp vô hạn (Cycle Prevention), mức RAM thực tế của DFS vẫn xấp xỉ BFS và UCS (ví dụ ở màn L4-02 là 400.15 KB so với 384.07 KB của BFS).
     \end{itemize}
 \end{enumerate}
 
@@ -315,11 +361,12 @@ Bảng \ref{tab:benchmark_results} là khung dữ liệu thực nghiệm tiêu c
 \section{Giao diện chương trình \& Video Demo (GUI \& Demo)}
 
 \subsection{Mô tả giao diện đồ họa (GUI)}
-Chương trình được phát triển giao diện trực quan bằng thư viện Pygame, bao gồm:
+Chương trình được phát triển giao diện 3D tương tác hoàn chỉnh bằng thư viện Ursina (dựa trên nền tảng Panda3D), bao gồm:
 \begin{itemize}
-    \item Bàn cờ hiển thị dạng Isometric 2.5D đẹp mắt, phân biệt rõ màu sắc các loại ô (Sàn xám, Ô vỡ cam, Cầu xanh lá/đỏ, Công tắc có ký hiệu riêng).
-    \item Khối hộp hiển thị chuyển động lăn mượt mà (smooth roll animation).
-    \item Bảng điều khiển gồm: Chọn màn chơi, Nút Reset/New Game, và các nút kích hoạt từng thuật toán giải tự động.
+    \item Bàn cờ hiển thị dạng 3D trực quan, phân biệt rõ màu sắc và vật liệu của từng loại ô (Sàn tiêu chuẩn, Ô cam dễ vỡ, Cầu đóng/mở linh hoạt, Công tắc hình tròn Soft Switch và hình chữ X Heavy Switch).
+    \item Khối hộp hiển thị chuyển động lăn 3D mượt mà (Smooth roll animation qua 12 trường hợp xoay góc).
+    \item Bảng điều khiển tích hợp: Chọn màn chơi trong bộ Test Set, New Game / Restart, và 4 nút kích hoạt các thuật toán tìm kiếm (BFS, DFS, UCS, A*) kèm bảng số liệu thống kê thời gian, bộ nhớ, số bước.
+    \item Chế độ phát lại (Replay mode): Cho phép Play, Pause, Step từng bước hoặc điều chỉnh tốc độ lăn của lời giải.
 \end{itemize}
 
 \subsection{Liên kết Video Demo YouTube}

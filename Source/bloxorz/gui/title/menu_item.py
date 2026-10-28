@@ -17,9 +17,10 @@ COLOR_TEXT_REST = color.hex("#FFEECC")
 COLOR_TEXT_HOVER = color.hex("#1A1824")
 COLOR_BG_HOVER = color.hex("#FFEECC")
 
-ITEM_HEIGHT = 0.095
-ITEM_WIDTH = 0.38
-TEXT_OFFSET_X = 0.03
+ITEM_HEIGHT = 0.135
+ITEM_WIDTH = 0.42
+TEXT_OFFSET_X = 0.035
+TEXT_OFFSET_Y = -0.039
 
 
 class TitleMenuItem(Entity):
@@ -67,13 +68,13 @@ class TitleMenuItem(Entity):
             enabled=False,
         )
 
-        # The crisp uppercase label (larger, bolder, static position, sharp resolution)
+        # The crisp uppercase label (vertically centered, stationary position)
         self.label = Text(
             parent=self,
             text=text.upper(),
             font=get_font("PlusJakartaSans-ExtraBold.ttf"),
             origin=(-0.5, 0.0),
-            position=(TEXT_OFFSET_X, 0.0, -0.005),
+            position=(TEXT_OFFSET_X, TEXT_OFFSET_Y, -0.005),
             scale=1.45,
             color=COLOR_TEXT_REST,
         )

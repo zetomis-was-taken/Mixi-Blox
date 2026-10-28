@@ -24,7 +24,7 @@ READY_TIME = 1.60       # Interactive ready time
 # Target Coordinates (camera.ui space)
 TITLE_TARGET_Y = 0.28
 PLAY_TARGET_Y = -0.02
-QUIT_TARGET_Y = -0.16
+QUIT_TARGET_Y = -0.19
 
 BLOCK_INIT_POS = (0.00, 0.00, 0.00)     # Initial center staging
 BLOCK_REST_POS = (0.34, 0.00, 0.00)     # Settled center-right (widened)

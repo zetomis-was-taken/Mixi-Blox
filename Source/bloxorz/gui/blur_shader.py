@@ -1,7 +1,7 @@
-"""GLSL blur and depth-softening shader for the 3D board preview.
+"""Discrete 3D Geometric Face Shader for the level preview.
 
-Softens face edges, blends highlights, and casts a frosted atmospheric tone over preview
-board entities without requiring expensive multi-pass offscreen framebuffers.
+Uses mesh normal directly to provide guaranteed bright, vibrant top-surface illumination
+and clean dimensional edge shading regardless of camera orientation or projection mode.
 """
 
 from __future__ import annotations
@@ -15,20 +15,19 @@ if TYPE_CHECKING:
 
 _VERTEX = """#version 130
 uniform mat4 p3d_ModelViewProjectionMatrix;
-uniform mat3 p3d_NormalMatrix;
 in vec4 p3d_Vertex;
 in vec3 p3d_Normal;
 in vec2 p3d_MultiTexCoord0;
 in vec4 p3d_Color;
 out vec2 texcoords;
 out vec4 vertex_color;
-out vec3 normal;
+out vec3 model_normal;
 
 void main() {
     gl_Position = p3d_ModelViewProjectionMatrix * p3d_Vertex;
     texcoords = p3d_MultiTexCoord0;
     vertex_color = p3d_Color;
-    normal = normalize(p3d_NormalMatrix * p3d_Normal);
+    model_normal = p3d_Normal;
 }
 """
 
@@ -37,51 +36,43 @@ uniform sampler2D p3d_Texture0;
 uniform vec4 p3d_ColorScale;
 in vec2 texcoords;
 in vec4 vertex_color;
-in vec3 normal;
+in vec3 model_normal;
 out vec4 fragColor;
 
 void main() {
     vec4 base = texture(p3d_Texture0, texcoords) * p3d_ColorScale * vertex_color;
-    vec3 n = normalize(normal);
-    vec3 light_dir = normalize(vec3(0.25, 0.85, 0.45));
-    float diff = max(dot(n, light_dir), 0.0);
-    float top_face = max(n.y, 0.0);
 
-    // Identify special pieces (fragile tiles, bridges, switch plates, active block)
-    // which have higher saturation or brightness than the muted slate floor (#46425e).
-    float max_c = max(base.r, max(base.g, base.b));
-    float min_c = min(base.r, min(base.g, base.b));
-    float sat = max_c - min_c;
-    bool is_special = (sat > 0.18) || (max_c > 0.70);
-
-    vec3 final_color;
-    if (is_special) {
-        // Make special mechanisms and plates strikingly vibrant and luminous
-        vec3 boosted = base.rgb * (1.20 + 0.25 * diff + 0.18 * top_face);
-        final_color = min(boosted, vec3(1.0));
+    // Geometric face shading:
+    // Top face is illuminated with vibrant clarity so tile colors and markers stand out.
+    // Front and side faces receive distinct shading for crisp 3D volume.
+    float factor;
+    if (model_normal.y > 0.5) {
+        factor = 1.30;
+    } else if (model_normal.z < -0.5 || model_normal.x > 0.5) {
+        factor = 0.85;
     } else {
-        // Standard floor tiles: crisp cel shading for clear 3D footprint separation
-        vec3 lit = base.rgb * (0.92 + 0.40 * diff + 0.25 * top_face);
-        vec3 haze = vec3(0.275, 0.259, 0.369);
-        final_color = mix(lit, haze, 0.06);
+        factor = 0.58;
     }
 
-    fragColor = vec4(final_color, 1.0);
+    vec3 tone = min(base.rgb * factor, vec3(1.0));
+    fragColor = vec4(tone, base.a);
 }
 """
 
-BLUR_SHADER = Shader(
-    name="preview_blur",
+PREVIEW_CEL_SHADER = Shader(
+    name="preview_geometric_cel",
     language=Shader.GLSL,
     vertex=_VERTEX,
     fragment=_FRAGMENT,
 )
 
+# Backwards compatibility alias
+BLUR_SHADER = PREVIEW_CEL_SHADER
+
 
 def apply(board_view: BoardView) -> None:
-    """Give all physical tiles, bases, and switch details the softened preview shader."""
+    """Give all physical tiles, bases, and switch details the cel shader."""
     for entity in board_view.object_entities():
-        entity.shader = BLUR_SHADER
+        entity.shader = PREVIEW_CEL_SHADER
     for line in board_view.lines:
-        line.shader = BLUR_SHADER
-
+        line.shader = PREVIEW_CEL_SHADER

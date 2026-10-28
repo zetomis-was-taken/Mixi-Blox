@@ -19,7 +19,7 @@ from .preview import LevelPreviewPanel
 from .title.fonts import get_font, setup_text_sharpness
 
 # Screen left frame edge where the button background starts flush
-SCREEN_EDGE_LEFT = -0.92
+SCREEN_EDGE_LEFT = -0.88
 LABEL_MARGIN_LEFT = -0.74
 TITLE_Y = 0.40
 SUBTITLE_Y = 0.33

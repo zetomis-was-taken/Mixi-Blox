@@ -89,10 +89,10 @@ To definitively avoid sterile monospace/terminal aesthetics and project a contem
 +------------------------------------+-------------------------------------------+
 ```
 
-1. **Display & Impact Header Font:** *Unbounded ExtraBold* (`fonts/Unbounded-ExtraBold.ttf`)
-   - **Characteristics:** Ultra-modern geometric sans-serif with wide extended proportions, heavy structural weight, and monumental graphic character. Its expansive letterforms create an assertive, poster-like presence that commands immediate visual authority.
-   - **Usage:** Game title / wordmark, stage banners, victory accolades, large level numbers, and oversized background watermark decals.
-   - **Casing:** Strictly `UPPERCASE` for headers and banners; title-case allowed for stylized hero taglines.
+1. **Display & Impact Header Fonts:**
+   - *Monoton Regular* (`fonts/Monoton-Regular.ttf`): Dedicated multi-line inline display face for the main title wordmark, bringing a distinct retro-pop, graphic editorial grandeur when rendered at monumental scales ($4.0\text{x}-4.5\text{x}$).
+   - *Unbounded ExtraBold* (`fonts/Unbounded-ExtraBold.ttf`): Ultra-modern geometric sans-serif with wide extended proportions, heavy structural weight, and monumental graphic character for stage banners, victory accolades, level index numbers, and oversized background watermarks.
+   - **Casing:** Strictly `UPPERCASE` or specialized title-case for stylized hero taglines.
 
 2. **UI & Precision Interaction Font:** *Plus Jakarta Sans ExtraBold* (`fonts/PlusJakartaSans-ExtraBold.ttf`)
    - **Characteristics:** Contemporary geometric grotesque featuring clean circular bowls, generous apertures, and razor-sharp terminals. Unlike cold monospace fonts, it delivers high-density readability with lively, premium polish.

@@ -16,7 +16,7 @@ on a dark screen would have no silhouette.
 from __future__ import annotations
 
 from panda3d.core import Vec3
-from ursina import Entity, destroy, time
+from ursina import Entity, Mesh, Quad, destroy, time
 from ursina.shaders import unlit_shader
 
 from bloxorz.core.contracts import Cell, Kind, Stage
@@ -32,6 +32,16 @@ PREVIEW_ROTATION = (48.0, -32.0, 0.0)
 # is 1.78 units wide and 1 unit tall, so the right half is the board's).
 CARD_POSITION = (0.45, 0.0)
 CARD_SIZE = (0.82, 0.70)
+
+# The card is a trapezoid rather than a rectangle: its left edge runs from top right to bottom
+# left, the way the highlighted level card's right edge is cut, so the two shapes read as one
+# motif. The bottom-left corner reaches out by this share of the card's width, which leaves the
+# top-left corner where the rectangle's was — the board's box is not affected, so no tile is ever
+# cut off.
+CARD_SLANT = 0.12
+QUAD_BOTTOM_LEFT = 0
+# The quad's four corners as two triangles, keeping its winding.
+CARD_TRIANGLES = ((0, 1, 2), (0, 2, 3))
 
 # The box the board is scaled into, inside the card's margins.
 BOARD_BOX = (0.72, 0.56)
@@ -49,6 +59,15 @@ TILE_WIDTH = 0.84
 TILE_THICKNESS = theme.TILE_CAP_HEIGHT
 
 FADE_DURATION_SECONDS = 0.25
+
+
+def _card_mesh(slant: float) -> Mesh:
+    """The card's trapezoid: a quad whose bottom-left corner reaches out by ``slant``."""
+    quad = Quad(radius=0)
+    vertices = [Vec3(*vertex) for vertex in quad.vertices]
+    x, y, z = vertices[QUAD_BOTTOM_LEFT]
+    vertices[QUAD_BOTTOM_LEFT] = Vec3(x - slant, y, z)
+    return Mesh(vertices=vertices, triangles=CARD_TRIANGLES, uvs=quad.uvs, mode="triangle")
 
 
 def _ease_out_cubic(t: float) -> float:
@@ -140,7 +159,7 @@ class LevelPreviewPanel(Entity):
 
         self.card = Entity(
             parent=self,
-            model="quad",
+            model=_card_mesh(CARD_SLANT),
             scale=CARD_SIZE,
             position=(CARD_POSITION[0], CARD_POSITION[1], CARD_Z),
             color=theme.BACKGROUND,

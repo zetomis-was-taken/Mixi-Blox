@@ -44,6 +44,10 @@ def setup_text_sharpness(
     try:
         font = getattr(text_entity, "_font", None)
         if font is not None:
+            # Panda keeps a space at the advance it had at its default point size however far the
+            # point size grows, so a space shrinks to a tenth of a letter and words run together.
+            # Scaling it by the same factor as the point size keeps the font's own proportions.
+            space_advance = font.getSpaceAdvance() * point_size / max(font.getPointSize(), 1.0)
             if hasattr(font, "clear"):
                 font.clear()
             if hasattr(font, "setPageSize"):
@@ -52,6 +56,8 @@ def setup_text_sharpness(
                 font.setPointSize(point_size)
             if hasattr(font, "setPixelsPerUnit"):
                 font.setPixelsPerUnit(pixels_per_unit)
+            if hasattr(font, "setSpaceAdvance"):
+                font.setSpaceAdvance(space_advance)
             if hasattr(text_entity, "raw_text") and text_entity.raw_text:
                 text_entity.text = text_entity.raw_text
     except Exception:

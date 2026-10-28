@@ -107,7 +107,7 @@ class LevelSelectState:
         """Compute the vertical position of button at index."""
         return self.scroll_y - index * BUTTON_PITCH
 
-    def is_visible(self, index: int, viewport_half_height: float = 0.42) -> bool:
-        """Check whether button at index falls within visible vertical range."""
-        return abs(self.button_y(index)) <= viewport_half_height
+    def is_visible(self, index: int, top: float, bottom: float) -> bool:
+        """Check whether the button at index falls inside the band ``bottom`` .. ``top``."""
+        return bottom <= self.button_y(index) <= top
 

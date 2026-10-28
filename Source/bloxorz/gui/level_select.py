@@ -9,12 +9,12 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from ursina import Button, Entity, Text, camera, color, destroy, time, window
+from ursina import Button, Entity, Mesh, Quad, Text, Vec3, camera, color, destroy, time, window
 
 from bloxorz.core.contracts import Stage
 
 from . import theme
-from .level_select_state import BUTTON_HEIGHT, LevelSelectState
+from .level_select_state import BUTTON_HEIGHT, SELECTED_WIDTH, LevelSelectState
 from .preview import LevelPreviewPanel
 from .title.fonts import get_font, setup_text_sharpness
 
@@ -25,8 +25,39 @@ TITLE_Y = 0.40
 SUBTITLE_Y = 0.33
 FOOTER_Y = -0.44
 
+# The list scrolls through the band between the header text and the footer hints, so a card never
+# slides under either of them.
+LIST_MARGIN = 0.06
+LIST_TOP = SUBTITLE_Y - LIST_MARGIN
+LIST_BOTTOM = FOOTER_Y + LIST_MARGIN
+
+# Clearance kept inside a card's right edge, so a label never touches the edge.
+LABEL_RIGHT_MARGIN = 0.02
+LABEL_ELLIPSIS = "..."
+
+# A card is a ribbon: its right end is cut on a diagonal, as a share of the card's own width so
+# the cut keeps its angle as the card grows and shrinks through the cascade.
+RIBBON_SLANT = 0.10
+QUAD_BOTTOM_RIGHT = 1
+# The quad's four corners as two triangles, keeping its winding.
+RIBBON_TRIANGLES = ((0, 1, 2), (0, 2, 3))
+
+# The cleared badge: its size, and the margin between it and the card's right edge.
+BADGE_SIZE = 0.016
+BADGE_MARGIN = 0.035
+
+
+def _ribbon_mesh(slant: float) -> Mesh:
+    """A card's ribbon shape: a quad with its bottom-right corner pulled in by ``slant``."""
+    quad = Quad(radius=0)
+    vertices = [Vec3(*vertex) for vertex in quad.vertices]
+    x, y, z = vertices[QUAD_BOTTOM_RIGHT]
+    vertices[QUAD_BOTTOM_RIGHT] = Vec3(x - slant, y, z)
+    return Mesh(vertices=vertices, triangles=RIBBON_TRIANGLES, uvs=quad.uvs, mode="triangle")
+
+
 TITLE_TEXT = "SELECT LEVEL"
-SUBTITLE_TEXT = "CLICK to select  |  CLICK AGAIN / ENTER to play  |  W/S/SCROLL navigate"
+SUBTITLE_TEXT = "CLICK to select  |  CLICK AGAIN / ENTER to play"
 FOOTER_TEXT = "↑/↓ NAVIGATE      ENTER / CLICK CHOOSE      ESC TITLE"
 
 
@@ -39,6 +70,7 @@ class _LevelButtonItem:
         stage: Stage,
         is_cleared: bool,
         on_click: Callable[[], None],
+        card_model: Mesh,
     ) -> None:
         self.stage = stage
         self.is_cleared = is_cleared
@@ -49,7 +81,7 @@ class _LevelButtonItem:
         # Quad button background
         self.button = Button(
             parent=parent,
-            model="quad",
+            model=card_model,
             scale=(0.40, BUTTON_HEIGHT),
             color=theme.TILE_FLOOR,
             z=0.01,
@@ -70,16 +102,40 @@ class _LevelButtonItem:
         )
         setup_text_sharpness(self.label, point_size=24.0, pixels_per_unit=130.0)
 
+        # The highlighted card shows the level's name, fitted to the card on first use: the font
+        # metrics it is fitted against are only final once every text on the screen exists.
+        self.selected_text: str | None = None
+
         # Cleared badge indicator
         self.badge: Entity | None = None
         if self.is_cleared:
             self.badge = Entity(
                 parent=parent,
                 model="quad",
-                scale=(0.016, 0.016),
+                scale=(BADGE_SIZE, BADGE_SIZE),
                 color=theme.TILE_HEAVY,
                 z=-0.02,
             )
+
+    def _measure(self, text: str) -> float:
+        """How much room ``text`` takes in the card, in UI units; the label is left holding it.
+
+        ``Text.width`` is the width of the rendered glyphs before the entity's own scale, so it
+        has to be scaled here to compare against the card.
+        """
+        self.label.text = text
+        return self.label.width * self.label.scale_x
+
+    def _fit_to_card(self, text: str, card_width: float) -> str:
+        """``text`` as far as it fits inside a card of ``card_width``, trimmed with an ellipsis."""
+        reserve = card_width * RIBBON_SLANT / 2.0 + LABEL_RIGHT_MARGIN
+        if self.badge is not None:
+            reserve += BADGE_SIZE + BADGE_MARGIN
+        room = SCREEN_EDGE_LEFT + card_width - LABEL_MARGIN_LEFT - reserve
+        trimmed = text
+        while trimmed and self._measure(trimmed.rstrip() + LABEL_ELLIPSIS) > room:
+            trimmed = trimmed[:-1]
+        return text if trimmed == text else trimmed.rstrip() + LABEL_ELLIPSIS
 
     def set_layout(
         self,
@@ -107,7 +163,11 @@ class _LevelButtonItem:
             self.button.color = theme.TILE_BRIDGE
             self.button.highlight_color = theme.TILE_BRIDGE
             self.label.color = theme.TILE_FLOOR
-            self.label.text = f"{self.stage.id}   {self.stage.name}"
+            if self.selected_text is None:
+                self.selected_text = self._fit_to_card(
+                    f"{self.stage.id}   {self.stage.name}", SELECTED_WIDTH
+                )
+            self.label.text = self.selected_text
         else:
             self.button.color = theme.TILE_FLOOR
             self.button.highlight_color = color.rgba32(85, 80, 115, 255)
@@ -117,9 +177,13 @@ class _LevelButtonItem:
         # Text starts at fixed comfortable padding from the frame
         self.label.position = (LABEL_MARGIN_LEFT, y, -0.01)
 
-        # Badge sits near the expanding right edge of the card
+        # Badge sits near the expanding right edge, clear of the ribbon's cut corner
         if self.badge is not None:
-            self.badge.position = (SCREEN_EDGE_LEFT + width - 0.035, y, -0.02)
+            self.badge.position = (
+                SCREEN_EDGE_LEFT + width - BADGE_MARGIN - width * RIBBON_SLANT / 2.0,
+                y,
+                -0.02,
+            )
 
 
 class LevelSelectScene(Entity):
@@ -201,6 +265,9 @@ class LevelSelectScene(Entity):
                 stage=stage,
                 is_cleared=(stage.id in cleared),
                 on_click=lambda idx=i, s=stage: self._on_button_clicked(idx, s),
+                # Each card builds its own ribbon: ursina does not keep a mesh usable when the
+                # same one is shared by entities it scales separately.
+                card_model=_ribbon_mesh(RIBBON_SLANT),
             )
             self.buttons.append(btn)
 
@@ -235,7 +302,7 @@ class LevelSelectScene(Entity):
             w = self.state.widths[i]
             y = self.state.button_y(i)
             is_sel = (i == sel)
-            is_vis = self.state.is_visible(i)
+            is_vis = self.state.is_visible(i, LIST_TOP, LIST_BOTTOM)
             btn.set_layout(
                 y=y,
                 width=w,

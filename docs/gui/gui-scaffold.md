@@ -9,9 +9,11 @@ the art direction ([`theme.md`](theme.md)).
 
 - Boots into a title screen: the wordmark over two cards, play (into the level select) and quit,
   with `Enter` / `Esc` as their keyboard route. `--stage FILE` skips both menus entirely.
-- Opens the level select from that card: one card per stage, one row per stage group (L1-L4), with
-  cleared levels tinted the mechanism cyan for the rest of the session. Clicking a card starts that
-  level.
+- Opens the level select from that card: one card per stage in one scrolling list, with a 3D
+  miniature of the highlighted stage's board beside it. The highlighted card is a solid cyan
+  ribbon whose right end is cut on a diagonal, and the cream card the miniature stands on is a
+  trapezoid whose left edge is on the same diagonal; cleared levels carry a badge for the rest of
+  the session. Clicking a card highlights it, and clicking it again starts that level.
 - Plays a load animation on entry: tiles float up from below with randomised delays, then the block
   drops in from above. Input is blocked until the animation has fully played.
 - Renders the board as flat tiles: a dark tile per walkable cell, butted together with a faint

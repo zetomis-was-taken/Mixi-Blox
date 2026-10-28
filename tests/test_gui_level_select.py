@@ -132,5 +132,21 @@ def test_scroll_position_and_visibility() -> None:
     assert pytest.approx(state.button_y(3), abs=0.001) == 0.0
     assert state.button_y(2) > 0.0  # Previous is above
     assert state.button_y(4) < 0.0  # Next is below
-    assert state.is_visible(3)
+    assert state.is_visible(3, top=0.28, bottom=-0.39)
+
+
+def test_visibility_band_hides_cards_past_the_header_and_footer() -> None:
+    state = LevelSelectState(stage_count=10, initial_index=4)
+    for _ in range(50):
+        state.update(0.1)
+
+    # A band that leaves room for the three cards above the selection and the four below it.
+    top = 3 * BUTTON_PITCH + 0.01
+    bottom = -4 * BUTTON_PITCH - 0.01
+
+    assert state.is_visible(1, top, bottom)
+    assert state.is_visible(8, top, bottom)
+    # The next card out in either direction runs under the header or the footer hints.
+    assert not state.is_visible(0, top, bottom)
+    assert not state.is_visible(9, top, bottom)
 

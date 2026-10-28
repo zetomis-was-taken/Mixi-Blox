@@ -1,8 +1,8 @@
 """The modernized two-layer level select screen with 3D board preview.
 
 Presents a full-screen dark backdrop (Layer A) with a vertical, scrollable button list
-featuring dynamic fish-eye width cascade, and an angled, softened 3D board preview
-(Layer B) with loading transitions.
+anchored to the left side with fish-eye cascade widths, and an angled, softened 3D board
+preview (Layer B) with loading transitions.
 """
 
 from __future__ import annotations
@@ -18,13 +18,15 @@ from .level_select_state import BUTTON_HEIGHT, LevelSelectState
 from .preview import LevelPreviewPanel
 from .title.fonts import get_font, setup_text_sharpness
 
-BUTTON_CENTER_X = -0.32
-TITLE_Y = 0.42
-SUBTITLE_Y = 0.35
+# Screen left frame edge where the button background starts flush
+SCREEN_EDGE_LEFT = -0.92
+LABEL_MARGIN_LEFT = -0.74
+TITLE_Y = 0.40
+SUBTITLE_Y = 0.33
 FOOTER_Y = -0.44
 
 TITLE_TEXT = "SELECT LEVEL"
-SUBTITLE_TEXT = "W/S or SCROLL to navigate   |   CYAN = current   |   TEAL = cleared"
+SUBTITLE_TEXT = "CLICK to select  |  CLICK AGAIN / ENTER to play  |  W/S/SCROLL navigate"
 FOOTER_TEXT = "↑/↓ NAVIGATE      ENTER / CLICK CHOOSE      ESC TITLE"
 
 
@@ -37,12 +39,10 @@ class _LevelButtonItem:
         stage: Stage,
         is_cleared: bool,
         on_click: Callable[[], None],
-        on_hover: Callable[[], None],
     ) -> None:
         self.stage = stage
         self.is_cleared = is_cleared
         self.on_click_callback = on_click
-        self.on_hover_callback = on_hover
 
         font_body = get_font("PlusJakartaSans-ExtraBold.ttf")
 
@@ -50,26 +50,25 @@ class _LevelButtonItem:
         self.button = Button(
             parent=parent,
             model="quad",
-            scale=(0.20, BUTTON_HEIGHT),
+            scale=(0.40, BUTTON_HEIGHT),
             color=theme.TILE_FLOOR,
             z=0.01,
         )
-        self.button.highlight_color = theme.TILE_FLOOR
+        self.button.highlight_color = color.rgba32(85, 80, 115, 255)
         self.button.pressed_color = theme.TILE_FLOOR
         self.button.on_click = self.on_click_callback
-        self.button.on_mouse_enter = self.on_hover_callback
 
-        # Sibling text label (not parented to button to avoid scale distortion)
+        # Sibling text label (left-aligned inside the card)
         self.label = Text(
             parent=parent,
             text=stage.id,
             font=font_body,
-            origin=(0, 0),
-            scale=0.55,
+            origin=(-0.5, 0.0),
+            scale=0.60,
             color=theme.BACKGROUND,
             z=-0.01,
         )
-        setup_text_sharpness(self.label, point_size=20.0, pixels_per_unit=120.0)
+        setup_text_sharpness(self.label, point_size=24.0, pixels_per_unit=130.0)
 
         # Cleared badge indicator
         self.badge: Entity | None = None
@@ -77,14 +76,13 @@ class _LevelButtonItem:
             self.badge = Entity(
                 parent=parent,
                 model="quad",
-                scale=(0.014, 0.014),
+                scale=(0.016, 0.016),
                 color=theme.TILE_HEAVY,
                 z=-0.02,
             )
 
     def set_layout(
         self,
-        x: float,
         y: float,
         width: float,
         is_selected: bool,
@@ -99,7 +97,9 @@ class _LevelButtonItem:
         if not visible:
             return
 
-        self.button.position = (x, y, 0.01)
+        # Background starts flush from the left screen frame edge
+        center_x = SCREEN_EDGE_LEFT + width / 2.0
+        self.button.position = (center_x, y, 0.01)
         self.button.scale = (width, BUTTON_HEIGHT, 1.0)
 
         # Highlighted vs standard card appearance
@@ -107,17 +107,19 @@ class _LevelButtonItem:
             self.button.color = theme.TILE_BRIDGE
             self.button.highlight_color = theme.TILE_BRIDGE
             self.label.color = theme.TILE_FLOOR
-            self.label.text = f"{self.stage.id}  {self.stage.name}"
+            self.label.text = f"{self.stage.id}   {self.stage.name}"
         else:
             self.button.color = theme.TILE_FLOOR
-            self.button.highlight_color = color.rgba32(70, 66, 94, 230)
+            self.button.highlight_color = color.rgba32(85, 80, 115, 255)
             self.label.color = theme.BACKGROUND
             self.label.text = self.stage.id
 
-        self.label.position = (x, y, -0.01)
+        # Text starts at fixed comfortable padding from the frame
+        self.label.position = (LABEL_MARGIN_LEFT, y, -0.01)
 
+        # Badge sits near the expanding right edge of the card
         if self.badge is not None:
-            self.badge.position = (x + width / 2.0 - 0.025, y, -0.02)
+            self.badge.position = (SCREEN_EDGE_LEFT + width - 0.035, y, -0.02)
 
 
 class LevelSelectScene(Entity):
@@ -150,14 +152,14 @@ class LevelSelectScene(Entity):
         font_title = get_font("Monoton-Regular.ttf")
         font_hint = get_font("PlusJakartaSans-ExtraBold.ttf")
 
-        # Header titles
+        # Header titles (anchored to the left margin, fully visible)
         self.title_label = Text(
             parent=self,
             text=TITLE_TEXT,
             font=font_title,
-            origin=(0, 0),
-            position=(BUTTON_CENTER_X, TITLE_Y, -0.01),
-            scale=2.2,
+            origin=(-0.5, 0.0),
+            position=(LABEL_MARGIN_LEFT, TITLE_Y, -0.01),
+            scale=1.35,
             color=theme.BACKGROUND,
         )
         setup_text_sharpness(self.title_label, point_size=28.0, pixels_per_unit=120.0)
@@ -166,9 +168,9 @@ class LevelSelectScene(Entity):
             parent=self,
             text=SUBTITLE_TEXT,
             font=font_hint,
-            origin=(0, 0),
-            position=(BUTTON_CENTER_X, SUBTITLE_Y, -0.01),
-            scale=0.45,
+            origin=(-0.5, 0.0),
+            position=(LABEL_MARGIN_LEFT, SUBTITLE_Y, -0.01),
+            scale=0.38,
             color=theme.TILE_BRIDGE,
         )
         setup_text_sharpness(self.subtitle_label, point_size=18.0, pixels_per_unit=120.0)
@@ -180,7 +182,7 @@ class LevelSelectScene(Entity):
             font=font_hint,
             origin=(0, 0),
             position=(0.0, FOOTER_Y, -0.01),
-            scale=0.52,
+            scale=0.50,
             color=theme.BACKGROUND,
         )
         setup_text_sharpness(self.footer_label, point_size=20.0, pixels_per_unit=120.0)
@@ -198,8 +200,7 @@ class LevelSelectScene(Entity):
                 parent=self,
                 stage=stage,
                 is_cleared=(stage.id in cleared),
-                on_click=lambda s=stage: self.on_pick(s),
-                on_hover=lambda idx=i: self._on_hover(idx),
+                on_click=lambda idx=i, s=stage: self._on_button_clicked(idx, s),
             )
             self.buttons.append(btn)
 
@@ -207,10 +208,16 @@ class LevelSelectScene(Entity):
         if stages:
             self.preview.set_stage(stages[0])
 
-    def _on_hover(self, index: int) -> None:
-        """Handle mouse hover on button item."""
-        if self.state.select(index):
-            self._on_selection_changed()
+    def _on_button_clicked(self, index: int, stage: Stage) -> None:
+        """Clicking an unselected card highlights and previews it.
+
+        Clicking the already selected card launches the level.
+        """
+        if self.state.selected_index == index:
+            self.on_pick(stage)
+        else:
+            if self.state.select(index):
+                self._on_selection_changed()
 
     def _on_selection_changed(self) -> None:
         """Notify preview panel when highlighted stage changes."""
@@ -230,7 +237,6 @@ class LevelSelectScene(Entity):
             is_sel = (i == sel)
             is_vis = self.state.is_visible(i)
             btn.set_layout(
-                x=BUTTON_CENTER_X,
                 y=y,
                 width=w,
                 is_selected=is_sel,

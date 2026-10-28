@@ -42,15 +42,31 @@ out vec4 fragColor;
 
 void main() {
     vec4 base = texture(p3d_Texture0, texcoords) * p3d_ColorScale * vertex_color;
-    // Key directional light vector
-    vec3 light_dir = normalize(vec3(0.3, 0.85, 0.5));
-    float diff = max(dot(normalize(normal), light_dir), 0.0);
-    // Softened face tone: compress contrast for an out-of-focus depth feel
-    vec3 lit = mix(base.rgb * 0.82, base.rgb * 1.08, diff * 0.5 + 0.4);
-    // Blend with atmospheric purple-slate backdrop (#46425e)
-    vec3 haze = vec3(0.275, 0.259, 0.369);
-    vec3 blended = mix(lit, haze, 0.22);
-    fragColor = vec4(blended, base.a * 0.92);
+    vec3 n = normalize(normal);
+    vec3 light_dir = normalize(vec3(0.25, 0.85, 0.45));
+    float diff = max(dot(n, light_dir), 0.0);
+    float top_face = max(n.y, 0.0);
+
+    // Identify special pieces (fragile tiles, bridges, switch plates, active block)
+    // which have higher saturation or brightness than the muted slate floor (#46425e).
+    float max_c = max(base.r, max(base.g, base.b));
+    float min_c = min(base.r, min(base.g, base.b));
+    float sat = max_c - min_c;
+    bool is_special = (sat > 0.18) || (max_c > 0.70);
+
+    vec3 final_color;
+    if (is_special) {
+        // Make special mechanisms and plates strikingly vibrant and luminous
+        vec3 boosted = base.rgb * (1.20 + 0.25 * diff + 0.18 * top_face);
+        final_color = min(boosted, vec3(1.0));
+    } else {
+        // Standard floor tiles: crisp cel shading for clear 3D footprint separation
+        vec3 lit = base.rgb * (0.92 + 0.40 * diff + 0.25 * top_face);
+        vec3 haze = vec3(0.275, 0.259, 0.369);
+        final_color = mix(lit, haze, 0.06);
+    }
+
+    fragColor = vec4(final_color, 1.0);
 }
 """
 

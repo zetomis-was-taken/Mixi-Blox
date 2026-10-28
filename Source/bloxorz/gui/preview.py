@@ -12,12 +12,12 @@ from bloxorz.core.contracts import Stage
 
 from . import blur_shader, theme
 from .board_view import BoardView
-from .layout import board_center
+from .layout import board_center, cell_to_world
 
 # Isometric preview tilt angles (pitch, yaw, roll)
 PREVIEW_ROTATION = (32.0, -36.0, 12.0)
-PREVIEW_CENTER_X = 0.32
-PREVIEW_CENTER_Y = -0.04
+PREVIEW_CENTER_X = 0.30
+PREVIEW_CENTER_Y = -0.02
 FADE_DURATION_SECONDS = 0.30
 SPINNER_FADE_SECONDS = 0.20
 
@@ -37,13 +37,23 @@ class LevelPreviewPanel(Entity):
         )
 
         # Angled divider backdrop representing the diagonal split (Layer B)
+        # Tilted positive 22 deg so the boundary runs from top-right down to bottom-left
         self.backdrop = Entity(
             parent=self,
             model="quad",
-            scale=(1.25, 1.15),
-            position=(0.04, -0.02, 0.02),
-            rotation_z=-14.0,
-            color=color.rgba32(21, 120, 140, 45),  # subtle deep teal shadow (#15788c)
+            scale=(2.6, 2.2),
+            position=(0.20, -0.20, 0.04),
+            rotation_z=22.0,
+            color=color.rgba32(21, 120, 140, 75),  # deep teal #15788c
+        )
+
+        # Crisp accent edge along the diagonal boundary
+        self.divider_line = Entity(
+            parent=self.backdrop,
+            model="quad",
+            scale=(1.0, 0.004),
+            position=(0.0, 0.5, -0.001),
+            color=color.rgba32(0, 185, 190, 110),  # subtle bright cyan line #00b9be
         )
 
         # Content root that holds rotated 3D preview models
@@ -99,10 +109,22 @@ class LevelPreviewPanel(Entity):
         cx, cz = board_center(stage)
         board_view.root.position = (-cx, 0.0, -cz)
 
-        # Scale dynamically so large and small boards fit the preview window
-        span = max(stage.index.rows, stage.index.cols, 8)
-        base_scale = 0.28 / span
+        # Scale dynamically so large and small boards fill the preview area prominently
+        span = max(stage.index.rows, stage.index.cols, 7)
+        base_scale = 1.08 / span
         wrapper.scale = (base_scale, base_scale, base_scale)
+
+        # Prominent 3D standing player block at the start cell
+        sx, sz = cell_to_world(stage.index.start, stage.index.rows, stage.index.cols)
+        Entity(
+            parent=board_view.root,
+            name=f"preview_player_block_{stage.id}",
+            model="cube",
+            scale=(0.92, 2.0, 0.92),
+            position=(sx, 1.0, sz),
+            color=theme.BLOCK,
+            shader=blur_shader.BLUR_SHADER,
+        )
 
         # Apply soft preview shader
         blur_shader.apply(board_view)

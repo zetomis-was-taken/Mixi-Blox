@@ -135,7 +135,11 @@ class Game:
         self._show(TitleScene(self.show_level_select))
 
     def show_level_select(self) -> None:
-        self._show(LevelSelectScene(self.catalog, self.cleared, self.play))
+        self._show(
+            LevelSelectScene(
+                self.catalog, self.cleared, self.play, on_back=self.show_title
+            )
+        )
 
     def play(self, stage: Stage) -> None:
         self._show(PrototypeScene(stage, self, self.solve))

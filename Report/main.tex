@@ -99,21 +99,19 @@
 
     \begin{minipage}{0.48\textwidth}
         \textbf{\large Giảng viên phụ trách:}\\
-        % \vspace*{0.05cm}
         ThS. Bùi Duy Đăng\\
-        Nguyễn Ngọc Đức\\
-        Nguyễn Thanh Tình
+        ThS. Nguyễn Ngọc Đức\\
+        ThS. Nguyễn Thanh Tình
     \end{minipage}
     \hfill
     \begin{minipage}{0.48\textwidth}
         \raggedleft
         \textbf{\large Nhóm sinh viên thực hiện:}\\
-        % \vspace*{0.05cm}
-        Trần Văn Tấn Khôi\\
-        Nguyễn Đức Duy Tân\\
-        Lê Văn Thành Đạt\\
-        Lê Thành Đạt\\
-        Vương Hữu Khang\\[0.3cm]
+        24120010 -- Trần Văn Tấn Khôi\\
+        24120135 -- Nguyễn Đức Duy Tân\\
+        24120036 -- Lê Văn Thành Đạt\\
+        24120035 -- Lê Thành Đạt\\
+        24120070 -- Vương Hữu Khang\\[0.3cm]
         \textbf{Mã nguồn GitHub:}\\
         \href{https://github.com/zetomis-was-taken/Mixi-Blox}{zetomis-was-taken/Mixi-Blox}
     \end{minipage}
@@ -143,30 +141,30 @@ Theo quy định đánh giá của đồ án, điểm số cá nhân của mỗi
 \hline
 \textbf{STT} & \textbf{Thành viên} & \textbf{Nhiệm vụ phụ trách chính} & \textbf{\% Đóng góp} \\
 \hline
-1 & Trần Văn Tấn Khôi & 
+1 & Trần Văn Tấn Khôi \newline (MSSV: 24120010) & 
 - Xây dựng Game Engine core, board parser, rules, advanced tiles.\newline
 - Xử lý cơ chế Split switch \& teleport hai khối cube $1\times1\times1$.\newline
 - Viết mục Problem Formalization trong báo cáo. & 22\% \\
 \hline
-2 & Nguyễn Đức Duy Tân & 
+2 & Nguyễn Đức Duy Tân \newline (MSSV: 24120135) & 
 - Phát triển 3D GUI bằng Ursina (Panda3D), board view, block view.\newline
 - Animation cuộn lăn 12 case, hiệu ứng vỡ ô, cầu đóng mở.\newline
 - Xây dựng Solver panel \& Replay; Thực hiện Video demo YouTube. & 21\% \\
 \hline
-3 & Lê Văn Thành Đạt & 
+3 & Lê Văn Thành Đạt \newline (MSSV: 24120036) & 
 - Xây dựng Solver base, SearchProblem, Frontier, visited set.\newline
 - Cài đặt thuật toán BFS và DFS/IDS có kiểm soát chu trình.\newline
 - Viết mục thuật toán BFS/DFS trong báo cáo. & 19\% \\
 \hline
-4 & Lê Thành Đạt & 
+4 & Lê Thành Đạt \newline (MSSV: 24120035) & 
 - Cài đặt thuật toán UCS (đề xuất \& biện minh cost function).\newline
 - Cài đặt thuật toán A* (thiết kế Heuristic $h_1, h_2$ \& chứng minh).\newline
 - Viết mục thuật toán UCS/A* trong báo cáo. & 21\% \\
 \hline
-5 & Vương Hữu Khang & 
+5 & Vương Hữu Khang \newline (MSSV: 24120070) & 
 - Thiết lập hạ tầng repo, CI linting (Ruff) + testing (Pytest).\newline
 - Xây dựng module Benchmark đo đạc (time, RAM tracemalloc, nodes, moves).\newline
-- Thiết lập 12 Test Stages chuẩn 4 nhóm; Soạn khung báo cáo \LaTeX.\newline
+- Thiết lập 10 Test Stages chuẩn 4 nhóm; Soạn khung báo cáo \LaTeX.\newline
 - Viết scripts tự động kiểm tra \& đóng gói nộp bài (\texttt{tools/package.py}). & 17\% \\
 \hline
 \end{tabular}
@@ -379,7 +377,32 @@ Video trình diễn đầy đủ các tính năng của chương trình và gi�
 \end{center}
 
 % ==============================================================================
-% MỤC 7: TÀI LIỆU THAM KHẢO & PHỤ LỤC
+% MỤC 7: KẾT LUẬN (CONCLUSION)
+% ==============================================================================
+\section{Kết luận (Conclusion)}
+
+\subsection{Kết quả đạt được}
+Qua quá trình nghiên cứu, mô hình hóa và triển khai đồ án Bloxorz Solver, nhóm đã hoàn thành toàn diện các mục tiêu đề ra:
+\begin{enumerate}
+    \item \textbf{Mô hình hóa bài toán chính xác}: Xây dựng Game Engine mô phỏng trọn vẹn quy luật không gian trạng thái của trò chơi Bloxorz, bao gồm đầy đủ các cơ chế nâng cao như ô dễ vỡ (Fragile tiles), hệ thống cầu đóng/mở (Bridges) điều khiển bởi công tắc mềm (Soft switches) và công tắc nặng (Heavy switches), cùng cơ chế phân tách và tái hợp nhất khối (Split \& Merge).
+    \item \textbf{Cài đặt và kiểm chứng 4 thuật toán tìm kiếm}:
+    \begin{itemize}
+        \item Cài đặt thành công BFS, DFS (kèm tập \texttt{visited} triệt tiêu chu trình lặp), UCS và A*.
+        \item Đề xuất và biện minh mô hình hàm chi phí hành động thực tế nhằm phản ánh rủi ro khi tương tác với các ô đặc biệt (ô cam dễ vỡ gán chi phí 3, roll thường gán 1).
+        \item Thiết kế và chứng minh tính admissible, consistent của hàm heuristic cho thuật toán A*, giúp định hướng tìm kiếm hiệu quả và giảm đáng kể số trạng thái mở rộng.
+    \end{itemize}
+    \item \textbf{Thực nghiệm và đo lường khách quan}: Xây dựng thư viện \texttt{benchmark} đo đạc độc lập, chuẩn hóa quy trình đo thời gian (\textit{median-of-3}) và bộ nhớ RAM đỉnh (\texttt{tracemalloc}) trên bộ dữ liệu kiểm thử 10 màn chơi phân tầng độ khó, trích xuất số liệu tự động ra bảng \LaTeX\ và 4 biểu đồ vector.
+    \item \textbf{Giao diện trực quan}: Xây dựng giao diện đồ họa 3D bằng thư viện Ursina (Panda3D), hỗ trợ phát lại hoạt ảnh lăn khối mượt mà và trực quan hóa toàn bộ tiến trình giải của các thuật toán.
+\end{enumerate}
+
+\subsection{Hướng phát triển trong tương lai}
+\begin{itemize}
+    \item \textbf{Cải tiến hàm Heuristic}: Nghiên cứu các kỹ thuật Heuristic nâng cao như Pattern Database (PDB) hoặc phân tích đồ thị tĩnh có xét đến chướng ngại vật và trạng thái cầu để thu hẹp hơn nữa không gian tìm kiếm trên các màn chơi quy mô lớn.
+    \item \textbf{Tối ưu hóa giải thuật}: Ứng dụng các biến thể tìm kiếm nâng cao như IDA* (Iterative Deepening A*) hoặc Bidirectional Search (tìm kiếm hai chiều) nhằm tối ưu hơn nữa lượng bộ nhớ tiêu thụ khi mở rộng sang các màn chơi phức tạp có độ sâu nghiệm lớn.
+\end{itemize}
+
+% ==============================================================================
+% MỤC 8: TÀI LIỆU THAM KHẢO & PHỤ LỤC
 % ==============================================================================
 \newpage
 

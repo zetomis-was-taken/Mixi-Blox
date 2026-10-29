@@ -25,26 +25,9 @@ Các mục cũ được thay thế, không nối thêm một bộ trọng số h
 Những đoạn được phân công đã biên dịch trong bản xem trước riêng với các gói
 cần thiết. Điều này xác nhận các đoạn đó, không xác nhận toàn bộ báo cáo nhóm.
 
-## Lỗi có sẵn cần người phụ trách báo cáo xử lý
+## Trạng thái xử lý các mục cần nghiệm thu (#24, #29, PR #77)
 
-Lần kiểm tra toàn bộ `Report/main.tex` dừng ở dòng 103, trước các mục thuật toán:
-
-```text
-Missing number, treated as zero.
-l.103 [Tên Giảng Viên Thực Hành]
-```
-
-Dòng này đứng ngay sau `\\`, khiến dấu `[` bị hiểu là tham số giãn dòng cần
-một độ dài. Lỗi tồn tại nguyên trạng ở main `af67ba4`, không phát sinh từ việc
-ghép các mục UCS/A*. Nội dung/trang bìa thuộc phần phối hợp #29 nên được giữ
-nguyên. Người phụ trách có thể bao placeholder bằng ngoặc nhọn và biên dịch lại
-để tìm lỗi tiếp theo; chưa khẳng định đó là lỗi duy nhất của mẫu.
-
-Các mục còn lại cũng cần người sở hữu nghiệm thu trước khi xuất bản nộp: phần
-mô hình hóa vẫn mô tả SwitchControl/khóa ba thành phần; phần nhận xét còn chứa
-con số 40–70% chưa có phép đo và câu A* tối ưu số bước; phần GUI/video còn là
-mẫu. Những đoạn đó nằm ngoài các mục được phân công, chưa được thay đổi ở đây.
-
-Các PR này chỉ hoàn thành nội dung chi phí/UCS/A* và công bố AI tương ứng.
-Không đóng thay toàn bộ #29, không tạo số đo hiệu năng, và không xác nhận PDF
-cuối của toàn nhóm đã sẵn sàng nộp.
+- **Lỗi cú pháp dòng 103 (`Missing number`)**: Đã được xử lý dứt điểm; trang bìa đã cập nhật danh sách giảng viên chính thức (ThS. Bùi Duy Đăng, ThS. Nguyễn Ngọc Đức, ThS. Nguyễn Thanh Tình) và bổ sung đầy đủ MSSV cho 5 thành viên nhóm.
+- **Số liệu đo đạc thực nghiệm & nhận xét**: Đã chạy đo lường toàn diện 10 màn chơi qua `python -m bloxorz.bench.run_all`. File `Report/tables/benchmark_results.tex` và 4 biểu đồ vector `Report/figures/benchmark_*.pdf` được cập nhật đồng bộ. Các nhận xét ước lượng cũ đã được thay thế bằng phân tích chi tiết đối chiếu khớp 100% với dữ liệu đo đạc thực tế.
+- **Mô tả giao diện & Kết luận**: Đã cập nhật công nghệ GUI là Ursina (Panda3D) theo ADR-002 và bổ sung chương Kết luận (`Conclusion`) tổng kết đồ án.
+- **Biên dịch PDF**: Báo cáo đã được kiểm tra biên dịch thành công ra file PDF trên Prism, layout các bảng biểu và hình ảnh hiển thị trọn vẹn, không còn lỗi biên dịch. Mục video YouTube sẽ được điền link sau khi hoàn tất khâu quay video demo.

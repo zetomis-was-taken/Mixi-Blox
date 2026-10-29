@@ -18,10 +18,11 @@ from bloxorz.core.contracts import Stage
 
 from . import results, theme
 
-# UI space is [-0.8, 0.8] x [-0.5, 0.5] at 16:10 (docs/gui/window.md), so these are 0.02 in from
-# the corners. The small lines are 0.8 of the level name's size.
+# UI space is [-0.8, 0.8] x [-0.5, 0.5] at 16:10 (docs/gui/window.md).
+# LEFT_X is 0.02 in from the left edge; RIGHT_X leaves room for the top-right hamburger menu.
+# The small lines are 0.8 of the level name's size.
 LEFT_X = -0.78
-RIGHT_X = 0.78
+RIGHT_X = 0.69
 TOP_Y = 0.47
 HINT_Y = 0.43
 CUBE_Y = 0.39

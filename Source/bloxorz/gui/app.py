@@ -44,8 +44,8 @@ from .layout import TILE_SIZE, board_center, cell_to_world
 from .level_select import LevelSelectScene
 from .pause_overlay import PauseOverlay
 from .replay import Algorithms, Replay
+from .solver_menu import SolverMenu
 from .solver_overlay import SolverOverlay
-from .solver_panel import SolverPanel
 from .title import TitleScene
 from .win_overlay import WinOverlay
 
@@ -190,9 +190,9 @@ class PrototypeScene(Entity):
         application.base.accept("aspectRatioChanged", self._mark_reframe)
         self.hud = Hud(stage)
 
-        # Solver playback. The panel is the only way in; a replay borrows the board and the run is
+        # Solver playback. The menu is the only way in; a replay borrows the board and the run is
         # kept aside so stopping or closing the card puts the player back exactly.
-        self.panel = SolverPanel(tuple(solve), self._solve_with) if solve else None
+        self.panel = SolverMenu(tuple(solve), self._solve_with) if solve else None
         self.solver_overlay: SolverOverlay | None = None
         self.replay: Replay | None = None
         self.algorithm: str | None = None
@@ -328,7 +328,10 @@ class PrototypeScene(Entity):
         elif key == "r":
             self._retry()
         elif key == "escape":
-            self._pause()
+            if self.panel is not None and self.panel.is_open:
+                self.panel.close()
+            else:
+                self._pause()
 
     def _pause_input(self, key: str) -> None:
         """The pause card's keys, mirroring its two buttons: continue, or leave for the levels."""

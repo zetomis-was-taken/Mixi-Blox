@@ -9,12 +9,15 @@ from bloxorz.gui.title.timeline import (
     ANCHOR_LEFT_X,
     BLOCK_INIT_POS,
     BLOCK_REST_POS,
+    BLOCK_TARGET_Y,
     KF1_END,
     KF2_END,
     KF2_START,
     KF3A_END,
     KF3B_END,
     OFFSCREEN_LEFT_X,
+    PLAY_TARGET_Y,
+    QUIT_TARGET_Y,
     READY_TIME,
     TITLE_TARGET_Y,
     is_interactive,
@@ -56,6 +59,12 @@ def test_player_block_scale_pop_in() -> None:
     assert player_block_scale(0.0) == 0.0
     assert player_block_scale(KF1_END) == 1.0
     assert player_block_scale(KF1_END + 0.5) == 1.0
+
+
+def test_player_block_vertical_centering() -> None:
+    assert BLOCK_TARGET_Y == (PLAY_TARGET_Y + QUIT_TARGET_Y) / 2.0
+    assert BLOCK_INIT_POS[1] == BLOCK_TARGET_Y
+    assert BLOCK_REST_POS[1] == BLOCK_TARGET_Y
 
 
 def test_menu_buttons_stagger_and_alignment() -> None:

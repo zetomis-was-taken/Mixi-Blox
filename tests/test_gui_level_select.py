@@ -18,6 +18,7 @@ from bloxorz.gui.level_select_state import (
 
 
 def test_target_width_values() -> None:
+    assert SELECTED_WIDTH > NEIGHBOR_1_WIDTH > NEIGHBOR_2_WIDTH > STANDARD_WIDTH
     assert target_width(0) == SELECTED_WIDTH
     assert target_width(1) == NEIGHBOR_1_WIDTH
     assert target_width(-1) == NEIGHBOR_1_WIDTH

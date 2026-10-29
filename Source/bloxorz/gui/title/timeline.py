@@ -26,8 +26,10 @@ TITLE_TARGET_Y = 0.28
 PLAY_TARGET_Y = -0.02
 QUIT_TARGET_Y = -0.19
 
-BLOCK_INIT_POS = (0.00, 0.00, 0.00)     # Initial center staging
-BLOCK_REST_POS = (0.34, 0.00, 0.00)     # Settled center-right (widened)
+BLOCK_TARGET_Y = (PLAY_TARGET_Y + QUIT_TARGET_Y) / 2.0
+
+BLOCK_INIT_POS = (0.00, BLOCK_TARGET_Y, 0.00)     # Initial center staging
+BLOCK_REST_POS = (0.34, BLOCK_TARGET_Y, 0.00)     # Settled center-right (widened)
 
 
 def clamp(val: float, low: float = 0.0, high: float = 1.0) -> float:

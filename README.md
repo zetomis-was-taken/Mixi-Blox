@@ -15,32 +15,59 @@ The Ursina game (#28) — a title screen, level select, playable stages, split-c
 undo/retry, a live move/clock HUD, a Solve panel with one card per real algorithm that replays its
 path as a movie and reports the run on a card, a results screen and a board framing that survives a
 resize — and its headless geometry/controller/catalog/reaction/framing/replay tests, plus the
-benchmark harness (#24) with its CSV/JSON/LaTeX and chart exporters, are in place. `pytest -q` runs
-315 tests.
-
-`python Source/main.py --gui` hands every level scene `bloxorz.solvers.ALGORITHMS`, so the Solve
-panel offers BFS, DFS, UCS and A*; `python Source/main.py --stage FILE --solver NAME` runs one
-algorithm headlessly and prints its `SearchResult` as JSON.
+benchmark harness (#24) with its CSV/JSON/LaTeX and chart exporters, are in place.
 
 Still missing:
 
 - `Report/` holds no measured results yet: `python -m bloxorz.bench.run_all` runs end to end, but
   the charts and tables have not been regenerated from a full run and committed.
 
-## Run a solver (Python 3.11+)
+## Quick Start (Python 3.11+)
 
-```powershell
-python -m Source.main --stage Source/bloxorz/core/stages/L2-02_fragile_ring.json --solver ucs
-python -m Source.main --stage Source/bloxorz/core/stages/L2-02_fragile_ring.json --solver astar
-python -m Source.main --stage Source/bloxorz/core/stages/L2-02_fragile_ring.json --solver bfs
-python -m Source.main --stage Source/bloxorz/core/stages/L1-02_two_flights.json --solver dfs
-python -m pytest -q
-python -m ruff check .
+### 1. Installation
+
+```bash
+pip install -r requirements.txt
 ```
 
-The CLI prints a JSON `SearchResult`; moves are `len(path)` and `cost` is weighted total cost.
-`--node-cap` limits completed expansions and `--time-cap` sets a search deadline in seconds.
+### 2. Launch the Game (3D GUI)
+
+The Ursina game launches by default:
+
+```bash
+python Source/main.py                       # launch game (title screen & level select)
+python Source/main.py --stage <FILE>        # skip menus and play a specific level directly
+```
+
+*Key Controls*: `WASD` / Arrow keys to roll, `Z` to undo, `R` to restart, `Tab` to switch cubes (split stages), `Space` to pause replay, `Esc` to quit/back.
+
+### 3. Run Search Solvers (CLI)
+
+Run algorithms headlessly and output JSON `SearchResult`:
+
+```bash
+python Source/main.py --stage Source/bloxorz/core/stages/L2-02_fragile_ring.json --solver ucs
+python Source/main.py --stage Source/bloxorz/core/stages/L2-02_fragile_ring.json --solver astar
+python Source/main.py --stage Source/bloxorz/core/stages/L2-02_fragile_ring.json --solver bfs
+python Source/main.py --stage Source/bloxorz/core/stages/L1-02_two_flights.json --solver dfs
+```
+
+- `--node-cap <int>`: limit expanded nodes.
+- `--time-cap <float>`: search deadline in seconds.
+- `--no-gui`: inspect stage properties and legal moves in terminal mode without launching the GUI:
+  ```bash
+  python Source/main.py --no-gui --stage Source/bloxorz/core/stages/L1-01_long_corridor.json
+  ```
+
 Exit codes: 0 solved, 1 cap/unsolvable, 2 invalid input or unregistered solver.
+
+### 4. Run Tests & Linter
+
+```bash
+pytest -q
+ruff check .
+```
+
 See the [UCS report and integration notes](docs/ucs_vi.md) and [cost policy](docs/action_cost_vi.md).
 The [A* report and proofs](docs/astar_vi.md) cover admissibility, consistency and the teleport fallback.
 The [BFS notes](docs/bfs_vi.md) record the move/cost split and the frontier tests.

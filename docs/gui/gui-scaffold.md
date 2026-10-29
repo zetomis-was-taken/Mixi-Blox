@@ -63,8 +63,8 @@ the art direction ([`theme.md`](theme.md)).
 
 ```bash
 pip install -r requirements.txt
-python Source/main.py --gui                      # title screen
-python Source/main.py --gui --stage FILE         # one level, no menus
+python Source/main.py                           # title screen (GUI is default)
+python Source/main.py --stage FILE               # one level, no menus
 ```
 
 Ursina needs Python `< 3.14` (see `requirements.txt`). The level select lists every stage under

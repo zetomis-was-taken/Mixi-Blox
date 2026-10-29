@@ -10,8 +10,9 @@ Ursina requires Python `< 3.14` (see `requirements.txt`).
 # Project Layout:
 
 ```
-Source/main.py                 CLI entry point: puts Source/ on sys.path, loads a stage,
-                               prints its legal moves; --gui launches the Ursina prototype.
+Source/main.py                 CLI entry point: puts Source/ on sys.path; launches the Ursina
+                               game by default, runs search algorithms (--solver), or inspects
+                               stages (--no-gui).
 Source/bloxorz/core/           The frozen v1 core (stdlib only).
   contracts.py                 Frozen dataclasses/types: State, Stage, StageIndex, Counts,
                                Stats, SearchResult, Caps; aliases Cell/Cube/Action.
@@ -80,10 +81,10 @@ pip install -r requirements.txt
 pytest -q                                   # full suite (pytest.ini adds Source/ to the path)
 ruff check .                                # lint (E, F, I; line length 100)
 
-python Source/main.py --stage Source/bloxorz/core/stages/L1-01_long_corridor.json
-python Source/main.py --gui                 # Ursina game, boots the title screen
-python Source/main.py --gui --stage FILE    # one level, no menus
-python Source/main.py --stage FILE --solver ucs     # one solver run, JSON SearchResult
+python Source/main.py                       # Ursina game (default), boots the title screen
+python Source/main.py --stage FILE          # Ursina game, opens that level directly
+python Source/main.py --stage FILE --solver ucs  # headless solver run, JSON SearchResult
+python Source/main.py --no-gui --stage FILE # CLI inspection of a stage
 
 PYTHONPATH=Source python -m bloxorz.bench.run_all   # writes Report/data, tables and figures
 python tools/verify_submission.py .         # CI also runs this on every push/PR

@@ -1,10 +1,13 @@
 """Entry point. Puts ``Source/`` on ``sys.path`` (§ Layout, rule 1) and reports a stage.
 
-``--solver`` runs one of the four search algorithms (#18-#23) through the frozen API and prints the
-``SearchResult`` as JSON. ``--gui`` launches the Ursina game (#28): it boots into the title screen,
+By default, running ``main.py`` launches the Ursina game (#28): it boots into the title screen,
 then the level select; ``--stage`` skips both menus and opens that level directly. Every level
 scene is handed ``bloxorz.solvers.ALGORITHMS``, so its Solve panel offers the real BFS, DFS, UCS
 and A*.
+
+``--no-gui`` switches to CLI mode (inspects a stage, or prints help if no stage is given).
+``--solver`` runs one of the four search algorithms (#18-#23) through the frozen API and prints the
+``SearchResult`` as JSON.
 """
 
 from __future__ import annotations
@@ -31,8 +34,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--gui",
-        action="store_true",
-        help="launch the Ursina game (title screen, level select, or --stage for one level)",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="launch the Ursina game (enabled by default; use --no-gui for CLI mode)",
     )
     parser.add_argument("--node-cap", type=int, help="maximum completed expansions")
     parser.add_argument("--time-cap", type=float, help="search deadline in seconds")
@@ -43,7 +47,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    if args.gui:
+    if args.gui is True and args.solver is not None:
+        parser.error("--solver cannot be used with --gui")
+
+    use_gui = (args.gui is not False) if args.solver is None else False
+
+    if use_gui:
         from bloxorz.gui.app import run
         from bloxorz.solvers import ALGORITHMS
 

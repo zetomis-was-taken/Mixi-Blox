@@ -99,13 +99,16 @@
 
     \begin{minipage}{0.48\textwidth}
         \textbf{\large Giảng viên phụ trách:}\\
-        ThS. [Tên Giảng Viên]\\
-        {[Tên Giảng Viên Thực Hành]}
+        % \vspace*{0.05cm}
+        ThS. Bùi Duy Đăng\\
+        Nguyễn Ngọc Đức\\
+        Nguyễn Thanh Tình
     \end{minipage}
     \hfill
     \begin{minipage}{0.48\textwidth}
         \raggedleft
         \textbf{\large Nhóm sinh viên thực hiện:}\\
+        % \vspace*{0.05cm}
         Trần Văn Tấn Khôi\\
         Nguyễn Đức Duy Tân\\
         Lê Văn Thành Đạt\\
@@ -133,41 +136,41 @@
 \subsection{Bảng phân công trách nhiệm \& Đánh giá đóng góp}
 Theo quy định đánh giá của đồ án, điểm số cá nhân của mỗi thành viên được tính dựa trên tỷ lệ phần trăm hoàn thành công việc được phân công ($\text{Điểm cá nhân} = \text{Điểm nhóm} \times \text{\% Đóng góp}$).
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
-\caption{Bảng phân công nhiệm vụ và tỷ lệ đóng góp của 5 thành viên trong nhóm}
 \label{tab:task_distribution}
-\begin{tabularx}{\textwidth}{clXcc}
-\toprule
-\textbf{STT} & \textbf{Thành viên} & \textbf{Nhiệm vụ phụ trách chính} & \textbf{Tiến độ} & \textbf{\% Đóng góp} \\
-\midrule
+\begin{tabular}{|c|p{4cm}|p{7cm}|c|}
+\hline
+\textbf{STT} & \textbf{Thành viên} & \textbf{Nhiệm vụ phụ trách chính} & \textbf{\% Đóng góp} \\
+\hline
 1 & Trần Văn Tấn Khôi & 
 - Xây dựng Game Engine core, board parser, rules, advanced tiles.\newline
-- Xử lý cơ chế Split switch & teleport hai khối cube 1×1×1.\newline
-- Viết mục Problem Formalization trong báo cáo. & Đang thực hiện & 22\% \\
-\midrule
+- Xử lý cơ chế Split switch \& teleport hai khối cube $1\times1\times1$.\newline
+- Viết mục Problem Formalization trong báo cáo. & 22\% \\
+\hline
 2 & Nguyễn Đức Duy Tân & 
 - Phát triển 3D GUI bằng Ursina (Panda3D), board view, block view.\newline
 - Animation cuộn lăn 12 case, hiệu ứng vỡ ô, cầu đóng mở.\newline
-- Xây dựng Solver panel & Replay; Thực hiện Video demo YouTube. & Đang thực hiện & 21\% \\
-\midrule
+- Xây dựng Solver panel \& Replay; Thực hiện Video demo YouTube. & 21\% \\
+\hline
 3 & Lê Văn Thành Đạt & 
 - Xây dựng Solver base, SearchProblem, Frontier, visited set.\newline
 - Cài đặt thuật toán BFS và DFS/IDS có kiểm soát chu trình.\newline
-- Viết mục thuật toán BFS/DFS trong báo cáo. & Đang thực hiện & 19\% \\
-\midrule
+- Viết mục thuật toán BFS/DFS trong báo cáo. & 19\% \\
+\hline
 4 & Lê Thành Đạt & 
-- Cài đặt thuật toán UCS (đề xuất & biện minh cost function).\newline
-- Cài đặt thuật toán A* (thiết kế Heuristic h1, h2 & chứng minh).\newline
-- Viết mục thuật toán UCS/A* trong báo cáo. & Đang thực hiện & 21\% \\
-\midrule
+- Cài đặt thuật toán UCS (đề xuất \& biện minh cost function).\newline
+- Cài đặt thuật toán A* (thiết kế Heuristic $h_1, h_2$ \& chứng minh).\newline
+- Viết mục thuật toán UCS/A* trong báo cáo. & 21\% \\
+\hline
 5 & Vương Hữu Khang & 
 - Thiết lập hạ tầng repo, CI linting (Ruff) + testing (Pytest).\newline
 - Xây dựng module Benchmark đo đạc (time, RAM tracemalloc, nodes, moves).\newline
-- Thiết lập 12 Test Stages chuẩn 4 nhóm; Soạn khung báo cáo LaTeX.\newline
-- Viết scripts tự động kiểm tra & đóng gói nộp bài (tools/package.py). & Hoàn thành & 17\% \\
-\bottomrule
-\end{tabularx}
+- Thiết lập 12 Test Stages chuẩn 4 nhóm; Soạn khung báo cáo \LaTeX.\newline
+- Viết scripts tự động kiểm tra \& đóng gói nộp bài (\texttt{tools/package.py}). & 17\% \\
+\hline
+\end{tabular}
+\caption{Bảng phân công nhiệm vụ và tỷ lệ đóng góp của 5 thành viên trong nhóm}
 \end{table}
 
 \subsection{Lộ trình và Tiến độ thực tế}
@@ -289,39 +292,38 @@ Bảng \ref{tab:benchmark_results} tổng hợp kết quả đo đạc thực t�
 \input{tables/benchmark_results.tex}
 
 \subsection{Biểu đồ so sánh trực quan}
-Hình \ref{fig:benchmark_charts} minh họa trực quan các chỉ số hiệu năng (thời gian thực thi, bộ nhớ RAM đỉnh, số trạng thái mở rộng và số bước đi của lời giải) giữa 4 thuật toán qua các nhóm màn chơi:
+% Hình \ref{fig:benchmark_charts} minh họa trực quan các chỉ số hiệu năng (thời gian thực thi, bộ nhớ RAM đỉnh, số trạng thái mở rộng và số bước đi của lời giải) giữa 4 thuật toán qua các nhóm màn chơi:
 
-\begin{figure}[htbp]
+% --- Biểu đồ 1: Thời gian thực thi ---
+\begin{figure}[H]
 \centering
-\begin{subfigure}[b]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{figures/benchmark_time.pdf}
-    \caption{Thời gian thực thi (ms)}
-    \label{fig:bench_time}
-\end{subfigure}
-\hfill
-\begin{subfigure}[b]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{figures/benchmark_memory.pdf}
-    \caption{Bộ nhớ RAM đỉnh (KB)}
-    \label{fig:bench_memory}
-\end{subfigure}
-\\[0.3cm]
-\begin{subfigure}[b]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{figures/benchmark_nodes.pdf}
-    \caption{Số nút mở rộng (Nodes)}
-    \label{fig:bench_nodes}
-\end{subfigure}
-\hfill
-\begin{subfigure}[b]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{figures/benchmark_moves.pdf}
-    \caption{Số bước đi của lời giải (Moves)}
-    \label{fig:bench_moves}
-\end{subfigure}
-\caption{Biểu đồ so sánh hiệu năng tổng thể giữa 4 thuật toán BFS, DFS, UCS, A* qua 4 cấp độ màn chơi}
-\label{fig:benchmark_charts}
+\includegraphics[width=1.0\textwidth]{figures/benchmark_time.pdf}
+\caption{Thời gian thực thi (ms) giữa các thuật toán qua các màn chơi}
+\label{fig:bench_time}
+\end{figure}
+
+% --- Biểu đồ 2: Bộ nhớ RAM đỉnh ---
+\begin{figure}[H]
+\centering
+\includegraphics[width=1.0\textwidth]{figures/benchmark_memory.pdf}
+\caption{Bộ nhớ RAM đỉnh (KB) giữa các thuật toán qua các màn chơi}
+\label{fig:bench_memory}
+\end{figure}
+
+% --- Biểu đồ 3: Số nút mở rộng ---
+\begin{figure}[H]
+\centering
+\includegraphics[width=1.0\textwidth]{figures/benchmark_nodes.pdf}
+\caption{Số nút mở rộng (Nodes) giữa các thuật toán qua các màn chơi}
+\label{fig:bench_nodes}
+\end{figure}
+
+% --- Biểu đồ 4: Số bước đi của lời giải ---
+\begin{figure}[H]
+\centering
+\includegraphics[width=1.0\textwidth]{figures/benchmark_moves.pdf}
+\caption{Số bước đi của lời giải (Moves) giữa các thuật toán qua các màn chơi}
+\label{fig:bench_moves}
 \end{figure}
 
 \subsection{Phân tích \& Nhận xét chuyên sâu}
@@ -350,7 +352,7 @@ Từ dữ liệu thực nghiệm tại Bảng \ref{tab:benchmark_results} và đ
     \item \textbf{Về thời gian thực thi (Runtime) và bộ nhớ RAM đỉnh (Peak Memory)}:
     \begin{itemize}
         \item \textbf{Thời gian thực thi}: Cả 4 thuật toán đều hoàn thành việc giải trong thời gian dưới 1 giây trên toàn bộ 10 màn chơi. Thời gian tăng dần theo độ phức tạp của bản đồ: L1 từ 19.98 đến 79.89 ms, L2 từ 39.83 đến 78.35 ms, L3 từ 84.67 đến 182.95 ms. Ở L4, nơi trạng thái tách thành hai khối $1 \times 1 \times 1$ làm không gian trạng thái lớn hơn hẳn, BFS, UCS và A* cần từ 666.94 đến 933.49 ms, còn DFS chỉ cần từ 114.96 đến 284.19 ms vì không duyệt hết không gian trạng thái.
-        \item \textbf{Bộ nhớ RAM đỉnh}: Đo lường bằng \texttt{tracemalloc} cho thấy mức tiêu thụ RAM tỉ lệ thuận với số trạng thái sinh ra trong tập \texttt{visited} và hàng đợi \texttt{Frontier}. Mức RAM đỉnh duy trì ổn định trong khoảng \textbf{42 KB đến 415 KB}. 
+        \item \textbf{Bộ nhớ RAM đỉnh}: Đo lường bằng \texttt{tracemalloc} cho thấy mức tiêu thụ RAM tỉ lệ thuận với số trạng thái sinh ra trong tập \texttt{visited} và hàng đợi \texttt{Frontier}. Mức RAM đỉnh duy trì ổn định trong khoảng \textbf{43 KB đến 415 KB}. 
         \item Dù DFS trên lý thuyết chỉ cần lưu nhánh hiện tại trên Stack, nhưng do phải duy trì tập \texttt{visited} đầy đủ để triệt tiêu vòng lặp vô hạn (Cycle Prevention), mức RAM thực tế của DFS vẫn xấp xỉ BFS và UCS (ví dụ ở màn L4-02 là 400.15 KB so với 384.07 KB của BFS).
     \end{itemize}
 \end{enumerate}
@@ -379,6 +381,8 @@ Video trình diễn đầy đủ các tính năng của chương trình và gi�
 % ==============================================================================
 % MỤC 7: TÀI LIỆU THAM KHẢO & PHỤ LỤC
 % ==============================================================================
+\newpage
+
 \section{Tài liệu tham khảo \& Phụ lục (References \& Appendix)}
 
 \subsection{Tài liệu tham khảo}

@@ -268,13 +268,13 @@ Bộ dữ liệu gồm 10 màn chơi chuẩn được chia thành 4 cấp độ 
 
 \subsection{Môi trường thực nghiệm \& Phương pháp đo lường}
 \begin{itemize}
-    \item \textbf{Cấu hình phần cứng}: Vi xử lý Intel(R) Core(TM) Architecture AMD64 (Family 6 Model 58), RAM 16GB.
+    \item \textbf{Cấu hình phần cứng}: Vi xử lý Intel x86-64 (Family 6, Model 58 -- thế hệ Ivy Bridge), RAM 16GB.
     \item \textbf{Hệ điều hành \& Nền tảng}: Windows 10 64-bit (build 10.0.19045), Python 3.11.2 (CPython).
     \item \textbf{Phương pháp đo đạc (Methodology)}:
     \begin{itemize}
         \item \textbf{Thời gian thực thi}: Sử dụng bộ đếm xung độ chính xác cao \texttt{time.perf\_counter}. Để triệt tiêu nhiễu từ hệ thống và cơ chế thu hồi bộ nhớ (garbage collection), mỗi thuật toán được đo độc lập 3 lần trên từng màn chơi và lấy giá trị trung vị (\textit{median-of-3}).
         \item \textbf{Bộ nhớ tiêu thụ}: Sử dụng module \texttt{tracemalloc.get\_traced\_memory} đo lượng RAM đỉnh (\textit{peak memory consumption}) trong suốt quá trình tìm kiếm.
-        \item \textbf{Cô lập tiến trình}: Mỗi tác vụ giải được thực thi trong một quy trình con riêng biệt nhằm tránh rò rỉ bộ nhớ hoặc chia sẻ bộ đệm giữa các thuật toán.
+        \item \textbf{Khởi tạo lại bộ đo}: Mỗi lượt đo đều gọi \texttt{gc.collect()} trước khi bật \texttt{tracemalloc} và bấm giờ, nên bộ nhớ còn sót từ lượt trước không lọt vào số đo của lượt sau. Ba lượt chạy liên tiếp được thực hiện trong cùng một tiến trình, và giá trị báo cáo là trung vị của ba lượt.
     \end{itemize}
 \end{itemize}
 
@@ -349,7 +349,7 @@ Từ dữ liệu thực nghiệm tại Bảng \ref{tab:benchmark_results} và đ
 
     \item \textbf{Về thời gian thực thi (Runtime) và bộ nhớ RAM đỉnh (Peak Memory)}:
     \begin{itemize}
-        \item \textbf{Thời gian thực thi}: Cả 4 thuật toán đều hoàn thành việc giải trong thời gian dưới 1 giây trên toàn bộ 10 màn chơi. Thời gian tăng dần từ ~20--60 ms (L1, L2) lên ~80--180 ms (L3) và đạt đỉnh ở ~700--930 ms (L4, do không gian trạng thái tách 2 khối $1 \times 1 \times 1$ có kích thước lớn hơn đáng kể).
+        \item \textbf{Thời gian thực thi}: Cả 4 thuật toán đều hoàn thành việc giải trong thời gian dưới 1 giây trên toàn bộ 10 màn chơi. Thời gian tăng dần theo độ phức tạp của bản đồ: L1 từ 19.98 đến 79.89 ms, L2 từ 39.83 đến 78.35 ms, L3 từ 84.67 đến 182.95 ms. Ở L4, nơi trạng thái tách thành hai khối $1 \times 1 \times 1$ làm không gian trạng thái lớn hơn hẳn, BFS, UCS và A* cần từ 666.94 đến 933.49 ms, còn DFS chỉ cần từ 114.96 đến 284.19 ms vì không duyệt hết không gian trạng thái.
         \item \textbf{Bộ nhớ RAM đỉnh}: Đo lường bằng \texttt{tracemalloc} cho thấy mức tiêu thụ RAM tỉ lệ thuận với số trạng thái sinh ra trong tập \texttt{visited} và hàng đợi \texttt{Frontier}. Mức RAM đỉnh duy trì ổn định trong khoảng \textbf{42 KB đến 415 KB}. 
         \item Dù DFS trên lý thuyết chỉ cần lưu nhánh hiện tại trên Stack, nhưng do phải duy trì tập \texttt{visited} đầy đủ để triệt tiêu vòng lặp vô hạn (Cycle Prevention), mức RAM thực tế của DFS vẫn xấp xỉ BFS và UCS (ví dụ ở màn L4-02 là 400.15 KB so với 384.07 KB của BFS).
     \end{itemize}

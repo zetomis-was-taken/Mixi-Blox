@@ -190,7 +190,9 @@ if self.replay is not None and not self.controller.animating:
 Four things this relies on:
 
 - `Replay` plans the path once, through `board.successors`, and raises `ValueError` on an illegal
-  action. A solver whose path cannot be followed is a defect in the solver, not a GUI bug.
+  action. A solver whose path cannot be followed is a defect in the solver, not a GUI bug. The scene
+  plans through `Replay.try_plan`, which answers `None` instead, so that defect costs the movie and
+  not the frame loop: the card says the path is not legal here and offers no "watch again".
 - `controller.play` validates the pair again and never counts it as a player move. If it returns
   `False`, the scene aborted input or the pair drifted: stop the replay.
 - The roll landing is observed as `controller.animating` going false — the same flag the manual
@@ -254,7 +256,7 @@ Headless first, per the project's GUI rule (never import Ursina in `tests/`):
 | The card says `7 moves` but the HUD says `0 moves` | Expected: solver length and player moves are different numbers, and both are shown |
 | A `cap` result plays a movie | The scene branched on `path` instead of `status`; `cap` and `unsolvable` carry an empty path |
 | `node_cap` returns one more expansion than expected | The cap is checked before the increment, so it is the number of completed expansions |
-| A long DFS freezes the window | `solve` is synchronous and Ursina is single-threaded; show the "solving" state first, and give the panel a `Caps(node_cap=…)` |
+| A long DFS freezes the window | `solve` is synchronous and Ursina is single-threaded; show the "solving" state first, and pass a deadline — the scene uses `Caps(time_s=SOLVE_TIME_CAP_SECONDS)`, so an over-long run returns `cap` and the card says why |
 | `ImportError: bloxorz.solvers` | Something in `gui/` imported the solvers package at module scope; the mapping belongs to the caller (`main.py`) and reaches the scene through `run(..., solve=…)` |
 | `perf_counter` flagged by the contract test | Timing belongs to `bench/` or `solvers/`, never the GUI |
 

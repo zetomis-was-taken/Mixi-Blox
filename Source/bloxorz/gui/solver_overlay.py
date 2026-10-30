@@ -1,10 +1,10 @@
 """The solver's result card: how the run ended, what it cost, and the way out (Ursina).
 
 Shown when a solver has answered: the algorithm and its outcome, the solution's length and cost (or
-why there is nothing to watch), the counts the search collected, and up to three ways on — watch it
-again, close back to the board, or return to the level select. Modal like the win overlay: the
-level scene stops reading movement keys while it is up, and this entity answers ``Enter`` (watch
-again) and ``Esc`` (close).
+why there is nothing to watch, including a path the board cannot follow), the counts the search
+collected, and up to three ways on — watch it again, close back to the board, or return to the
+level select. Modal like the win overlay: the level scene stops reading movement keys while it is
+up, and this entity answers ``Enter`` (watch again) and ``Esc`` (close).
 
 The numbers and wording all come from ``results.py``, so the card and the HUD's replay line cannot
 describe one run differently. A solver run never raises ``WinOverlay``: that card reports the
@@ -46,13 +46,15 @@ class SolverOverlay(Entity):
         on_replay: Callable[[], None] | None,
         on_close: Callable[[], None],
         on_levels: Callable[[], None],
+        *,
+        note: str | None = None,
     ) -> None:
         # UI entities belong to the UI camera, so their coordinates are screen fractions.
         super().__init__(name="solver-overlay", parent=camera.ui)
         self.on_replay = on_replay
         self.on_close = on_close
         self.on_levels = on_levels
-        self._build(stage, algorithm, result)
+        self._build(stage, algorithm, result, note)
 
     def input(self, key: str) -> None:
         """The keyboard route through the card, mirroring its buttons."""
@@ -61,7 +63,9 @@ class SolverOverlay(Entity):
         elif key == "escape":
             self.on_close()
 
-    def _build(self, stage: Stage, algorithm: str, result: SearchResult) -> None:
+    def _build(
+        self, stage: Stage, algorithm: str, result: SearchResult, note: str | None
+    ) -> None:
         Entity(
             parent=self,
             model="quad",
@@ -87,7 +91,7 @@ class SolverOverlay(Entity):
         )
         Text(
             parent=self,
-            text=results.solver_detail(result.status, len(result.path), result.cost),
+            text=note or results.solver_detail(result.status, len(result.path), result.cost),
             origin=(0, 0),
             y=DETAIL_Y,
             scale=1.0,

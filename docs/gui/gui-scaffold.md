@@ -39,14 +39,17 @@ the art direction ([`theme.md`](theme.md)).
   clock, from the same `results.py` line the win overlay prints, so both always agree.
 - Offers a Solve control once a level has loaded: one card per algorithm in the injected mapping,
   hidden while the level is loading or won. A click shows a "BFS…" busy card and starts the search
-  on the next frame, so the window never looks dead during a blocking `solve`.
+  on the next frame, so the window never looks dead during a blocking `solve`; the run itself is
+  bounded by `SOLVE_TIME_CAP_SECONDS` and an over-long one comes back as `cap`.
 - Replays the answer as a movie: the block rolls the solver's path through the same quarter-turn
   animation, one roll at a time with `REPLAY_PAUSE_SECONDS` between them. The HUD's right-hand line
   reads `BFS replay — move 4 of 19`; `Space` pauses, `Esc` stops and puts the player's own run back,
   and direction keys, `Tab`, `Z` and `R` are ignored while a movie plays.
 - Reports the run on a solver card: outcome, solution length and cost, and the three `Counts`, with
-  watch again / close / levels. `cap` and `unsolvable` show the card without a movie, a solver run
-  never counts as a player clear, and time/memory are not shown — the GUI may not clock a search.
+  watch again / close / levels. `cap` and `unsolvable` show the card without a movie, and so does a
+  path the board cannot follow — with a note and no watch again, instead of an error out of the
+  frame loop. A solver run never counts as a player clear, and time/memory are not shown — the GUI
+  may not clock a search.
 - Offers the real solvers: every level scene is handed `bloxorz.solvers.ALGORITHMS`, so the Solve
   panel draws one card per algorithm — BFS, DFS, UCS and A* — and replays that algorithm's answer.
 - Ends a level on a win overlay: the move count and elapsed time, then next level, retry and back to

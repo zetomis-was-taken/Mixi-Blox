@@ -23,6 +23,10 @@ SOLVER_NOTES: dict[Status, str] = {
     "unsolvable": "every reachable position was exhausted — nothing to replay",
 }
 
+# The detail line when the search answered ``solved`` but its actions do not exist on this board:
+# the card can still report the run, but there is no movie and nothing to watch again.
+UNUSABLE_PATH = "the solver's path is not legal on this board — nothing to replay"
+
 
 def elapsed_label(seconds: float) -> str:
     """``m:ss`` for the level clock, truncated to whole seconds."""

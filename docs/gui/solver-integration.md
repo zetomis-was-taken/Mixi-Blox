@@ -226,8 +226,8 @@ a player clear. Playback that reaches the goal should raise the solver card, not
   puts it back with `restore`, which also restores the move count, the clock and the undo stack and
   re-syncs the view, so bridges and plates retarget in the same frame.
 - Split stages: do nothing special. The action carries its cube index, `controller.play` follows
-  `_active_after`, and `BlockView.animate` rolls exactly that cube. Split, merge and teleport
-  transitions snap instead of rolling — an existing, documented limitation that playback inherits.
+  `_active_after`, and `BlockView.animate` rolls exactly that cube. Split-switch, merge and
+  teleport transitions snap instead of rolling — the same limitation the manual game has.
 - Leaving the scene (level select, next level, `teardown`) destroys the panel and card with the
   rest of the scene; a replay left running would keep a reference alive.
 

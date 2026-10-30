@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from bloxorz.core.contracts import Stage, State
-from bloxorz.core.engine import orientation
+from bloxorz.core.contracts import Action, Stage, State
+from bloxorz.core.engine import orientation, roll
 
 TILE_SIZE = 1.0
 
@@ -104,3 +104,21 @@ def poses_for_state(state: State, rows: int, cols: int) -> tuple[Pose, ...]:
             x, z = cell_to_world(cube[0], rows, cols)
             poses.append(Pose((x, 0.5, z), (1.0, 1.0, 1.0)))
     return tuple(poses)
+
+
+def landed_cube_index(start: State, next_state: State, action: Action) -> int | None:
+    """Which of ``next_state``'s cubes ``action`` moved, found by the cells it lands on.
+
+    ``State`` orders its cubes by cell, so one action can swap their indices: a cube that rolls
+    down while the other sits east of it now sorts second. Aiming the animation with ``action``'s
+    own index would then roll towards the other cube's landing, find no match, and snap. A
+    teleport lands where no roll predicts, so there is no answer and the caller snaps instead.
+    """
+    if len(next_state.cubes) < 2:
+        return None
+    index, direction = action
+    landed = set(roll(start.cubes[index], direction, True) or ())
+    for position, cube in enumerate(next_state.cubes):
+        if landed <= set(cube):
+            return position
+    return None

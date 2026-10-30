@@ -146,9 +146,10 @@ bottom edge it tips over:
 - duration = `theme.ROLL_SECONDS` (0.22 s), with linear angular motion.
 
 Unsplit moves, a split cube's own move, and an undo of either use this path — an undo is the same
-plan with the direction reversed, so the block tips back over the edge it came in on. Split-switch,
-merge, and teleport transitions currently snap to the destination pose; polishing those is still
-part of #28.
+plan with the direction reversed, so the block tips back over the edge it came in on. A split
+cube's landing pose is found by the cells it rolled onto, not by the action's index, because the
+state orders its cubes by cell and one action can swap their indices. Split-switch, merge and
+teleport transitions have no roll to derive, so they snap to the destination pose.
 
 ## Load animation
 
@@ -381,7 +382,8 @@ count.
 - The pause card is not offered during the load animation, a solver movie or a result card: `Esc`
   already stops a movie and leaves a result card for the level select.
 - Holding a direction key does not repeat: a long corridor is tapped out key press by key press.
-- Split/merge/teleport changes snap instead of rolling — forward, when undone, and during a movie.
+- Split-switch, merge and teleport changes snap instead of rolling — forward, when undone, and
+  during a movie.
 - A fragile panel never breaks on screen. A standing block on fragile is an illegal move
   (ADR-003), so no state exists in which the panel has given way; an idle tile bobs on the spot
   and the weight pins it still.

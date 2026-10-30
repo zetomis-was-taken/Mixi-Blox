@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from bloxorz.core.contracts import State
 from bloxorz.core.engine import Board
 from bloxorz.core.stage import load_stage
 from bloxorz.gui.layout import (
@@ -14,6 +15,7 @@ from bloxorz.gui.layout import (
     board_center,
     cell_to_world,
     goal_rim_pieces,
+    landed_cube_index,
     poses_for_state,
 )
 
@@ -98,3 +100,55 @@ def test_split_state_renders_two_unit_cubes() -> None:
     poses = poses_for_state(state, stage.index.rows, stage.index.cols)
     assert len(poses) == 2
     assert all(pose.scale == (1.0, 1.0, 1.0) for pose in poses)
+
+
+def _split_state(*cells: tuple[int, int]) -> State:
+    """A state holding one lone cube per cell; ``State`` sorts them by cell itself."""
+    return State(cubes=tuple((cell,) for cell in cells), bridges=())
+
+
+def test_a_split_roll_is_found_by_the_cells_it_lands_on() -> None:
+    """One action can swap the cubes' indices, because the state orders them by cell."""
+    start = _split_state((0, 0), (0, 3))
+    down = _split_state((0, 3), (1, 0))
+
+    assert landed_cube_index(start, down, (0, "D")) == 1
+
+
+def test_a_split_roll_that_keeps_the_order_keeps_its_index() -> None:
+    start = _split_state((0, 0), (0, 3))
+    right = _split_state((0, 1), (0, 3))
+
+    assert landed_cube_index(start, right, (0, "R")) == 0
+
+
+def test_a_transition_no_roll_can_predict_has_no_landing() -> None:
+    """A teleport or a merge is not a roll, so the view is told to snap instead."""
+    start = _split_state((0, 0), (0, 3))
+    merged = State(cubes=(((0, 0), (0, 1)),), bridges=())
+
+    assert landed_cube_index(start, _split_state((0, 3), (2, 2)), (0, "R")) is None
+    assert landed_cube_index(start, merged, (0, "R")) is None
+
+
+def test_every_split_roll_on_a_split_stage_finds_its_landing() -> None:
+    """The invariant the view relies on, over every position ``L4-01`` can reach."""
+    board = Board(_stage("L4-01_split_into_the_far_room"))
+    seen = {board.start().key()}
+    queue = [board.start()]
+    checked = swapped = 0
+
+    while queue:
+        state = queue.pop()
+        for next_state, action in board.successors(state):
+            if len(state.cubes) == 2 and len(next_state.cubes) == 2:
+                landing = landed_cube_index(state, next_state, action)
+                assert landing is not None, action
+                checked += 1
+                swapped += landing != action[0]
+            if next_state.key() not in seen:
+                seen.add(next_state.key())
+                queue.append(next_state)
+
+    assert checked > 0, "L4-01 must have split positions to roll from"
+    assert swapped > 0, "and some of them must swap indices, or this proves nothing"

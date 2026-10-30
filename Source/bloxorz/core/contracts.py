@@ -14,9 +14,7 @@ Cube = tuple[Cell, ...]
 Orientation = Literal["standing", "lying_h", "lying_v", "cube"]
 Direction = Literal["U", "D", "L", "R"]
 Action = tuple[int, Direction]
-Kind = Literal[
-    "void", "floor", "start", "goal", "fragile", "bridge", "soft", "heavy", "split"
-]
+Kind = Literal["void", "floor", "start", "goal", "fragile", "bridge", "soft", "heavy", "split"]
 Status = Literal["solved", "cap", "unsolvable"]
 Verdict = Literal["moves", "refused", "fatal"]
 

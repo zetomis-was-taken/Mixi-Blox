@@ -4,7 +4,10 @@
 matplotlib>=3.8.0
 
 # 3D GUI Engine (per team agreement)
-ursina>=5.0.0; python_version < "3.14"
+# Ursina 7 is the line the GUI was built and measured against; 8.x is a different
+# major version nothing here has run with. The range is the CI matrix, 3.11-3.12;
+# on 3.13 the marker keeps pip from resolving 8.x behind our back.
+ursina>=7,<8; python_version >= "3.11" and python_version < "3.13"
 
 # Testing & Quality Assurance
 pytest>=7.4.0

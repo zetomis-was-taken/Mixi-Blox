@@ -1,8 +1,19 @@
-"""Load a stage or run a solver through the frozen API; GUI remains separate."""
+"""Entry point. Puts ``Source/`` on ``sys.path`` (§ Layout, rule 1) and reports a stage.
+
+By default, running ``main.py`` launches the Ursina game (#28): it boots into the title screen,
+then the level select; ``--stage`` skips both menus and opens that level directly. Every level
+scene is handed ``bloxorz.solvers.ALGORITHMS``, so its Solve panel offers the real BFS, DFS, UCS
+and A*.
+
+``--no-gui`` switches to CLI mode (inspects a stage, or prints help if no stage is given).
+``--solver`` runs one of the four search algorithms (#18-#23) through the frozen API and prints the
+``SearchResult`` as JSON.
+"""
 
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import sys
 from pathlib import Path
@@ -20,7 +31,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--solver",
         choices=("bfs", "dfs", "ucs", "astar"),
-        help="algorithm to run (currently ucs, astar, bfs, dfs)",
+        help="algorithm to run (#18-#23)",
+    )
+    parser.add_argument(
+        "--gui",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="launch the Ursina game (enabled by default; use --no-gui for CLI mode)",
     )
     parser.add_argument("--node-cap", type=int, help="maximum completed expansions")
     parser.add_argument("--time-cap", type=float, help="search deadline in seconds")
@@ -30,6 +47,23 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+
+    if args.gui is True and args.solver is not None:
+        parser.error("--solver cannot be used with --gui")
+
+    use_gui = (args.gui is not False) if args.solver is None else False
+
+    if use_gui:
+        if importlib.util.find_spec("ursina") is None:
+            parser.error(
+                "Ursina is not installed; the game needs Python 3.11 or 3.12 with "
+                "`pip install -r requirements.txt`, or pass --no-gui"
+            )
+        from bloxorz.gui.app import run
+        from bloxorz.solvers import ALGORITHMS
+
+        return run(args.stage, solve=ALGORITHMS)
+
     if args.stage is None:
         if args.solver:
             parser.error("--solver requires --stage")
@@ -62,7 +96,9 @@ def main(argv: list[str] | None = None) -> int:
     board = Board(stage)
     start = board.start()
     moves = board.successors(start)
-    print(f"{stage.id} {stage.name} [{stage.group}] {stage.index.rows}x{stage.index.cols}")
+    print(
+        f"{stage.id} {stage.name} [{stage.group}] {stage.index.rows}x{stage.index.cols}"
+    )
     print(f"start {cells(start)[0]}  goal {stage.index.goal}  legal moves {len(moves)}")
     for state, action in moves:
         print(f"  {action[1]} -> {cells(state)}")

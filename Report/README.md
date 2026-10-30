@@ -5,14 +5,13 @@ Thư mục này chứa toàn bộ mẫu báo cáo LaTeX chuẩn cho đồ án 1 
 ## 1. Cấu trúc thư mục
 
 ```text
-report/
+Report/
 ├── main.tex              # File nguồn LaTeX chính (đã phân mục theo đúng barem 30 điểm)
-├── figures/              # Chứa toàn bộ hình ảnh và biểu đồ thực nghiệm
+├── figures/              # Hình ảnh và biểu đồ thực nghiệm
 │   ├── logo_khtn.png
-│   ├── benchmark_search_time.pdf
-│   ├── benchmark_peak_memory.pdf
-│   ├── benchmark_expanded_nodes.pdf
-│   └── benchmark_solution_length.pdf
+│   └── (benchmark_*.pdf do bench harness sinh ra)
+├── tables/               # Bảng kết quả thực nghiệm
+│   └── benchmark_results.tex
 └── README.md             # Tài liệu hướng dẫn này
 ```
 
@@ -32,7 +31,18 @@ pdflatex main.tex
 
 ## 3. Cách cập nhật số liệu thực nghiệm tự động
 
-Khi nhóm chạy thử nghiệm các thuật toán thông qua thư viện `benchmark`, chỉ cần:
-1. Chạy hàm `runner.to_latex_table()` hoặc `runner.export_latex_table("report/tables/benchmark_table.tex")` để xuất bảng mã LaTeX.
-2. Chạy `plot_benchmark_results(results, output_dir="report/figures")` để tự động làm mới các file đồ thị vector PDF trong thư mục `report/figures/`.
-3. Biên dịch lại file LaTeX là báo cáo sẽ tự động cập nhật bảng biểu và đồ thị mới nhất!
+Số liệu do bench harness sinh ra, không nhập tay:
+
+```bash
+PYTHONPATH=Source python -m bloxorz.bench.run_all
+```
+
+Lệnh này chỉ chạy được sau khi `bloxorz.solvers` (#18-#23) có đủ bốn thuật toán; trước đó nó dừng
+ngay và không ghi số liệu giả. Khi chạy xong, harness ghi:
+
+1. `Report/data/benchmark_results.csv` và `.json` — dữ liệu thô;
+2. `Report/tables/benchmark_results.tex` — bảng LaTeX (`export_records_latex`);
+3. `Report/figures/benchmark_*.pdf` — biểu đồ thời gian, bộ nhớ, số node và độ dài lời giải
+   (`plot_benchmark_charts`).
+
+Biên dịch lại `main.tex` là báo cáo tự cập nhật bảng và đồ thị mới nhất.

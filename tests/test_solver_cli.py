@@ -49,3 +49,52 @@ def test_module_cli_distinguishes_caps_from_configuration_errors() -> None:
     assert capped.returncode == 1 and json.loads(capped.stdout)["status"] == "cap"
     invalid = subprocess.run(command + ["-1"], cwd=ROOT, capture_output=True, text=True)
     assert invalid.returncode == 2 and "non-negative" in invalid.stderr
+
+
+def test_module_cli_no_gui_prints_help() -> None:
+    res = subprocess.run(
+        [sys.executable, "-m", "Source.main", "--no-gui"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert res.returncode == 0
+    assert "Mixi-Blox" in res.stdout or "usage:" in res.stdout
+
+
+def test_module_cli_no_gui_inspects_stage() -> None:
+    res = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "Source.main",
+            "--no-gui",
+            "--stage",
+            "tests/fixtures/FIX-01_straight_line.json",
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert "FIX-01" in res.stdout
+    assert "legal moves" in res.stdout
+
+
+def test_module_cli_rejects_solver_with_gui() -> None:
+    res = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "Source.main",
+            "--gui",
+            "--solver",
+            "ucs",
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert res.returncode == 2
+    assert "--solver cannot be used with --gui" in res.stderr
+

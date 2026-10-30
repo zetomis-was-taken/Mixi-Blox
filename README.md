@@ -22,7 +22,7 @@ Still missing:
 - `Report/` holds no measured results yet: `python -m bloxorz.bench.run_all` runs end to end, but
   the charts and tables have not been regenerated from a full run and committed.
 
-## Quick Start (Python 3.11+)
+## Quick Start (Python 3.11 or 3.12)
 
 ### 1. Installation
 

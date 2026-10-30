@@ -5,7 +5,7 @@ This is a clone of the game `Bloxorz`, this clone will include:
 - The option to solve the game (in a movie way) using various solver algorithms (BFS, DFS, UCS, and A*).
 
 Stack: Python 3.11+ (CI runs 3.11 and 3.12), pytest, ruff, matplotlib, and Ursina for the 3D GUI.
-Ursina requires Python `< 3.14` (see `requirements.txt`).
+Ursina installs on Python 3.11 and 3.12 only (see `requirements.txt`).
 
 # Project Layout:
 

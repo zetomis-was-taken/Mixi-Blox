@@ -13,6 +13,7 @@ and A*.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import sys
 from pathlib import Path
@@ -53,6 +54,11 @@ def main(argv: list[str] | None = None) -> int:
     use_gui = (args.gui is not False) if args.solver is None else False
 
     if use_gui:
+        if importlib.util.find_spec("ursina") is None:
+            parser.error(
+                "Ursina is not installed; the game needs Python 3.11 or 3.12 with "
+                "`pip install -r requirements.txt`, or pass --no-gui"
+            )
         from bloxorz.gui.app import run
         from bloxorz.solvers import ALGORITHMS
 

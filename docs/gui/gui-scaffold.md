@@ -67,7 +67,7 @@ python Source/main.py                           # title screen (GUI is default)
 python Source/main.py --stage FILE               # one level, no menus
 ```
 
-Ursina needs Python `< 3.14` (see `requirements.txt`). The level select lists every stage under
+Ursina installs on Python 3.11 and 3.12 only (see `requirements.txt`). The level select lists every stage under
 `Source/bloxorz/core/stages/`, in file-name order, grouped by each stage's own `group` field.
 
 ## Structure
@@ -451,7 +451,7 @@ count.
   the standing block is on it and back to `0.0250` after it leaves, an opened bridge at its floor
   height and fully cyan. (The probe also measured a fragile crack, which has since been replaced
   by the tile's Y-axis twist; that reading no longer applies, and the twist has not been watched
-  on screen yet — it needs Python `< 3.14` with Ursina installed.)
+  on screen yet - it needs Python 3.11 or 3.12 with Ursina installed.)
 - A pivot-roll sweep across all stage files found a valid roll plan for every reachable unsplit
   transition (3,550 checked at the time).
 

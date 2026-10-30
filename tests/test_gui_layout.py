@@ -9,7 +9,13 @@ from pathlib import Path
 
 from bloxorz.core.engine import Board
 from bloxorz.core.stage import load_stage
-from bloxorz.gui.layout import DIRECTION_VECTORS, board_center, cell_to_world, poses_for_state
+from bloxorz.gui.layout import (
+    DIRECTION_VECTORS,
+    board_center,
+    cell_to_world,
+    goal_rim_pieces,
+    poses_for_state,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 STAGES = ROOT / "Source" / "bloxorz" / "core" / "stages"
@@ -37,6 +43,24 @@ def test_direction_vectors_match_grid_movement() -> None:
     assert DIRECTION_VECTORS["D"] == (0.0, -1.0)
     assert DIRECTION_VECTORS["L"] == (-1.0, 0.0)
     assert DIRECTION_VECTORS["R"] == (1.0, 0.0)
+
+
+def test_the_goal_rim_frames_the_cell_without_filling_it() -> None:
+    """The hole must stay a hole: four bars inside the cell, none over its middle."""
+    pieces = goal_rim_pieces()
+
+    assert len(pieces) == 4
+    for (offset_x, offset_z), (size_x, size_z) in pieces:
+        assert abs(offset_x) + size_x / 2.0 <= 0.5 + 1e-9, "a bar overhangs the cell"
+        assert abs(offset_z) + size_z / 2.0 <= 0.5 + 1e-9, "a bar overhangs the cell"
+    assert all(
+        abs(offset_x) >= size_x / 2.0 or abs(offset_z) >= size_z / 2.0
+        for (offset_x, offset_z), (size_x, size_z) in pieces
+    ), "a bar covers the middle of the hole"
+
+    # A frame, not an L: the offsets cancel on both axes.
+    assert abs(sum(offset_x for (offset_x, _), _ in pieces)) < 1e-9
+    assert abs(sum(offset_z for (_, offset_z), _ in pieces)) < 1e-9
 
 
 def test_standing_and_lying_poses_have_the_block_extents() -> None:

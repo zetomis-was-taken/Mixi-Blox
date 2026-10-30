@@ -41,7 +41,7 @@ mechanisms.
 | # | Hex | Constant(s) | Used for | Why |
 | --- | --- | --- | --- | --- |
 | 1 | `#46425e` | `TILE_FLOOR`, `TILE_SIDE`, `TEXT` | Every walkable tile (floor, start and tile sides), HUD text | The dark base of the board: it contrasts with the cream background and keeps the coral player and the accent-coloured mechanisms readable. |
-| 2 | `#15788c` | `TILE_HEAVY`, `GRID_LINE`, `PARALLAX_SQUARE` | Heavy switch base; the faint line between tiles; the parallax backdrop squares | Deep teal is the darker of the two mechanism accents, matching the heavy switch's "weight"; at ~35% opacity it also gives the gapless board its grid without becoming a stripe. The same hue, at a lower opacity, keeps the parallax squares behind the board. |
+| 2 | `#15788c` | `TILE_HEAVY`, `GRID_LINE`, `PARALLAX_SQUARE`, `GOAL_RIM` | Heavy switch base; the faint line between tiles; the parallax backdrop squares; the rim around the goal's hole | Deep teal is the darker of the two mechanism accents, matching the heavy switch's "weight"; at ~35% opacity it also gives the gapless board its grid without becoming a stripe. The same hue, at a lower opacity, keeps the parallax squares behind the board, and at full strength it frames the cream hole so the goal reads as a target instead of as the platform's edge. |
 | 3 | `#00b9be` | `TILE_BRIDGE`, `TILE_SOFT`, `TILE_SPLIT` | Open bridge, soft switch, split switch | Bright cyan is the "mechanism" accent; together with the detail shape it separates these cells from ordinary dark floor. |
 | 4 | `#ffeecc` | `BACKGROUND`, `TILE_MARK`, `OVERLAY_PANEL` | Window clear colour; switch plates; the win overlay's card | The light background the board sits on, the light plates that mark interactive cells, and the results card — nearly opaque so the solved board still shows at its edges. |
 | 5 | `#ffb0a3` | `TILE_FRAGILE`, `BLOCK_IDLE` | Fragile panel base; the cube that is not taking input after a split | Soft peach is the one warning tint: clearly warmer than the dark floor without competing with the coral player. It doubles as the quieter half of a split pair, so both cubes still read as the player while the active one keeps the coral. |
@@ -53,7 +53,7 @@ mechanisms.
 | --- | --- | --- |
 | `floor` (`o`) | `TILE_FLOOR` `#46425e` | none |
 | `start` (`S`) | `TILE_FLOOR` `#46425e` | none — the start is an ordinary tile with no mark |
-| `goal` (`G`) | **no tile** | none — the cream background shows through, like the original game's hole |
+| `goal` (`G`) | **no tile** | a `#15788c` rim framing the hole |
 | `fragile` (`F`) | `TILE_FRAGILE` `#ffb0a3` | none — the bare tile bobs up and down while idle |
 | `bridge` (`=`) | `TILE_BRIDGE` `#00b9be` when open, `TILE_FLOOR` `#46425e` when closed | none; height carries the state |
 | `soft` (`+`) | `TILE_SOFT` `#00b9be` | 0.45 × 0.45 cream plate (small button) |
@@ -63,11 +63,12 @@ mechanisms.
 
 ## The goal and the start
 
-Two cells deliberately carry no decoration:
+The goal carries no tile and the start carries no mark:
 
 - **goal** — `board_view.py` skips the tile entirely (`TILES_LEFT_OUT`). The background is the
   window colour, so the goal reads as a hole in the platform; the block is drawn on top of the
-  empty cell until the level-clear flow replaces it.
+  empty cell until the level-clear flow replaces it. A rim (`GOAL_RIM`) frames the opening: seen
+  from the camera's angle, an unmarked gap looks exactly like the edge of the board.
 - **start** — drawn exactly like floor. It has its own glyph in the stage file, but the player's
   block already shows where the level begins, so an extra mark would only add noise.
 
@@ -92,7 +93,7 @@ colours belong to the palette. All pieces are thin (`theme.TRIM_HEIGHT`) cubes r
 - **soft / heavy / split** — cream plates, sized and split as described above.
 - **floor / start / bridge / fragile** — no detail; colour, height and, for fragile, the tile's
   own wobble already carry their meaning.
-- **goal** — no tile, so there is nothing to detail.
+- **goal** — the rim described above: four bars inside the cell, the only piece it carries.
 
 Because every detail is a separate entity, the load animation can float the tiles in first and the
 details onto them second (`LoadIntro.obstacle_progress`). A stage with no details at all still
@@ -137,7 +138,7 @@ has given way. An idle tile bobs on the spot and the weight pins it still.
    - the player stays `#ff6973` and must remain readable on every tile it can stand on; a split
      pair keeps its idle cube one step quieter (`#ffb0a3`), so the active cube stays the accent;
    - the background stays light and the normal tile stays dark, so the board silhouette reads;
-   - the goal stays empty and the start stays unmarked;
+   - the goal stays a hole — a rim may frame it, but nothing fills it — and the start stays unmarked;
    - the grid line stays translucent and thinner than a tile detail, so it reads as a seam rather
      than a beam;
    - a detail piece must contrast with the tile it sits on;

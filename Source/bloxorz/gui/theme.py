@@ -34,6 +34,10 @@ TILE_SIDE = color.rgb32(70, 66, 94)  # #46425e, the same as TILE_FLOOR
 # Switch plates, the only detail pieces left once fragile cells went bare.
 TILE_MARK = color.rgb32(255, 238, 204)  # #ffeecc
 
+# The goal's rim: deep teal, dark against the cream hole, so the opening reads as a target rather
+# than as the edge of the platform.
+GOAL_RIM = color.rgb32(21, 120, 140)  # #15788c
+
 # Parallax background squares: the deep teal, drawn at a low opacity by ``parallax.py``.
 PARALLAX_SQUARE = color.rgb32(21, 120, 140)  # #15788c
 

@@ -19,7 +19,8 @@ the art direction ([`theme.md`](theme.md)).
 - Renders the board as flat tiles: a dark tile per walkable cell, butted together with a faint
   translucent teal grid line, on a dark base that gives the platform visible thickness, a raised
   detail piece on switch cells, a bare peach tile that bobs up and down while idle on fragile
-  cells, no tile at the goal, and no mark on the start (see [`theme.md`](theme.md)).
+  cells, no tile at the goal but a rim around the opening, and no mark on the start (see
+  [`theme.md`](theme.md)).
 - Reacts to the block: switch plates sink while it bears on them, fragile tiles stop bobbing and
   hold still once the block stands on them, and a bridge eases between its open and closed height
   with its tint following it ([`theme.md`](theme.md#reactions)).
@@ -331,8 +332,8 @@ stage. Adjust `CAMERA_FOV` only when the amount of perspective distortion also n
 
 `theme.py` holds the palette and the mapping is documented in [`theme.md`](theme.md): flat tile
 colours plus a raised detail piece for switch cells and an idle bob for fragile ones. The goal
-cell has no tile, so the cream background shows through as a hole, and the start is an ordinary
-tile. Rendering stays
+cell has no tile, so the cream background shows through as a hole, framed by a rim so the opening
+cannot be read as the platform's edge; the start is an ordinary tile. Rendering stays
 deliberately simple — no lights, shadows, fog, gradients or textures. Entities use the
 `unlit_shader`, except the board objects and player when the optional dotted shader is enabled.
 Values are written with `color.rgb32(...)` because Ursina's `color.rgb()` expects floats in `0–1`;

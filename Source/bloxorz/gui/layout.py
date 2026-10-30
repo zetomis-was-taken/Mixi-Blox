@@ -21,6 +21,10 @@ DIRECTION_VECTORS: dict[str, tuple[float, float]] = {
     "R": (1.0, 0.0),
 }
 
+# The goal stays a hole, so it is framed rather than filled: this is how wide the frame's bars are,
+# as a fraction of a tile. Narrow enough that the hole still reads as a hole.
+GOAL_RIM_WIDTH = 0.12
+
 
 @dataclass(frozen=True)
 class Pose:
@@ -36,6 +40,23 @@ def cell_to_world(cell: tuple[int, int], rows: int, cols: int) -> tuple[float, f
     x = (col - (cols - 1) / 2.0) * TILE_SIZE
     z = ((rows - 1 - row) - (rows - 1) / 2.0) * TILE_SIZE
     return x, z
+
+
+def goal_rim_pieces() -> tuple[tuple[tuple[float, float], tuple[float, float]], ...]:
+    """The four bars that frame a goal cell: ``((offset_x, offset_z), (size_x, size_z))``.
+
+    Offsets and sizes are fractions of a tile, like every detail piece in ``board_view``. The side
+    bars stop short of the corners, so the four meet without overlapping and cannot z-fight.
+    """
+    half = 0.5
+    edge = half - GOAL_RIM_WIDTH / 2.0
+    side = 1.0 - 2.0 * GOAL_RIM_WIDTH
+    return (
+        ((0.0, edge), (1.0, GOAL_RIM_WIDTH)),
+        ((0.0, -edge), (1.0, GOAL_RIM_WIDTH)),
+        ((edge, 0.0), (GOAL_RIM_WIDTH, side)),
+        ((-edge, 0.0), (GOAL_RIM_WIDTH, side)),
+    )
 
 
 def board_center(stage: Stage) -> tuple[float, float]:

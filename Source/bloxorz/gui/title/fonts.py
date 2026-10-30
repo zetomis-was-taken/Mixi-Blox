@@ -1,6 +1,6 @@
 """Font loader and resolution utilities for Panda3D / Ursina compatibility.
 
-Translates OS paths to Panda3D VFS format (/c/...) and configures DynamicTextFont
+Names a bundled font the way Ursina resolves one, and configures DynamicTextFont
 sharpness safely using clear() before modifying point size or pixels per unit.
 """
 
@@ -14,19 +14,16 @@ GLYPH_PAGE_SIZE = 1024
 
 
 def get_font_path(filename: str) -> str:
-    """Return a Unix-style path compatible with Panda3D's VFS."""
-    path = Path(__file__).parents[2] / "fonts" / filename
-    resolved = path.resolve()
+    """Name a bundled font so Ursina's text search finds it.
 
-    try:
-        from panda3d.core import Filename
-
-        return Filename.from_os_specific(str(resolved)).get_fullpath()
-    except Exception:
-        posix_path = str(resolved).replace("\\", "/")
-        if len(posix_path) >= 2 and posix_path[1] == ":":
-            return f"/{posix_path[0].lower()}{posix_path[2:]}"
-        return posix_path
+    ``Text.font`` resolves its value with ``folder.glob(f"**/{name}")`` across the asset
+    folders, so a bare file name is what it expects: the name it is given is a glob pattern,
+    not a path, and neither an OS path nor a Panda3D VFS path (``/d/...``) matches anything.
+    The name only expands correctly when the file exists, so the check stays here.
+    """
+    if not (Path(__file__).parents[2] / "fonts" / filename).is_file():
+        raise FileNotFoundError(f"bundled font is missing: {filename}")
+    return filename
 
 
 get_font = get_font_path

@@ -1,9 +1,10 @@
 """Board view: one flat tile per walkable cell, plus the detail piece each special kind carries.
 
 The goal is deliberately not drawn: its cell stays empty and the cream background shows through,
-the way the original game's hole does. The start is an ordinary tile with no mark. Fragile cells
-and switches get a raised detail piece so they read differently from plain floor at a glance.
-Colours come from ``theme.py``; the mapping is documented in ``docs/gui/theme.md``.
+the way the original game's hole does. A rim frames that opening, so from the camera's angle it
+cannot be mistaken for the edge of the platform. The start is an ordinary tile with no mark.
+Fragile cells and switches get a raised detail piece so they read differently from plain floor at a
+glance. Colours come from ``theme.py``; the mapping is documented in ``docs/gui/theme.md``.
 
 Tiles butt against each other with no gap. Each one is a thin coloured cap over a deeper base in
 the same dark tile colour, so the platform shows a solid 0.30-unit edge. A faint translucent teal
@@ -32,7 +33,7 @@ from bloxorz.core.contracts import Cell, Kind, Stage, State
 
 from . import reaction, theme
 from .intro import LoadIntro
-from .layout import TILE_SIZE, cell_to_world
+from .layout import TILE_SIZE, cell_to_world, goal_rim_pieces
 from .reaction import approach
 
 TILE_COLORS: dict[Kind, object] = {
@@ -82,6 +83,9 @@ DETAILS: dict[Kind, tuple[_Detail, ...]] = {
         _Detail((-0.22, 0.0), (0.32, 0.80), theme.TILE_MARK),
         _Detail((0.22, 0.0), (0.32, 0.80), theme.TILE_MARK),
     ),
+    # The goal keeps its hole, so its pieces are a frame around the opening rather than a plate on
+    # a tile: four bars, in the colour that reads darkest against the background.
+    "goal": tuple(_Detail(offset, size, theme.GOAL_RIM) for offset, size in goal_rim_pieces()),
 }
 
 
@@ -189,6 +193,13 @@ class BoardView:
                 if lines:
                     self.lines.extend(lines)
                     self._line_at[cell] = lines
+
+        # The goal has no tile, so its rim is built here rather than in the loop above. It is a
+        # detail like any other, so it lands with the others and follows the same placement.
+        goal = index.goal
+        self.details.extend(
+            self._build_details(goal, "goal", *cell_to_world(goal, index.rows, index.cols))
+        )
 
         # Bridges start where the stage file says they are, so the first state retargets nothing.
         for bridge in stage.bridges:

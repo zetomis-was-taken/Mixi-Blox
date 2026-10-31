@@ -42,6 +42,7 @@ from .hud import Hud
 from .intro import IntroTiming, LoadIntro
 from .layout import TILE_SIZE, board_center, cell_to_world
 from .level_select import LevelSelectScene
+from .loss_overlay import LossOverlay
 from .pause_overlay import PauseOverlay
 from .replay import Algorithms, Replay
 from .solver_menu import SolverMenu
@@ -176,9 +177,10 @@ class PrototypeScene(Entity):
         self.board_view.root.parent = self
         self.block_view = BlockView(stage.index.rows, stage.index.cols, parent=self)
         self.controller = PlayerController(
-            self.board, self.block_view, self._level_cleared
+            self.board, self.block_view, self._level_cleared, self._level_failed
         )
         self.overlay: WinOverlay | None = None
+        self.loss_overlay: LossOverlay | None = None
         self.pause: PauseOverlay | None = None
         self._reframe_pending = False
         window.title = f"{WINDOW_TITLE}  |  {stage.id} {stage.name}"
@@ -314,6 +316,8 @@ class PrototypeScene(Entity):
         if self.pause is not None:
             self._pause_input(key)
             return
+        if self.loss_overlay is not None:
+            return
         if self.solver_overlay is not None or not self.intro.finished:
             return
         if self.replay is not None:
@@ -322,7 +326,7 @@ class PrototypeScene(Entity):
             elif key == "space":
                 self._toggle_pause()
             return
-        if self.controller.cleared:
+        if self.controller.cleared or self.controller.lost:
             return
         if key in KEY_BINDINGS:
             self.controller.move(KEY_BINDINGS[key])
@@ -375,8 +379,10 @@ class PrototypeScene(Entity):
         if (
             not self.intro.finished
             or self.controller.cleared
+            or self.controller.lost
             or self.replay is not None
             or self.pause is not None
+            or self.loss_overlay is not None
         ):
             return
         self.controller.tick(time.dt)
@@ -406,7 +412,12 @@ class PrototypeScene(Entity):
         A press that lands while the block is mid-roll, or while a solver run is being asked for,
         is dropped like any other press that cannot be carried out yet.
         """
-        if self._pending is not None or self.controller.animating:
+        if (
+            self._pending is not None
+            or self.controller.animating
+            or self.controller.lost
+            or self.loss_overlay is not None
+        ):
             return
         if self.panel is not None:
             self.panel.hide()
@@ -427,12 +438,30 @@ class PrototypeScene(Entity):
         """
         if self.controller.retry():
             self._dismiss_overlay()
+            self._dismiss_loss_overlay()
             self.intro = self._load_intro()
 
     def _dismiss_overlay(self) -> None:
         if self.overlay is not None:
             destroy(self.overlay)
             self.overlay = None
+
+    def _level_failed(self) -> None:
+        """Raise the loss card: retry or leave for the level select."""
+        if self.replay is not None:
+            return
+        if self.panel is not None:
+            self.panel.hide()
+        self.loss_overlay = LossOverlay(
+            stage=self.stage,
+            on_retry=self._retry,
+            on_levels=self.game.show_level_select,
+        )
+
+    def _dismiss_loss_overlay(self) -> None:
+        if self.loss_overlay is not None:
+            destroy(self.loss_overlay)
+            self.loss_overlay = None
 
     def _show_panel_if_idle(self) -> None:
         """The Solve cards belong to a loaded, unsolved level that is not mid-movie."""
@@ -441,9 +470,11 @@ class PrototypeScene(Entity):
         idle = (
             self.intro.finished
             and not self.controller.cleared
+            and not self.controller.lost
             and self.replay is None
             and self.solver_overlay is None
             and self.pause is None
+            and self.loss_overlay is None
             and self._pending is None
         )
         if idle:
@@ -602,7 +633,14 @@ class PrototypeScene(Entity):
         """Remove everything this scene put on screen: board and block are children, UI is not."""
         application.base.ignore("aspectRatioChanged")
         self.hud.teardown()
-        for entity in (self.overlay, self.solver_overlay, self.pause, self.panel, self.parallax):
+        for entity in (
+            self.overlay,
+            self.loss_overlay,
+            self.solver_overlay,
+            self.pause,
+            self.panel,
+            self.parallax,
+        ):
             if entity is not None:
                 destroy(entity)
         destroy(self)

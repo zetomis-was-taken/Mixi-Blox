@@ -17,7 +17,7 @@ from bloxorz.core.contracts import Action, State
 
 from . import theme
 from .intro import LoadIntro
-from .layout import DIRECTION_VECTORS, Pose, poses_for_state
+from .layout import DIRECTION_VECTORS, Pose, landed_cube_index, poses_for_state
 
 
 @dataclass(frozen=True)
@@ -104,9 +104,10 @@ class BlockView:
     ) -> None:
         """Roll from ``start`` to ``next_state``.
 
-        Only the common unsplit action and a split cube's own roll are animated. Split/merge/
-        teleport transitions (which ``L1-01`` does not use) snap to the new pose; polishing those
-        is part of #28.
+        Every unsplit roll and every split cube's own roll is animated. The landing is looked up by
+        the cells the cube rolled onto rather than by the action's index, because the state orders
+        its cubes by cell and one action can swap their indices. A transition no roll can express —
+        a split switch, a merge, a teleport — snaps to the new pose.
         """
         start_poses = poses_for_state(start, self.rows, self.cols)
         end_poses = poses_for_state(next_state, self.rows, self.cols)
@@ -120,12 +121,15 @@ class BlockView:
                 self._roll = _Roll(self.pieces[0], *plan)
                 return
         elif len(start_poses) == len(end_poses) == 2:
-            # A split action rolls just the named cube; the other one stays put.
+            # A split action rolls just the named cube; the other one stays put. Its landing pose
+            # is the one whose cube holds the cells it rolled onto, not necessarily the same index.
             index = action[0]
-            plan = self._plan_roll(start_poses[index], end_poses[index], action[1])
-            if plan is not None:
-                self._roll = _Roll(self.pieces[index], *plan)
-                return
+            target = landed_cube_index(start, next_state, action)
+            if target is not None:
+                plan = self._plan_roll(start_poses[index], end_poses[target], action[1])
+                if plan is not None:
+                    self._roll = _Roll(self.pieces[index], *plan)
+                    return
 
         # Split switch / merge: no roll to derive, so show the landed pose immediately.
         self.sync(next_state)

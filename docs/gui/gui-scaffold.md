@@ -46,11 +46,12 @@ the art direction ([`theme.md`](theme.md)).
   animation, one roll at a time with `REPLAY_PAUSE_SECONDS` between them. The HUD's right-hand line
   reads `BFS replay — move 4 of 19`; `Space` pauses, `Esc` stops and puts the player's own run back,
   and direction keys, `Tab`, `Z` and `R` are ignored while a movie plays.
-- Reports the run on a solver card: outcome, solution length and cost, and the three `Counts`, with
-  watch again / close / levels. `cap` and `unsolvable` show the card without a movie, and so does a
-  path the board cannot follow — with a note and no watch again, instead of an error out of the
-  frame loop. A solver run never counts as a player clear, and time/memory are not shown — the GUI
-  may not clock a search.
+- Reports the run on a solver card: outcome, solution length and cost, the three `Counts`, and, on a
+  solved run, the benchmark's time and peak memory for that stage and algorithm, with watch again /
+  close / levels. The GUI may not clock a search (contract rule 5), so those two figures are read
+  from `Report/data/benchmark_results.json` and labelled `bench`. `cap` and `unsolvable` show the card
+  without a movie, and so does a path the board cannot follow — with a note and no watch again,
+  instead of an error out of the frame loop. A solver run never counts as a player clear.
 - Offers the real solvers: every level scene is handed `bloxorz.solvers.ALGORITHMS`, so the Solve
   panel draws one card per algorithm — BFS, DFS, UCS and A* — and replays that algorithm's answer.
 - Ends a level on a win overlay: the move count and elapsed time, then next level, retry and back to
@@ -79,6 +80,7 @@ Ursina installs on Python 3.11 and 3.12 only (see `requirements.txt`). The level
 | File | Responsibility |
 | --- | --- |
 | `Source/bloxorz/gui/app.py` | Window, the scenes, `Game` (which scene is on screen, cleared levels), camera, input (one action per key press), launch helper |
+| `Source/bloxorz/gui/benchmarks.py` | The harness record (`Report/data/benchmark_results.json`): time and peak memory per stage and algorithm (no Ursina) |
 | `Source/bloxorz/gui/board_view.py` | One flat tile per non-void cell, plus per-kind detail pieces; bridge tint/height |
 | `Source/bloxorz/gui/block_view.py` | Player boxes and pivot-based roll animation |
 | `Source/bloxorz/gui/catalog.py` | The stage catalog: play order, grouping and the next level (no Ursina) |
@@ -94,7 +96,7 @@ Ursina installs on Python 3.11 and 3.12 only (see `requirements.txt`). The level
 | `Source/bloxorz/gui/reaction.py` | Which mechanisms the block loads, and how their value eases there (no Ursina) |
 | `Source/bloxorz/gui/replay.py` | Solver playback: `SearchResult.path` planned into paced steps (no Ursina) |
 | `Source/bloxorz/gui/results.py` | Move/clock and solver-run text the HUD, win overlay and solver card show (no Ursina) |
-| `Source/bloxorz/gui/solver_overlay.py` | Solver result card: outcome, counts, watch again / close / levels |
+| `Source/bloxorz/gui/solver_overlay.py` | Solver result card: outcome, counts, benchmark figures, watch again / close / levels |
 | `Source/bloxorz/gui/solver_panel.py` | The level's Solve control: one card per algorithm, plus the "solving" state |
 | `Source/bloxorz/gui/theme.py` | Palette (mapped in [`theme.md`](theme.md)), reaction timing and roll timing |
 | `Source/bloxorz/gui/title.py` | The title screen: wordmark, play and quit cards, `Enter` / `Esc` |
@@ -378,8 +380,10 @@ count.
 - Playback always starts the stage over: the board is reset to the level's start, and the player's
   own run — position, move count, clock, undo stack — is held aside and put back when the card is
   closed or the movie stopped.
-- The solver card shows `Counts` only. Time and memory are the benchmark harness's job, because the
-  GUI may not start a clock around a search (contract rule 5).
+- The solver card's time and peak memory are the harness's committed record for the same stage and
+  algorithm, not this run's measurement: the GUI may not start a clock around a search (contract
+  rule 5). A stage outside the benchmark set, or a tree without `Report/`, shows the line without
+  them.
 - The level select shows stage ids only: the stage names appear once a level is open.
 - The level select has no way back to the title screen, so the quit card is reachable only at boot.
 - The pause card is not offered during the load animation, a solver movie or a result card: `Esc`

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from bloxorz.core.contracts import Counts
+from bloxorz.gui.benchmarks import Metrics
 from bloxorz.gui.results import (
     counts_line,
     elapsed_label,
@@ -63,3 +64,14 @@ def test_counts_line_keeps_a_large_run_readable() -> None:
     assert counts_line(counts) == (
         "expanded 1,234   |   generated 5,678   |   frontier peak 89"
     )
+
+
+def test_solver_detail_adds_the_benchmark_figures_to_a_solved_run() -> None:
+    metrics = Metrics(time_ms=19.98, peak_mem_kb=42.89)
+
+    assert solver_detail("solved", 7, 7.0, metrics) == (
+        "7 moves   |   cost 7   |   bench 19.98 ms · 42.89 KB"
+    )
+    # An unsolved run cannot be compared with the benchmark, so it keeps its reason instead.
+    assert solver_detail("cap", 0, 0.0, metrics) == solver_detail("cap", 0, 0.0)
+    assert solver_detail("solved", 0, 0.0, metrics) == solver_detail("solved", 0, 0.0)

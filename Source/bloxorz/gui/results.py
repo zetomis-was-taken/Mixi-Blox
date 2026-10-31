@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from bloxorz.core.contracts import Counts, Status
 
+from .benchmarks import Metrics
+
 # How each search outcome reads on the card's headline. ``solved`` also has a path to play; ``cap``
 # and ``unsolvable`` do not, so their detail line says why there is no movie.
 SOLVER_HEADINGS: dict[Status, str] = {
@@ -57,10 +59,22 @@ def solver_result_line(moves: int, cost: float) -> str:
     return f"{moves} {noun}   |   cost {cost:g}"
 
 
-def solver_detail(status: Status, moves: int, cost: float) -> str:
-    """The card's second line: what the run produced, or why there is nothing to watch."""
+def solver_detail(
+    status: Status, moves: int, cost: float, metrics: Metrics | None = None
+) -> str:
+    """The card's second line: what the run produced, or why there is nothing to watch.
+
+    ``metrics`` adds the harness's time and peak memory for the same stage and algorithm. Contract
+    rule 5 keeps clocks and allocators out of the GUI, so those two figures are the committed
+    benchmark record rather than a fresh measurement, and the ``bench`` label says so. They are
+    only shown for a solved run, where the line is long enough to carry them and short enough to
+    stay inside the card.
+    """
     if status == "solved" and moves > 0:
-        return solver_result_line(moves, cost)
+        line = solver_result_line(moves, cost)
+        if metrics is None:
+            return line
+        return f"{line}   |   bench {metrics.time_ms:.2f} ms · {metrics.peak_mem_kb:.2f} KB"
     return SOLVER_NOTES[status]
 
 

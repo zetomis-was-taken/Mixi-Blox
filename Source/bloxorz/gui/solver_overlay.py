@@ -19,7 +19,7 @@ from ursina import Entity, Text, camera
 
 from bloxorz.core.contracts import SearchResult, Stage
 
-from . import results, theme, widgets
+from . import benchmarks, results, theme, widgets
 
 PANEL_SCALE = (0.94, 0.38)
 
@@ -91,7 +91,13 @@ class SolverOverlay(Entity):
         )
         Text(
             parent=self,
-            text=note or results.solver_detail(result.status, len(result.path), result.cost),
+            text=note
+            or results.solver_detail(
+                result.status,
+                len(result.path),
+                result.cost,
+                benchmarks.lookup(stage.name, algorithm),
+            ),
             origin=(0, 0),
             y=DETAIL_Y,
             scale=1.0,

@@ -17,7 +17,8 @@ what the GUI already provides, what an algorithm has to return, and where the tw
 | `PlayerController.play` | `gui/controller.py` | Applies one planned `(next_state, action)`; costs the player nothing (`moves`, `elapsed`, `history` untouched) |
 | `BlockView.animate` | `gui/block_view.py` | The existing quarter-turn animation; playback reuses it, so there is no second animation path |
 | Injection point | `gui/app.py` | `run(..., solve=…)`, fed by `Source/main.py` from `bloxorz.solvers.ALGORITHMS` → `build(..., solve=…)` → `Game(stages, solve)` → `PrototypeScene(stage, game, solve)`; `solve` is an `Algorithms` mapping (card name → solver) |
-| `SolverPanel` / `SolverOverlay` | `gui/solver_panel.py`, `gui/solver_overlay.py` | The four Solve cards, and the result card with the counts |
+| `SolverPanel` / `SolverOverlay` | `gui/solver_panel.py`, `gui/solver_overlay.py` | The four Solve cards, and the result card with the run's counts and the benchmark figures |
+| `gui/benchmarks.py` | `gui/benchmarks.py` | Reads `Report/data/benchmark_results.json`; the card's time and peak memory come from here |
 | `theme.ROLL_SECONDS` | `gui/theme.py` | `0.22` s for a quarter-turn; playback does not change it |
 | `theme.REPLAY_PAUSE_SECONDS` | `gui/theme.py` | `0.12` s between two rolls of a movie |
 
@@ -210,10 +211,14 @@ Four things this relies on:
 | `unsolvable` | No movie — card stating no solution exists |
 
 The card reports `len(result.path)`, `result.cost` and `result.counts.expanded/generated/
-frontier_peak`. Time and memory are **not** in `SearchResult` (the solver cannot measure them
-without a tracer someone else started), and the GUI may not time anything: `perf_counter` outside
-`bench/` and `solvers/` fails contract rule 5. If the report needs time and memory, take them from
-the benchmark harness, not from the game.
+frontier_peak`, and, on a solved run, the harness's `time_ms` and `peak_mem_kb` for the same stage
+and algorithm. `gui/benchmarks.py` reads those two from `Report/data/benchmark_results.json`, keyed
+by stage name and algorithm, and the line labels them `bench`: they are the committed benchmark
+record, not a measurement of this run. `SearchResult` carries no time or memory, and the GUI may not
+measure either — `perf_counter` outside `bench/` and `solvers/`, and `tracemalloc` outside `bench/`,
+fail contract rule 5. A stage outside the benchmark set, or a tree shipped without `Report/`, shows
+the line without them. The record was measured with the harness's own caps; the GUI's 10 s cap only
+bounds the live search and, on the ten benchmark stages, never fires.
 
 A solver run must not call `game.level_cleared(stage)`: the level select tints a stage cyan only for
 a player clear. Playback that reaches the goal should raise the solver card, not `WinOverlay`'s

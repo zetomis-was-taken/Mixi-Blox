@@ -42,13 +42,21 @@ class Run:
 
 
 class PlayerController:
-    def __init__(self, board: Board, block, on_goal: Callable[[], None]) -> None:
+    def __init__(
+        self,
+        board: Board,
+        block,
+        on_goal: Callable[[], None],
+        on_loss: Callable[[], None] | None = None,
+    ) -> None:
         self.board = board
         self.block = block
         self.on_goal = on_goal
+        self.on_loss = on_loss
         self.state: State = board.start()
         self.animating = False
         self.cleared = False
+        self.lost = False
         self.moves = 0
         self.elapsed = 0.0
         # Each entry is the state a move started from, plus the action that left it, so an undo can
@@ -90,19 +98,40 @@ class PlayerController:
                 return option
         return options[0] if options else None
 
+    def resolve_fatal(self, direction: Direction) -> tuple[State, Action] | None:
+        """The active cube's fatal ``(fatal_state, action)`` in ``direction``, if there is one.
+
+        When the active cube cannot move, the other cube is checked.
+        """
+        candidates = (self.active, 1 - self.active) if self.split else (self.active,)
+        for index in candidates:
+            action = (index, direction)
+            outcome = self.board.outcome(self.state, action)
+            if outcome.kind == "fatal" and outcome.state is not None:
+                return outcome.state, action
+        return None
+
     def move(self, direction: Direction) -> bool:
         """Move the active cube one action in ``direction``. Returns whether one was started."""
-        if self.animating or self.cleared:
+        if self.animating or self.cleared or self.lost:
             return False
         resolved = self.resolve(direction)
-        if resolved is None:
-            return False
+        if resolved is not None:
+            next_state, action = resolved
+            self.history.append((self.state, action))
+            self.moves += 1
+            self._begin(next_state, action)
+            return True
 
-        next_state, action = resolved
-        self.history.append((self.state, action))
-        self.moves += 1
-        self._begin(next_state, action)
-        return True
+        fatal = self.resolve_fatal(direction)
+        if fatal is not None:
+            fatal_state, action = fatal
+            self.history.append((self.state, action))
+            self.moves += 1
+            self._begin_fatal(fatal_state, action)
+            return True
+
+        return False
 
     def play(self, next_state: State, action: Action) -> bool:
         """Apply one action chosen elsewhere — solver playback — as a move that costs nothing.
@@ -128,6 +157,22 @@ class PlayerController:
         self.animating = True
         self.block.animate(start, next_state, action, self._animation_finished)
 
+    def _begin_fatal(self, fatal_state: State, action: Action) -> None:
+        """Commit a fatal transition (fall), starting its animation."""
+        start = self.state
+        self.state = fatal_state
+        self.lost = True
+        self.animating = True
+        if hasattr(self.block, "fall"):
+            self.block.fall(start, fatal_state, action, self._fatal_animation_finished)
+        else:
+            self.block.animate(start, fatal_state, action, self._fatal_animation_finished)
+
+    def _fatal_animation_finished(self) -> None:
+        self.animating = False
+        if self.on_loss is not None:
+            self.on_loss()
+
     def undo(self) -> bool:
         """Roll the last move back. Returns whether there was one to take back.
 
@@ -144,6 +189,7 @@ class PlayerController:
         self.state = previous
         self.moves -= 1
         self.cleared = False
+        self.lost = False
         # The cube that is rolling back is the one the action moved; ``active`` follows it, and the
         # cube takes the input again in the state it is returning to.
         index = self._active_after(previous, current, action)
@@ -161,6 +207,7 @@ class PlayerController:
         self.moves = 0
         self.elapsed = 0.0
         self.cleared = False
+        self.lost = False
         self._active = 0
         self.block.sync(self.state)
         return True
@@ -183,6 +230,7 @@ class PlayerController:
         self.elapsed = run.elapsed
         self.history = list(run.history)
         self.cleared = False
+        self.lost = False
         self.block.sync(self.state)
         return True
 

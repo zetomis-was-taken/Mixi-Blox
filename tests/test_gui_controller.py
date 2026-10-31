@@ -24,14 +24,21 @@ class FakeBlock:
         self.on_done = None
         self.action = None
         self.state = None
+        self.fatal = False
 
     def animate(self, start, next_state, action, on_done) -> None:
         self.action = action
         self.on_done = on_done
 
+    def fall(self, start, fatal_state, action, on_done) -> None:
+        self.action = action
+        self.on_done = on_done
+        self.fatal = True
+
     def sync(self, state) -> None:
         self.state = state
         self.on_done = None
+        self.fatal = False
 
     def finish(self) -> None:
         callback = self.on_done
@@ -426,3 +433,79 @@ def test_restoring_puts_a_solved_board_back_in_play() -> None:
     assert controller.cleared is False
     assert controller.state == run.state
     assert controller.moves == len(path) - 1
+
+
+def test_fatal_move_animates_fall_triggers_loss_and_allows_undo_and_retry() -> None:
+    stage = load_stage(STAGES / "L2-01_fragile_shelves.json")
+    board = Board(stage)
+    block = FakeBlock()
+    lost_calls: list[bool] = []
+    controller = PlayerController(
+        board,
+        block,
+        on_goal=lambda: None,
+        on_loss=lambda: lost_calls.append(True),
+    )
+
+    start = board.start()
+    queue = deque([(start, ())])
+    seen = {start.key()}
+    fatal_path: tuple[str, ...] | None = None
+    fatal_direction: str | None = None
+    while queue:
+        state, path = queue.popleft()
+        for direction in ("U", "D", "L", "R"):
+            if board.outcome(state, (0, direction)).kind == "fatal":
+                fatal_path = path
+                fatal_direction = direction
+                break
+        if fatal_path is not None:
+            break
+        for next_state, action in board.successors(state):
+            if next_state.key() not in seen:
+                seen.add(next_state.key())
+                queue.append((next_state, path + (action[1],)))
+
+    assert fatal_path is not None
+    assert fatal_direction is not None
+
+    for direction in fatal_path:
+        assert controller.move(direction) is True
+        block.finish()
+
+    assert controller.lost is False
+    assert block.fatal is False
+
+    # Taking the fatal direction triggers fall animation and enters lost state
+    assert controller.move(fatal_direction) is True
+    assert controller.lost is True
+    assert controller.animating is True
+    assert block.fatal is True
+    # The on_loss hook is deferred until the fall animation finishes
+    assert lost_calls == []
+
+    # New moves are rejected while animating/lost
+    assert controller.move("U") is False
+
+    # Finishing the fall triggers the on_loss callback
+    block.finish()
+    assert controller.animating is False
+    assert controller.lost is True
+    assert lost_calls == [True]
+
+    # Undo steps back out of the fatal move and clears the loss state
+    assert controller.undo() is True
+    assert controller.lost is False
+    block.finish()
+    assert controller.animating is False
+
+    # Trigger fatal move again, then test retry
+    assert controller.move(fatal_direction) is True
+    assert controller.lost is True
+    block.finish()
+
+    assert controller.retry() is True
+    assert controller.lost is False
+    assert controller.state == board.start()
+    assert controller.moves == 0
+

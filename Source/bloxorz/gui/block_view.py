@@ -45,13 +45,16 @@ class BlockView:
         self.active = 0
         self._rest_positions: list[tuple[float, float, float]] = []
         self._roll: _Roll | None = None
+        self._is_falling = False
+        self._falling = False
+        self._fall_elapsed = 0.0
         self._elapsed = 0.0
         self._next_state: State | None = None
         self._on_done = None
 
     @property
     def animating(self) -> bool:
-        return self._roll is not None
+        return self._roll is not None or self._falling
 
     def set_active(self, index: int) -> None:
         """Tint the cubes: the one that takes the next input keeps the strong accent.
@@ -83,6 +86,9 @@ class BlockView:
         self._rest_positions = [tuple(piece.position) for piece in self.pieces]
         self._paint()
         self._roll = None
+        self._is_falling = False
+        self._falling = False
+        self._fall_elapsed = 0.0
 
     def _paint(self) -> None:
         """Colour the pieces by which cube is active; a single block is always active."""
@@ -94,6 +100,17 @@ class BlockView:
         drop = (1.0 - intro.player_progress()) * intro.timing.player_drop
         for piece, (x, y, z) in zip(self.pieces, self._rest_positions):
             piece.position = (x, y + drop, z)
+
+    def fall(
+        self,
+        start: State,
+        fatal_state: State,
+        action: Action,
+        on_done,
+    ) -> None:
+        """Roll to ``fatal_state`` and then drop down out of view."""
+        self._is_falling = True
+        self.animate(start, fatal_state, action, on_done)
 
     def animate(
         self,
@@ -133,9 +150,25 @@ class BlockView:
 
         # Split switch / merge: no roll to derive, so show the landed pose immediately.
         self.sync(next_state)
+        if self._is_falling:
+            self._falling = True
+            self._fall_elapsed = 0.0
+            return
         self._finish()
 
     def update(self, dt: float) -> None:
+        if self._falling:
+            self._fall_elapsed += dt
+            t = min(self._fall_elapsed / theme.FALL_SECONDS, 1.0)
+            drop = t * t * theme.FALL_DISTANCE
+            for piece, rest in zip(self.pieces, self._rest_positions):
+                piece.position = (rest[0], rest[1] - drop, rest[2])
+            if t >= 1.0:
+                self._falling = False
+                self._is_falling = False
+                self._finish()
+            return
+
         if self._roll is None:
             return
 
@@ -148,6 +181,11 @@ class BlockView:
 
         if t >= 1.0:
             self.sync(self._next_state)
+            if self._is_falling:
+                self._roll = None
+                self._falling = True
+                self._fall_elapsed = 0.0
+                return
             self._finish()
 
     def _finish(self) -> None:

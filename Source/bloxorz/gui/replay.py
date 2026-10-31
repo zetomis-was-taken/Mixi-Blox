@@ -58,6 +58,26 @@ class Replay:
         self._since_step = 0.0
         self._speed = 1.0
 
+    @classmethod
+    def try_plan(
+        cls,
+        board: Board,
+        result: SearchResult,
+        pause: float,
+        *,
+        restore: State | None = None,
+    ) -> Replay | None:
+        """Plan a replay, or ``None`` when the solver's path cannot be followed.
+
+        A path the board cannot follow is a defect in the solver, not a reason to take the frame
+        loop down with it: the scene shows the result card with a note instead. ``Replay`` itself
+        still raises, so a caller that wants the error keeps it.
+        """
+        try:
+            return cls(board, result, pause, restore=restore)
+        except ValueError:
+            return None
+
     @property
     def speed(self) -> float:
         return self._speed

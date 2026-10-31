@@ -72,6 +72,11 @@ KEY_BINDINGS: dict[str, Direction] = {
     "right arrow": "R",
 }
 
+# The search runs on the one thread the window draws on, so it is given a deadline: a run that
+# would take longer than this is not something a player can watch, and hitting the cap raises the
+# result card with its reason instead of leaving a window that has stopped responding.
+SOLVE_TIME_CAP_SECONDS = 10.0
+
 
 def _camera_distance(stage: Stage) -> float:
     """The nominal distance from the framed board centre out to the camera.
@@ -464,19 +469,30 @@ class PrototypeScene(Entity):
             self.panel.set_busy(algorithm)
 
     def _run_pending(self) -> None:
-        """Run the queued algorithm once a frame has drawn the busy card; this call blocks."""
+        """Run the queued algorithm once a frame has drawn the busy card; this call blocks.
+
+        It blocks the frame, which is why it carries a deadline: past ``SOLVE_TIME_CAP_SECONDS``
+        the search returns a ``cap`` result and the card explains it.
+        """
         if self._pending_delay > 0:
             self._pending_delay -= 1
             return
         algorithm, self._pending = self._pending, None
-        result = self.solve[algorithm](self.stage, Caps())
+        result = self.solve[algorithm](self.stage, Caps(time_s=SOLVE_TIME_CAP_SECONDS))
         if self.panel is not None:
             self.panel.set_busy(None)
         self._start_replay(algorithm, result)
 
     def _start_replay(self, algorithm: str, result: SearchResult) -> None:
-        """Roll the answer, or raise the card when there is no movie to play."""
-        replay = Replay(self.board, result, theme.REPLAY_PAUSE_SECONDS)
+        """Roll the answer, or raise the card when there is no movie to play.
+
+        A path the board cannot follow is a solver defect the scene survives: ``try_plan`` answers
+        ``None``, and the card says why instead of letting the planning error out of ``update``.
+        """
+        replay = Replay.try_plan(self.board, result, theme.REPLAY_PAUSE_SECONDS)
+        if replay is None:
+            self._raise_solver_overlay(algorithm, result, note=results.UNUSABLE_PATH)
+            return
         if not replay.playable:
             self._raise_solver_overlay(algorithm, result)
             return
@@ -542,8 +558,14 @@ class PrototypeScene(Entity):
         paused = self.replay.phase == "paused"
         return results.replay_line(self.algorithm, step, total, paused)
 
-    def _raise_solver_overlay(self, algorithm: str, result: SearchResult) -> None:
-        """Show the outcome; "watch again" exists only when there is a path to roll."""
+    def _raise_solver_overlay(
+        self, algorithm: str, result: SearchResult, note: str | None = None
+    ) -> None:
+        """Show the outcome; "watch again" exists only when there is a path to roll.
+
+        ``note`` replaces the detail line for a run that cannot be replayed at all, and takes the
+        "watch again" card away with it: replaying it would only fail the same way.
+        """
         self._dismiss_solver_overlay()
         self.algorithm = algorithm
         self._solved_result = result
@@ -551,9 +573,10 @@ class PrototypeScene(Entity):
             stage=self.stage,
             algorithm=algorithm,
             result=result,
-            on_replay=(self._replay_again if result.path else None),
+            on_replay=(self._replay_again if result.path and note is None else None),
             on_close=self._close_solver_overlay,
             on_levels=self.game.show_level_select,
+            note=note,
         )
 
     def _replay_again(self) -> None:

@@ -204,6 +204,31 @@ def test_an_illegal_action_is_rejected_when_the_path_is_planned() -> None:
         Replay(board, result, PAUSE)
 
 
+def test_an_unfollowable_path_is_refused_instead_of_raised() -> None:
+    """The scene plans through ``try_plan``, so a solver defect costs the movie, not the frame."""
+    board, _ = _corridor()
+    result = SearchResult("solved", ((0, "L"),), 1.0, Counts(1, 1, 1))
+
+    assert Replay.try_plan(board, result, PAUSE) is None
+
+
+def test_try_plan_returns_the_movie_for_a_path_it_can_follow() -> None:
+    board, result = _corridor()
+    replay = Replay.try_plan(board, result, PAUSE)
+
+    assert replay is not None
+    assert replay.playable is True
+
+
+def test_try_plan_keeps_the_no_movie_answer_separate_from_a_bad_path() -> None:
+    board, _ = _corridor()
+    capped = SearchResult("cap", (), 0.0, Counts(0, 1, 1))
+    replay = Replay.try_plan(board, capped, PAUSE)
+
+    assert replay is not None, "a cap is an outcome to report, not a path to refuse"
+    assert replay.playable is False
+
+
 def test_the_mock_path_is_legal_at_every_step() -> None:
     """An invalid mock looks like a rendering bug, so assert the fixture itself first."""
     board, result = _corridor()

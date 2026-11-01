@@ -45,13 +45,17 @@ class BlockView:
         self.active = 0
         self._rest_positions: list[tuple[float, float, float]] = []
         self._roll: _Roll | None = None
+        self._is_falling = False
+        self._falling = False
+        self._fall_elapsed = 0.0
         self._elapsed = 0.0
         self._next_state: State | None = None
         self._on_done = None
+        self._on_drop = None
 
     @property
     def animating(self) -> bool:
-        return self._roll is not None
+        return self._roll is not None or self._falling
 
     def set_active(self, index: int) -> None:
         """Tint the cubes: the one that takes the next input keeps the strong accent.
@@ -65,7 +69,16 @@ class BlockView:
         self._paint()
 
     def sync(self, state: State) -> None:
-        """Rebuild the visible boxes to match ``state`` exactly."""
+        """Rebuild the visible boxes to match ``state`` exactly, cancelling any animation."""
+        self._place(state)
+        self._roll = None
+        self._is_falling = False
+        self._falling = False
+        self._fall_elapsed = 0.0
+        self._on_drop = None
+
+    def _place(self, state: State) -> None:
+        """Rebuild the visible boxes at ``state``, leaving a roll or a fall in flight alone."""
         for piece in self.pieces:
             destroy(piece)
         self.pieces = [
@@ -82,7 +95,16 @@ class BlockView:
         ]
         self._rest_positions = [tuple(piece.position) for piece in self.pieces]
         self._paint()
+
+    def _start_fall(self) -> None:
+        """Send the pieces now resting on the fatal tile down and out of view."""
         self._roll = None
+        self._falling = True
+        self._fall_elapsed = 0.0
+        drop = self._on_drop
+        self._on_drop = None
+        if drop is not None:
+            drop()
 
     def _paint(self) -> None:
         """Colour the pieces by which cube is active; a single block is always active."""
@@ -94,6 +116,23 @@ class BlockView:
         drop = (1.0 - intro.player_progress()) * intro.timing.player_drop
         for piece, (x, y, z) in zip(self.pieces, self._rest_positions):
             piece.position = (x, y + drop, z)
+
+    def fall(
+        self,
+        start: State,
+        fatal_state: State,
+        action: Action,
+        on_done,
+        on_drop=None,
+    ) -> None:
+        """Roll to ``fatal_state``, then drop the pieces out of view.
+
+        ``on_drop`` fires on the frame the drop starts, so whatever the block was standing on — a
+        fragile tile — can fall with it.
+        """
+        self._is_falling = True
+        self._on_drop = on_drop
+        self.animate(start, fatal_state, action, on_done)
 
     def animate(
         self,
@@ -132,10 +171,26 @@ class BlockView:
                     return
 
         # Split switch / merge: no roll to derive, so show the landed pose immediately.
+        if self._is_falling:
+            self._place(next_state)
+            self._start_fall()
+            return
         self.sync(next_state)
         self._finish()
 
     def update(self, dt: float) -> None:
+        if self._falling:
+            self._fall_elapsed += dt
+            t = min(self._fall_elapsed / theme.FALL_SECONDS, 1.0)
+            drop = t * t * theme.FALL_DISTANCE
+            for piece, rest in zip(self.pieces, self._rest_positions):
+                piece.position = (rest[0], rest[1] - drop, rest[2])
+            if t >= 1.0:
+                self._falling = False
+                self._is_falling = False
+                self._finish()
+            return
+
         if self._roll is None:
             return
 
@@ -147,6 +202,10 @@ class BlockView:
         self._roll.entity.quaternion = rotation
 
         if t >= 1.0:
+            if self._is_falling:
+                self._place(self._next_state)
+                self._start_fall()
+                return
             self.sync(self._next_state)
             self._finish()
 

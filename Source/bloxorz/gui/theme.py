@@ -80,3 +80,8 @@ ROLL_SECONDS = 0.22
 
 # The beat between two rolls of a solver replay, so the movie reads as steps rather than a blur.
 REPLAY_PAUSE_SECONDS = 0.12
+
+# A fatal fall drops the block downward off the board.
+FALL_SECONDS = 0.35
+FALL_DISTANCE = 3.5
+

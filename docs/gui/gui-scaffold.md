@@ -56,6 +56,10 @@ the art direction ([`theme.md`](theme.md)).
   panel draws one card per algorithm — BFS, DFS, UCS and A* — and replays that algorithm's answer.
 - Ends a level on a win overlay: the move count and elapsed time, then next level, retry and back to
   the level select — as cards or as `Enter` / `R` / `Esc`.
+- Loses a level on a loss card: a move that would drop the block (standing on a fragile tile, or
+  taking away the bridge it stands on) rolls to the fatal tile, the pieces drop out of view, and the
+  card offers retry or the level select — as cards or as `R` / `Enter` and `Esc` / `L`. Input and
+  the clock stop for the fall and the card.
 - Pauses a level: `Esc` puts a card over the frozen board with continue and level select, as cards
   or as `Enter` / `Esc` / `L`. Movement keys are dropped and the clock stops while it is up; the
   load animation, a solver movie and a result card are never interrupted by it.
@@ -91,6 +95,7 @@ Ursina installs on Python 3.11 and 3.12 only (see `requirements.txt`). The level
 | `Source/bloxorz/gui/intro.py` | Load-animation timeline: tile stagger, detail phase, then the block drop (no Ursina) |
 | `Source/bloxorz/gui/layout.py` | Grid ↔ world geometry and pose derivation (no Ursina) |
 | `Source/bloxorz/gui/level_select.py` | The level select: a card per stage, grouped by stage group, cleared ones tinted |
+| `Source/bloxorz/gui/loss_overlay.py` | Loss card after a fatal move: retry / level select, `R` / `Enter` / `Esc` / `L` |
 | `Source/bloxorz/gui/parallax.py` | Scrolling tiled square backdrop in two depth layers |
 | `Source/bloxorz/gui/pause_overlay.py` | Pause card over the frozen board: continue / level select, `Enter` / `Esc` / `L` |
 | `Source/bloxorz/gui/reaction.py` | Which mechanisms the block loads, and how their value eases there (no Ursina) |
@@ -98,7 +103,7 @@ Ursina installs on Python 3.11 and 3.12 only (see `requirements.txt`). The level
 | `Source/bloxorz/gui/results.py` | Move/clock and solver-run text the HUD, win overlay and solver card show (no Ursina) |
 | `Source/bloxorz/gui/solver_overlay.py` | Solver result card: outcome, counts, benchmark figures, watch again / close / levels |
 | `Source/bloxorz/gui/solver_panel.py` | The level's Solve control: one card per algorithm, plus the "solving" state |
-| `Source/bloxorz/gui/theme.py` | Palette (mapped in [`theme.md`](theme.md)), reaction timing and roll timing |
+| `Source/bloxorz/gui/theme.py` | Palette (mapped in [`theme.md`](theme.md)), reaction, roll and fall timing |
 | `Source/bloxorz/gui/title.py` | The title screen: wordmark, play and quit cards, `Enter` / `Esc` |
 | `Source/bloxorz/gui/widgets.py` | The flat card + label both menu screens are built from |
 | `Source/bloxorz/gui/win_overlay.py` | The results card: cost of the level, next/retry/levels, `Enter`/`R`/`Esc` |
@@ -119,7 +124,7 @@ is built, so two screens never share the window.
 | --- | --- | --- |
 | Title | `TitleScene` — the boot screen | play card or `Enter` → level select; quit card or `Esc` → `application.quit()` |
 | Level select | `LevelSelectScene`, from `catalog.load_catalog()` | a stage card → that level |
-| Level | `PrototypeScene` | the win overlay: next level, retry, or back to the level select; the pause card: continue or back to the level select |
+| Level | `PrototypeScene` | the win overlay: next level, retry, or back to the level select; the loss card: retry or back to the level select; the pause card: continue or back to the level select |
 
 `--stage FILE` skips the first two rows and builds the level scene directly. The title screen is
 given only the callback that opens the level select, so it reads no stage and no cleared-level data.
@@ -133,7 +138,9 @@ it is.
 - `Tab` calls `switch_cube`, which flips the active index (ignored while the block is unsplit or a
   roll is playing).
 - `resolve` prefers the active cube and falls back to the other one when the active cube has no
-  action in that direction, so a direction key is never dead.
+  action in that direction, so a direction key is never dead. When neither cube has a legal move,
+  `resolve_fatal` asks `Board.outcome` for a fatal action and the block falls instead of the key
+  being dropped.
 - `State` orders its cubes by cell, so a move can swap their indices; `_active_after` finds the cube
   by the cells it rolled onto and keeps it active. After a merge there is one cube and the index
   resets to 0.
@@ -155,6 +162,21 @@ plan with the direction reversed, so the block tips back over the edge it came i
 cube's landing pose is found by the cells it rolled onto, not by the action's index, because the
 state orders its cubes by cell and one action can swap their indices. Split-switch, merge and
 teleport transitions have no roll to derive, so they snap to the destination pose.
+
+## Fall animation
+
+A fatal move is not in `successors` (ADR-010), so `PlayerController.move` asks `Board.outcome`
+once `resolve` finds nothing and gets `Verdict.fatal` with the state the fall happens in.
+`BlockView.fall` then rolls to that tile exactly like a normal move and drops the pieces out of
+view: quadratic acceleration, `theme.FALL_DISTANCE` (3.5 units) over `theme.FALL_SECONDS` (0.35 s).
+The landing is rebuilt with `_place`, which leaves the pending fall alone — a plain `sync` would
+cancel it and show the loss card with the block still standing on the tile. Only the last frame of
+the drop calls back, and the scene raises the loss card and stops the clock there.
+
+A fragile tile breaks with the block: the frame the drop starts, `BlockView` fires the scene's
+`on_drop` hook, and `BoardView.break_tile` sends that cell's cap, base and grid lines down on the
+same curve, so the block never passes through a tile that is still there. A retry clears the broken
+set before the load animation replays, so the tile rises with the rest of the platform.
 
 ## Load animation
 
@@ -462,6 +484,11 @@ count.
   height and fully cyan. (The probe also measured a fragile crack, which has since been replaced
   by the tile's Y-axis twist; that reading no longer applies, and the twist has not been watched
   on screen yet - it needs Python 3.11 or 3.12 with Ursina installed.)
+- Offscreen loss probe (`window_type="offscreen"`, `L2-01`) — the fatal roll landed on the fragile
+  tile, the block and that tile then dropped the full `FALL_DISTANCE` (3.5) over `FALL_SECONDS`
+  (0.35 s, 21 frames at 60 fps), and the loss card was built only on the last frame. Retrying from
+  the card reset the run and put the tile back. Rebuilding the landing with a plain `sync` cancels
+  the block's drop and shows the card over a block still on the tile.
 - A pivot-roll sweep across all stage files found a valid roll plan for every reachable unsplit
   transition (3,550 checked at the time).
 

@@ -177,7 +177,11 @@ class PrototypeScene(Entity):
         self.board_view.root.parent = self
         self.block_view = BlockView(stage.index.rows, stage.index.cols, parent=self)
         self.controller = PlayerController(
-            self.board, self.block_view, self._level_cleared, self._level_failed
+            self.board,
+            self.block_view,
+            self._level_cleared,
+            self._level_failed,
+            self._break_under_block,
         )
         self.overlay: WinOverlay | None = None
         self.loss_overlay: LossOverlay | None = None
@@ -439,6 +443,7 @@ class PrototypeScene(Entity):
         if self.controller.retry():
             self._dismiss_overlay()
             self._dismiss_loss_overlay()
+            self.board_view.restore_tiles()
             self.intro = self._load_intro()
 
     def _dismiss_overlay(self) -> None:
@@ -457,6 +462,14 @@ class PrototypeScene(Entity):
             on_retry=self._retry,
             on_levels=self.game.show_level_select,
         )
+
+    def _break_under_block(self) -> None:
+        """Start the fragile tile under the block falling, in step with the block."""
+        index = self.stage.index
+        for cube in self.controller.state.cubes:
+            for cell in cube:
+                if index.kind[cell[0] * index.cols + cell[1]] == "fragile":
+                    self.board_view.break_tile(cell)
 
     def _dismiss_loss_overlay(self) -> None:
         if self.loss_overlay is not None:

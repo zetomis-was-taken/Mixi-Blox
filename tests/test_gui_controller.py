@@ -22,6 +22,7 @@ STAGES = ROOT / "Source" / "bloxorz" / "core" / "stages"
 class FakeBlock:
     def __init__(self) -> None:
         self.on_done = None
+        self.on_drop = None
         self.action = None
         self.state = None
         self.fatal = False
@@ -30,14 +31,16 @@ class FakeBlock:
         self.action = action
         self.on_done = on_done
 
-    def fall(self, start, fatal_state, action, on_done) -> None:
+    def fall(self, start, fatal_state, action, on_done, on_drop=None) -> None:
         self.action = action
         self.on_done = on_done
+        self.on_drop = on_drop
         self.fatal = True
 
     def sync(self, state) -> None:
         self.state = state
         self.on_done = None
+        self.on_drop = None
         self.fatal = False
 
     def finish(self) -> None:
@@ -440,11 +443,13 @@ def test_fatal_move_animates_fall_triggers_loss_and_allows_undo_and_retry() -> N
     board = Board(stage)
     block = FakeBlock()
     lost_calls: list[bool] = []
+    drops: list[bool] = []
     controller = PlayerController(
         board,
         block,
         on_goal=lambda: None,
         on_loss=lambda: lost_calls.append(True),
+        on_drop=lambda: drops.append(True),
     )
 
     start = board.start()
@@ -481,6 +486,9 @@ def test_fatal_move_animates_fall_triggers_loss_and_allows_undo_and_retry() -> N
     assert controller.lost is True
     assert controller.animating is True
     assert block.fatal is True
+    # The drop hook belongs to the view: the controller forwards it and does not call it.
+    assert block.on_drop is not None
+    assert drops == []
     # The on_loss hook is deferred until the fall animation finishes
     assert lost_calls == []
 

@@ -135,6 +135,9 @@ class BoardView:
         self._detail_intro_offsets: list[float] = []
         # Fragile tiles bob while idle; every other sort of tile rests on the platform.
         self._fragile_cells: set[Cell] = set()
+        # A fragile tile that broke under the block falls out of view; the value is its elapsed
+        # time in the drop, so it uses the same curve and duration as the block.
+        self._tile_falls: dict[Cell, float] = {}
         self._elapsed = 0.0
         # Mechanism state: the load already shown, and where each mechanism is heading.
         self._state: State | None = None
@@ -301,9 +304,20 @@ class BoardView:
                 self._bridge_targets[bridge.pos] = _bridge_height(state.bridges[position])
         self._load_targets = reaction.load_per_cell(self.stage, state)
 
+    def break_tile(self, cell: Cell) -> None:
+        """Start the fragile tile at ``cell`` falling, in step with the block that broke it."""
+        if cell in self._fragile_cells:
+            self._tile_falls.setdefault(cell, 0.0)
+
+    def restore_tiles(self) -> None:
+        """Put every broken tile back, for a retry that replays the level from its start."""
+        self._tile_falls.clear()
+
     def update(self, dt: float) -> None:
         """Ease every mechanism toward its target, then redraw the pieces that carry them."""
         self._elapsed += dt
+        for cell, elapsed in self._tile_falls.items():
+            self._tile_falls[cell] = min(elapsed + dt, theme.FALL_SECONDS)
         press_step = dt / theme.PRESS_SECONDS
         bridge_step = dt * BRIDGE_TRAVEL / theme.BRIDGE_SECONDS
         for cell, target in self._load_targets.items():
@@ -315,19 +329,33 @@ class BoardView:
 
     def _place_tiles(self) -> None:
         for index, (cell, tile) in enumerate(self.tiles.items()):
-            tile.y = self._rest_y[cell] + self._intro_offsets[index] + self._wiggle(cell)
+            tile.y = (
+                self._rest_y[cell]
+                + self._intro_offsets[index]
+                + self._wiggle(cell)
+                - self._fall_offset(cell)
+            )
             self._tile_bases[cell].y = tile.y + TILE_BASE_DROP
             if cell in self._bridge_targets:
                 tile.color = _bridge_color(self._rest_y[cell])
             for line in self._line_at.get(cell, ()):
                 line.y = self._line_y(tile.y)
 
+    def _fall_offset(self, cell: Cell) -> float:
+        """How far a broken tile has dropped, on the block's own curve and duration."""
+        elapsed = self._tile_falls.get(cell)
+        if elapsed is None:
+            return 0.0
+        t = elapsed / theme.FALL_SECONDS
+        return t * t * theme.FALL_DISTANCE
+
     def _wiggle(self, cell: Cell) -> float:
         """Vertical offset of a fragile tile: bobbing while idle, still once it takes weight.
 
         The load eases in, so the bob fades out as the block arrives and comes back when it leaves.
+        A tile that has broken off is no longer bobbing, it is falling.
         """
-        if cell not in self._fragile_cells:
+        if cell not in self._fragile_cells or cell in self._tile_falls:
             return 0.0
         idle = 1.0 - self._load.get(cell, 0.0)
         phase = math.tau * self._elapsed / theme.FRAGILE_WOBBLE_SECONDS

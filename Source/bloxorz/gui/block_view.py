@@ -51,6 +51,7 @@ class BlockView:
         self._elapsed = 0.0
         self._next_state: State | None = None
         self._on_done = None
+        self._on_drop = None
 
     @property
     def animating(self) -> bool:
@@ -74,6 +75,7 @@ class BlockView:
         self._is_falling = False
         self._falling = False
         self._fall_elapsed = 0.0
+        self._on_drop = None
 
     def _place(self, state: State) -> None:
         """Rebuild the visible boxes at ``state``, leaving a roll or a fall in flight alone."""
@@ -99,6 +101,10 @@ class BlockView:
         self._roll = None
         self._falling = True
         self._fall_elapsed = 0.0
+        drop = self._on_drop
+        self._on_drop = None
+        if drop is not None:
+            drop()
 
     def _paint(self) -> None:
         """Colour the pieces by which cube is active; a single block is always active."""
@@ -117,9 +123,15 @@ class BlockView:
         fatal_state: State,
         action: Action,
         on_done,
+        on_drop=None,
     ) -> None:
-        """Roll to ``fatal_state`` and then drop down out of view."""
+        """Roll to ``fatal_state``, then drop the pieces out of view.
+
+        ``on_drop`` fires on the frame the drop starts, so whatever the block was standing on — a
+        fragile tile — can fall with it.
+        """
         self._is_falling = True
+        self._on_drop = on_drop
         self.animate(start, fatal_state, action, on_done)
 
     def animate(

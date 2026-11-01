@@ -173,6 +173,11 @@ The landing is rebuilt with `_place`, which leaves the pending fall alone — a 
 cancel it and show the loss card with the block still standing on the tile. Only the last frame of
 the drop calls back, and the scene raises the loss card and stops the clock there.
 
+A fragile tile breaks with the block: the frame the drop starts, `BlockView` fires the scene's
+`on_drop` hook, and `BoardView.break_tile` sends that cell's cap, base and grid lines down on the
+same curve, so the block never passes through a tile that is still there. A retry clears the broken
+set before the load animation replays, so the tile rises with the rest of the platform.
+
 ## Load animation
 
 `gui/intro.py` owns the sequence as an absolute-time timeline, and the scene reads progress from it
@@ -480,9 +485,10 @@ count.
   by the tile's Y-axis twist; that reading no longer applies, and the twist has not been watched
   on screen yet - it needs Python 3.11 or 3.12 with Ursina installed.)
 - Offscreen loss probe (`window_type="offscreen"`, `L2-01`) — the fatal roll landed on the fragile
-  tile, the pieces then dropped the full `FALL_DISTANCE` (3.5) over `FALL_SECONDS` (0.35 s, 21
-  frames at 60 fps), and the loss card was built only on the last frame. Rebuilding the landing
-  with a plain `sync` cancels the drop and shows the card over a block still on the tile.
+  tile, the block and that tile then dropped the full `FALL_DISTANCE` (3.5) over `FALL_SECONDS`
+  (0.35 s, 21 frames at 60 fps), and the loss card was built only on the last frame. Retrying from
+  the card reset the run and put the tile back. Rebuilding the landing with a plain `sync` cancels
+  the block's drop and shows the card over a block still on the tile.
 - A pivot-roll sweep across all stage files found a valid roll plan for every reachable unsplit
   transition (3,550 checked at the time).
 

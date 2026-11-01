@@ -48,11 +48,13 @@ class PlayerController:
         block,
         on_goal: Callable[[], None],
         on_loss: Callable[[], None] | None = None,
+        on_drop: Callable[[], None] | None = None,
     ) -> None:
         self.board = board
         self.block = block
         self.on_goal = on_goal
         self.on_loss = on_loss
+        self.on_drop = on_drop
         self.state: State = board.start()
         self.animating = False
         self.cleared = False
@@ -163,7 +165,9 @@ class PlayerController:
         self.state = fatal_state
         self.lost = True
         self.animating = True
-        self.block.fall(start, fatal_state, action, self._fatal_animation_finished)
+        self.block.fall(
+            start, fatal_state, action, self._fatal_animation_finished, self.on_drop
+        )
 
     def _fatal_animation_finished(self) -> None:
         self.animating = False

@@ -163,10 +163,7 @@ class PlayerController:
         self.state = fatal_state
         self.lost = True
         self.animating = True
-        if hasattr(self.block, "fall"):
-            self.block.fall(start, fatal_state, action, self._fatal_animation_finished)
-        else:
-            self.block.animate(start, fatal_state, action, self._fatal_animation_finished)
+        self.block.fall(start, fatal_state, action, self._fatal_animation_finished)
 
     def _fatal_animation_finished(self) -> None:
         self.animating = False

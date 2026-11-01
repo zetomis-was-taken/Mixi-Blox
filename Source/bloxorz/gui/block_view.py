@@ -68,7 +68,15 @@ class BlockView:
         self._paint()
 
     def sync(self, state: State) -> None:
-        """Rebuild the visible boxes to match ``state`` exactly."""
+        """Rebuild the visible boxes to match ``state`` exactly, cancelling any animation."""
+        self._place(state)
+        self._roll = None
+        self._is_falling = False
+        self._falling = False
+        self._fall_elapsed = 0.0
+
+    def _place(self, state: State) -> None:
+        """Rebuild the visible boxes at ``state``, leaving a roll or a fall in flight alone."""
         for piece in self.pieces:
             destroy(piece)
         self.pieces = [
@@ -85,9 +93,11 @@ class BlockView:
         ]
         self._rest_positions = [tuple(piece.position) for piece in self.pieces]
         self._paint()
+
+    def _start_fall(self) -> None:
+        """Send the pieces now resting on the fatal tile down and out of view."""
         self._roll = None
-        self._is_falling = False
-        self._falling = False
+        self._falling = True
         self._fall_elapsed = 0.0
 
     def _paint(self) -> None:
@@ -149,11 +159,11 @@ class BlockView:
                     return
 
         # Split switch / merge: no roll to derive, so show the landed pose immediately.
-        self.sync(next_state)
         if self._is_falling:
-            self._falling = True
-            self._fall_elapsed = 0.0
+            self._place(next_state)
+            self._start_fall()
             return
+        self.sync(next_state)
         self._finish()
 
     def update(self, dt: float) -> None:
@@ -180,12 +190,11 @@ class BlockView:
         self._roll.entity.quaternion = rotation
 
         if t >= 1.0:
-            self.sync(self._next_state)
             if self._is_falling:
-                self._roll = None
-                self._falling = True
-                self._fall_elapsed = 0.0
+                self._place(self._next_state)
+                self._start_fall()
                 return
+            self.sync(self._next_state)
             self._finish()
 
     def _finish(self) -> None:

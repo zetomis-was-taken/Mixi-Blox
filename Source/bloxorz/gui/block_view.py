@@ -13,11 +13,11 @@ from dataclasses import dataclass
 from panda3d.core import Quat, Vec3
 from ursina import Entity, Shader, destroy
 
-from bloxorz.core.contracts import Action, State
+from bloxorz.core.contracts import Action, Direction, State
 
 from . import theme
 from .intro import LoadIntro
-from .layout import DIRECTION_VECTORS, Pose, landed_cube_index, poses_for_state
+from .layout import DIRECTION_VECTORS, Pose, landed_cube_index, poses_for_state, tip_plan
 
 
 @dataclass(frozen=True)
@@ -45,6 +45,9 @@ class BlockView:
         self.active = 0
         self._rest_positions: list[tuple[float, float, float]] = []
         self._roll: _Roll | None = None
+        self._tip: _Roll | None = None
+        self._tipping: Direction | None = None
+        self._tip_elapsed = 0.0
         self._is_falling = False
         self._falling = False
         self._fall_elapsed = 0.0
@@ -56,7 +59,7 @@ class BlockView:
 
     @property
     def animating(self) -> bool:
-        return self._roll is not None or self._falling
+        return self._roll is not None or self._tip is not None or self._falling
 
     def set_active(self, index: int) -> None:
         """Tint the cubes: the one that takes the next input keeps the strong accent.
@@ -73,6 +76,9 @@ class BlockView:
         """Rebuild the visible boxes to match ``state`` exactly, cancelling any animation."""
         self._place(state)
         self._roll = None
+        self._tip = None
+        self._tipping = None
+        self._tip_elapsed = 0.0
         self._is_falling = False
         self._falling = False
         self._fall_elapsed = 0.0
@@ -97,6 +103,26 @@ class BlockView:
         ]
         self._rest_positions = [tuple(piece.position) for piece in self.pieces]
         self._paint()
+
+    def _begin_fall(self) -> None:
+        """Tip over the edge when half the block still has a tile under it, else start the drop."""
+        self._roll = None
+        tip = self._tip_roll()
+        if tip is None:
+            self._start_fall()
+            return
+        self._tip = tip
+        self._tip_elapsed = 0.0
+
+    def _tip_roll(self) -> _Roll | None:
+        """The quarter-turn a half-supported block makes before it drops, if it makes one."""
+        if self._tipping is None or self._next_state is None:
+            return None
+        pose = poses_for_state(self._next_state, self.rows, self.cols)[0]
+        tip = tip_plan(pose, self._tipping)
+        return _Roll(
+            self.pieces[0], Vec3(*tip.pivot), Vec3(*tip.offset), Vec3(*tip.axis), tip.angle
+        )
 
     def _start_fall(self) -> None:
         """Send the pieces now resting on the fatal tile down and out of view."""
@@ -127,16 +153,19 @@ class BlockView:
         on_done,
         on_drop=None,
         dropping: frozenset[int] | None = None,
+        tipping: Direction | None = None,
     ) -> None:
-        """Roll to ``fatal_state``, then drop the pieces out of view.
+        """Roll to ``fatal_state``, tip off the edge if it is only half over the hole, then drop.
 
         ``on_drop`` fires on the frame the drop starts, so whatever the block was standing on — a
         fragile tile — can fall with it. ``dropping`` names the pieces with nothing left under them;
         ``None`` drops them all, and a split stage passes the one cube that left the platform so the
-        other keeps standing.
+        other keeps standing. ``tipping`` is the direction of the hole under half of a lying block:
+        that block tips about the edge first, so it never drops through the tile it still rests on.
         """
         self._is_falling = True
         self._dropping = dropping
+        self._tipping = tipping
         self._on_drop = on_drop
         self.animate(start, fatal_state, action, on_done)
 
@@ -179,12 +208,25 @@ class BlockView:
         # Split switch / merge: no roll to derive, so show the landed pose immediately.
         if self._is_falling:
             self._place(next_state)
-            self._start_fall()
+            self._begin_fall()
             return
         self.sync(next_state)
         self._finish()
 
     def update(self, dt: float) -> None:
+        if self._tip is not None:
+            self._tip_elapsed += dt
+            t = min(self._tip_elapsed / theme.ROLL_SECONDS, 1.0)
+            rotation = Quat()
+            rotation.setFromAxisAngle(self._tip.angle * t, self._tip.axis)
+            self._tip.entity.position = self._tip.pivot + rotation.xform(self._tip.offset)
+            self._tip.entity.quaternion = rotation
+            if t >= 1.0:
+                self._tip = None
+                self._rest_positions = [tuple(piece.position) for piece in self.pieces]
+                self._start_fall()
+            return
+
         if self._falling:
             self._fall_elapsed += dt
             t = min(self._fall_elapsed / theme.FALL_SECONDS, 1.0)
@@ -212,7 +254,7 @@ class BlockView:
         if t >= 1.0:
             if self._is_falling:
                 self._place(self._next_state)
-                self._start_fall()
+                self._begin_fall()
                 return
             self.sync(self._next_state)
             self._finish()

@@ -13,7 +13,7 @@ from bloxorz.core.contracts import Action, Outcome, State
 from bloxorz.core.engine import Board
 from bloxorz.core.stage import load_stage
 from bloxorz.gui import reaction
-from bloxorz.gui.controller import OPPOSITE, PlayerController
+from bloxorz.gui.controller import OPPOSITE, PlayerController, tipping_direction
 
 ROOT = Path(__file__).resolve().parents[1]
 STAGES = ROOT / "Source" / "bloxorz" / "core" / "stages"
@@ -27,17 +27,21 @@ class FakeBlock:
         self.state = None
         self.fatal = False
         self.dropping = None
+        self.tipping = None
 
     def animate(self, start, next_state, action, on_done) -> None:
         self.action = action
         self.on_done = on_done
 
-    def fall(self, start, fatal_state, action, on_done, on_drop=None, dropping=None) -> None:
+    def fall(
+        self, start, fatal_state, action, on_done, on_drop=None, dropping=None, tipping=None
+    ) -> None:
         self.action = action
         self.on_done = on_done
         self.on_drop = on_drop
         self.fatal = True
         self.dropping = dropping
+        self.tipping = tipping
 
     def sync(self, state) -> None:
         self.state = state
@@ -45,6 +49,7 @@ class FakeBlock:
         self.on_drop = None
         self.fatal = False
         self.dropping = None
+        self.tipping = None
 
     def finish(self) -> None:
         callback = self.on_done
@@ -537,6 +542,7 @@ def test_a_step_off_the_platform_is_a_fall() -> None:
     assert controller.lost is True
     assert block.fatal is True
     assert block.dropping == frozenset({0}), "the one piece has nothing under it"
+    assert block.tipping == "L", "it still rests on one tile, so it tips off the edge first"
     assert controller.state.cubes == (((3, 1), (3, 2)),)
     assert lost == []
 
@@ -562,7 +568,14 @@ def test_only_the_cube_that_left_the_platform_falls() -> None:
     assert controller.move("L") is True
     assert controller.lost is True
     assert block.dropping == frozenset({0}), "only the cube off the edge drops"
+    assert block.tipping is None, "a lone cube has no tile left to tip over"
     assert controller.state.cubes[0] == ((1, 8),)
     assert controller.state.cubes[1] == ((7, 10),), "the cube on the far room keeps standing"
     block.finish()
 
+
+def test_a_lying_block_over_nothing_at_all_does_not_tip() -> None:
+    stage = load_stage(STAGES / "L1-01_long_corridor.json")
+    board = Board(stage)
+    state = State(cubes=(((2, 0), (2, 1)),), bridges=board.start().bridges)
+    assert tipping_direction(board, state) is None, "no tile is left to pivot on"

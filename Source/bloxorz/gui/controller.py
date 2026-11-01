@@ -29,6 +29,14 @@ from bloxorz.core.engine import Board, orientation, roll
 # The direction that rolls a move back. An undo is the same quarter-turn, mirrored.
 OPPOSITE: dict[Direction, Direction] = {"U": "D", "D": "U", "L": "R", "R": "L"}
 
+# The hole's direction from the cell that still has a tile under it.
+_TIP_DIRECTIONS: dict[tuple[int, int], Direction] = {
+    (0, -1): "L",
+    (0, 1): "R",
+    (-1, 0): "U",
+    (1, 0): "D",
+}
+
 
 def falling_cubes(board: Board, state: State) -> frozenset[int]:
     """Which cubes of a fatal ``state`` have nothing left under them.
@@ -43,6 +51,24 @@ def falling_cubes(board: Board, state: State) -> frozenset[int]:
         for index, cube in enumerate(state.cubes)
         if not all(board.passable(cell, orientation(cube, split), state.bridges) for cell in cube)
     )
+
+
+def tipping_direction(board: Board, state: State) -> Direction | None:
+    """Toward the hole under half of a lying block, when that is how the fall is supported.
+
+    Only a lying block can be half supported: a standing block or a lone cube is one cell, so it
+    either stands or falls whole. A block with both cells over nothing drops straight down, so the
+    answer is ``None`` there too.
+    """
+    if len(state.cubes) != 1 or len(state.cubes[0]) != 2:
+        return None
+    cube = state.cubes[0]
+    piece = orientation(cube, split=False)
+    grounded = [board.passable(cell, piece, state.bridges) for cell in cube]
+    if grounded.count(True) != 1:
+        return None
+    kept, hole = cube[grounded.index(True)], cube[grounded.index(False)]
+    return _TIP_DIRECTIONS[(hole[0] - kept[0], hole[1] - kept[1])]
 
 
 @dataclass(frozen=True)
@@ -172,8 +198,9 @@ class PlayerController:
             fatal_state,
             action,
             self._fatal_animation_finished,
-            self.on_drop,
-            falling_cubes(self.board, fatal_state) or None,
+            on_drop=self.on_drop,
+            dropping=falling_cubes(self.board, fatal_state) or None,
+            tipping=tipping_direction(self.board, fatal_state),
         )
 
     def _fatal_animation_finished(self) -> None:

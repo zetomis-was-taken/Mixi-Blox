@@ -177,6 +177,11 @@ state and names the ones with nothing under them, so on a split stage the cube t
 drops while the cube still on a tile keeps standing. An unsplit block has one piece, so it always
 drops whole.
 
+A lying block that still rests on one tile does not drop through it: `controller.tipping_direction`
+names the hole's direction, and `BlockView` first turns the piece a quarter-turn about the bottom edge
+it shares with the hole (`layout.tip_plan`), so the half on the tile lifts and swings over the void.
+Only then does it drop, which keeps the box clear of the tile it was standing on.
+
 The landing is rebuilt with `_place`, which leaves the pending fall alone — a plain `sync` would
 cancel it and show the loss card with the block still standing on the tile. Only the last frame of
 the drop calls back, and the scene raises the loss card and stops the clock there.
@@ -500,9 +505,11 @@ count.
 - Offscreen edge-fall probe (`window_type="offscreen"`, `L1-01`) — a roll west out of the start
   reached the void pose and the whole block dropped `FALL_DISTANCE` (3.5) over `FALL_SECONDS`
   (0.35 s, 21 frames at 60 fps); the loss card ("The block fell off the platform") was built on the
-  last frame, and retry reset the run. On `L4-01` the split pair was walked to the far room: one cube
-  stepped west twice, only that cube dropped, the cube still on a tile kept its rest position, and
-  the card still waited for the drop. Nothing on either stage broke, so no tile fell.
+  last frame, and retry reset the run. The lying block tipped a quarter-turn over the edge first: it
+  ended over the hole column, not the tile it had been resting on. On `L4-01` the split pair was
+  walked to the far room: one cube stepped west twice, only that cube dropped, the cube still on a
+  tile kept its rest position, and the card still waited for the drop. Nothing on either stage
+  broke, so no tile fell.
 - A pivot-roll sweep across all stage files found a valid roll plan for every reachable unsplit
   transition (3,550 checked at the time).
 

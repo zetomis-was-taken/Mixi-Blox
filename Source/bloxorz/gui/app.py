@@ -465,10 +465,9 @@ class PrototypeScene(Entity):
 
     def _break_under_block(self) -> None:
         """Start the fragile tile under the block falling, in step with the block."""
-        index = self.stage.index
         for cube in self.controller.state.cubes:
             for cell in cube:
-                if index.kind[cell[0] * index.cols + cell[1]] == "fragile":
+                if self.board.kind(cell) == "fragile":
                     self.board_view.break_tile(cell)
 
     def _dismiss_loss_overlay(self) -> None:

@@ -48,6 +48,7 @@ class BlockView:
         self._is_falling = False
         self._falling = False
         self._fall_elapsed = 0.0
+        self._dropping: frozenset[int] | None = None
         self._elapsed = 0.0
         self._next_state: State | None = None
         self._on_done = None
@@ -75,6 +76,7 @@ class BlockView:
         self._is_falling = False
         self._falling = False
         self._fall_elapsed = 0.0
+        self._dropping = None
         self._on_drop = None
 
     def _place(self, state: State) -> None:
@@ -124,13 +126,17 @@ class BlockView:
         action: Action,
         on_done,
         on_drop=None,
+        dropping: frozenset[int] | None = None,
     ) -> None:
         """Roll to ``fatal_state``, then drop the pieces out of view.
 
         ``on_drop`` fires on the frame the drop starts, so whatever the block was standing on — a
-        fragile tile — can fall with it.
+        fragile tile — can fall with it. ``dropping`` names the pieces with nothing left under them;
+        ``None`` drops them all, and a split stage passes the one cube that left the platform so the
+        other keeps standing.
         """
         self._is_falling = True
+        self._dropping = dropping
         self._on_drop = on_drop
         self.animate(start, fatal_state, action, on_done)
 
@@ -183,7 +189,9 @@ class BlockView:
             self._fall_elapsed += dt
             t = min(self._fall_elapsed / theme.FALL_SECONDS, 1.0)
             drop = t * t * theme.FALL_DISTANCE
-            for piece, rest in zip(self.pieces, self._rest_positions):
+            for index, (piece, rest) in enumerate(zip(self.pieces, self._rest_positions)):
+                if self._dropping is not None and index not in self._dropping:
+                    continue
                 piece.position = (rest[0], rest[1] - drop, rest[2])
             if t >= 1.0:
                 self._falling = False

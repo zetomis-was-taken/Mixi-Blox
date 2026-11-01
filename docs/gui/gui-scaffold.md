@@ -56,10 +56,10 @@ the art direction ([`theme.md`](theme.md)).
   panel draws one card per algorithm — BFS, DFS, UCS and A* — and replays that algorithm's answer.
 - Ends a level on a win overlay: the move count and elapsed time, then next level, retry and back to
   the level select — as cards or as `Enter` / `R` / `Esc`.
-- Loses a level on a loss card: a move that would drop the block (standing on a fragile tile, or
-  taking away the bridge it stands on) rolls to the fatal tile, the pieces drop out of view, and the
-  card offers retry or the level select — as cards or as `R` / `Enter` and `Esc` / `L`. Input and
-  the clock stop for the fall and the card.
+- Loses a level on a loss card: a move that would drop the block (stepping off the platform, standing
+  on a fragile tile, or taking away the bridge it stands on) rolls to the fatal tile, the pieces drop
+  out of view, and the card offers retry or the level select — as cards or as `R` / `Enter` and
+  `Esc` / `L`. Input and the clock stop for the fall and the card.
 - Pauses a level: `Esc` puts a card over the frozen board with continue and level select, as cards
   or as `Enter` / `Esc` / `L`. Movement keys are dropped and the clock stops while it is up; the
   load animation, a solver movie and a result card are never interrupted by it.
@@ -137,10 +137,10 @@ it is.
 
 - `Tab` calls `switch_cube`, which flips the active index (ignored while the block is unsplit or a
   roll is playing).
-- `resolve` prefers the active cube and falls back to the other one when the active cube has no
-  action in that direction, so a direction key is never dead. When neither cube has a legal move,
-  `resolve_fatal` asks `Board.outcome` for a fatal action and the block falls instead of the key
-  being dropped.
+- `_choose` prefers the active cube and falls back to the other one when the active cube has no
+  answer in that direction, so a direction key is never dead. The active cube's own fall counts as an
+  answer and comes before the other cube's move, so a step off the edge is never quietly replaced by
+  moving the other cube; only when neither cube can move or fall is the key dropped.
 - `State` orders its cubes by cell, so a move can swap their indices; `_active_after` finds the cube
   by the cells it rolled onto and keeps it active. After a merge there is one cube and the index
   resets to 0.
@@ -165,10 +165,18 @@ teleport transitions have no roll to derive, so they snap to the destination pos
 
 ## Fall animation
 
-A fatal move is not in `successors` (ADR-010), so `PlayerController.move` asks `Board.outcome`
-once `resolve` finds nothing and gets `Verdict.fatal` with the state the fall happens in.
-`BlockView.fall` then rolls to that tile exactly like a normal move and drops the pieces out of
-view: quadratic acceleration, `theme.FALL_DISTANCE` (3.5 units) over `theme.FALL_SECONDS` (0.35 s).
+A fatal move is not in `successors` (ADR-010), so `PlayerController._choose` asks `Board.outcome`
+when the active cube has nothing legal in that direction, and gets `Verdict.fatal` with the state the
+fall happens in. That covers every way to lose: a step off the platform (#54), a fragile tile
+under a standing block, and a switch closing the bridge under the block. `BlockView.fall` then rolls
+to that pose exactly like a normal move and drops the pieces out of view: quadratic acceleration,
+`theme.FALL_DISTANCE` (3.5 units) over `theme.FALL_SECONDS` (0.35 s).
+
+The drop is per cube. `controller.falling_cubes` reads `Board.passable` for each cube of the fatal
+state and names the ones with nothing under them, so on a split stage the cube that left the platform
+drops while the cube still on a tile keeps standing. An unsplit block has one piece, so it always
+drops whole.
+
 The landing is rebuilt with `_place`, which leaves the pending fall alone — a plain `sync` would
 cancel it and show the loss card with the block still standing on the tile. Only the last frame of
 the drop calls back, and the scene raises the loss card and stops the clock there.
@@ -489,6 +497,12 @@ count.
   (0.35 s, 21 frames at 60 fps), and the loss card was built only on the last frame. Retrying from
   the card reset the run and put the tile back. Rebuilding the landing with a plain `sync` cancels
   the block's drop and shows the card over a block still on the tile.
+- Offscreen edge-fall probe (`window_type="offscreen"`, `L1-01`) — a roll west out of the start
+  reached the void pose and the whole block dropped `FALL_DISTANCE` (3.5) over `FALL_SECONDS`
+  (0.35 s, 21 frames at 60 fps); the loss card ("The block fell off the platform") was built on the
+  last frame, and retry reset the run. On `L4-01` the split pair was walked to the far room: one cube
+  stepped west twice, only that cube dropped, the cube still on a tile kept its rest position, and
+  the card still waited for the drop. Nothing on either stage broke, so no tile fell.
 - A pivot-roll sweep across all stage files found a valid roll plan for every reachable unsplit
   transition (3,550 checked at the time).
 

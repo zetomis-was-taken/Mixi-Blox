@@ -8,21 +8,37 @@ from __future__ import annotations
 
 from pathlib import Path
 
+try:
+    from panda3d.core import Filename, getModelPath
+except ImportError:
+    Filename = None  # type: ignore[assignment,misc]
+    getModelPath = None  # type: ignore[assignment]
+
 # Panda3D packs each DynamicTextFont's glyphs into a texture page; the default is
 # 256x256, too small for the high pixels-per-unit values used on the title screen.
 GLYPH_PAGE_SIZE = 1024
+
+_FONTS_DIR = Path(__file__).resolve().parents[2] / "fonts"
+_REGISTERED = False
+
+
+def _ensure_font_directory() -> None:
+    global _REGISTERED
+    if not _REGISTERED:
+        if getModelPath is not None and Filename is not None:
+            getModelPath().appendDirectory(Filename.fromOsSpecific(str(_FONTS_DIR)))
+        _REGISTERED = True
 
 
 def get_font_path(filename: str) -> str:
     """Name a bundled font so Ursina's text search finds it.
 
-    ``Text.font`` resolves its value with ``folder.glob(f"**/{name}")`` across the asset
-    folders, so a bare file name is what it expects: the name it is given is a glob pattern,
-    not a path, and neither an OS path nor a Panda3D VFS path (``/d/...``) matches anything.
-    The name only expands correctly when the file exists, so the check stays here.
+    Registers the bundled fonts directory with Panda3D's ``getModelPath()`` so
+    ``loader.loadFont(filename)`` resolves the font name across platforms.
     """
-    if not (Path(__file__).parents[2] / "fonts" / filename).is_file():
+    if not (_FONTS_DIR / filename).is_file():
         raise FileNotFoundError(f"bundled font is missing: {filename}")
+    _ensure_font_directory()
     return filename
 
 

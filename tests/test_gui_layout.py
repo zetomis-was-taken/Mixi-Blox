@@ -5,6 +5,7 @@ Ursina is never imported here: these tests must run in CI, which installs pytest
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 from bloxorz.core.contracts import State
@@ -12,11 +13,13 @@ from bloxorz.core.engine import Board
 from bloxorz.core.stage import load_stage
 from bloxorz.gui.layout import (
     DIRECTION_VECTORS,
+    Pose,
     board_center,
     cell_to_world,
     goal_rim_pieces,
     landed_cube_index,
     poses_for_state,
+    tip_plan,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -152,3 +155,34 @@ def test_every_split_roll_on_a_split_stage_finds_its_landing() -> None:
 
     assert checked > 0, "L4-01 must have split positions to roll from"
     assert swapped > 0, "and some of them must swap indices, or this proves nothing"
+
+
+def _turn(point, axis, degrees):
+    """Rotate ``point`` about ``axis`` with the right-hand rule, in ``tip_plan``'s unit."""
+    x, y, z = point
+    radians = math.radians(degrees)
+    cos, sin = math.cos(radians), math.sin(radians)
+    if axis[2]:
+        return (x * cos - y * sin, x * sin + y * cos, z)
+    return (x, y * cos - z * sin, y * sin + z * cos)
+
+
+def test_a_half_supported_block_tips_over_the_edge_it_hangs_on() -> None:
+    # Cells at x = 0 and x = 1, so the shared edge the block pivots on is x = 0.5.
+    lying_flat = Pose((0.5, 0.5, 0.0), (2.0, 1.0, 1.0))
+    left = tip_plan(lying_flat, "L")
+    assert left.pivot == (0.5, 0.0, 0.0), "the pivot is the bottom edge shared with the hole"
+    assert left.axis == (0.0, 0.0, 1.0)
+    turned = _turn(left.offset, left.axis, left.angle)
+    assert tuple(p + t for p, t in zip(left.pivot, turned))[0] == 0.0, "over the hole, not the tile"
+    assert tip_plan(lying_flat, "R").angle == -left.angle
+
+    # Lying north-south: the hole can be north or south of the tile that still holds it.
+    lying_deep = Pose((0.0, 0.5, 0.5), (1.0, 1.0, 2.0))
+    north = tip_plan(lying_deep, "U")
+    assert north.pivot == (0.0, 0.0, 0.5)
+    assert north.axis == (1.0, 0.0, 0.0)
+    turned = _turn(north.offset, north.axis, north.angle)
+    centre = tuple(p + t for p, t in zip(north.pivot, turned))
+    assert centre[2] == 1.0, "over the hole, not the tile"
+    assert tip_plan(lying_deep, "D").angle == -north.angle

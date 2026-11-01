@@ -182,10 +182,21 @@ def test_a_move_reports_the_cells_it_reaches(tmp_path: Path) -> None:
     assert reported.state == moved, "the same transition, spelled once"
 
 
-def test_a_move_into_void_is_refused_and_carries_no_state(tmp_path: Path) -> None:
+def test_a_move_into_void_is_a_fall_and_carries_the_state_to_render(tmp_path: Path) -> None:
     board = board_for(tmp_path, LINE)
-    blocked = board.outcome(board.start(), (0, "L"))
-    assert blocked.kind == "refused", "void is a wall, not a fall (ADR-004)"
+    start = board.start()
+    fell = board.outcome(start, (0, "L"))
+    assert fell.kind == "fatal", "leaving the platform is a fall (#54)"
+    assert cells(fell.state) == ((1, -1), (1, 0)), "the renderer animates the fall from here"
+    assert fell.state.bridges == start.bridges
+    assert "L" not in {action[1] for _, action in board.successors(start)}
+
+
+def test_only_a_cell_the_other_cube_holds_is_refused(tmp_path: Path) -> None:
+    board = board_for(tmp_path, ["......", ".SooGo", "......"])
+    state = State(cubes=(((1, 2),), ((1, 3),)), bridges=())
+    blocked = board.outcome(state, (0, "R"))
+    assert blocked.kind == "refused", "two cubes never share a cell (ADR-006)"
     assert blocked.state is None, "a refused action changed nothing to render"
 
 
@@ -251,6 +262,9 @@ def test_a_closed_bridge_is_impassable(tmp_path: Path) -> None:
     start = board.start()
     assert not board.passable((1, 3), "lying_h", start.bridges)
     assert board.successors(start) == [], "the only move would park the block on a closed bridge"
+    fell = board.outcome(start, (0, "R"))
+    assert fell.kind == "fatal", "a closed bridge is a hole, not a wall (#54)"
+    assert cells(fell.state) == ((1, 2), (1, 3))
 
 
 def test_a_soft_switch_toggles_its_bridge(tmp_path: Path) -> None:
@@ -422,7 +436,7 @@ def test_a_split_switch_sends_two_cubes_to_its_targets(tmp_path: Path) -> None:
         ("=", [{"pos": [1, 5], "initially_open": False}]),
     ],
 )
-def test_a_split_whose_landing_cannot_be_occupied_is_refused(
+def test_a_split_teleport_that_cannot_land_is_a_fall(
     tmp_path: Path, landing: str, bridges: list[dict[str, object]]
 ) -> None:
     row = list("..S.....")
@@ -443,8 +457,8 @@ def test_a_split_whose_landing_cannot_be_occupied_is_refused(
     )
     (hovering, _), = board.successors(board.start())
     pressed = board.outcome(hovering, (0, "D"))
-    assert pressed.kind == "refused", "a teleport that cannot place the cubes is a wall (ADR-004)"
-    assert pressed.state is None, "nothing was placed, so there is no fall to animate"
+    assert pressed.kind == "fatal", "a cube teleported over a hole falls (#54)"
+    assert cells(pressed.state) == ((1, 5), (2, 4)), "where the two cubes land to fall from"
     assert "D" not in {action[1] for _, action in board.successors(hovering)}
 
 

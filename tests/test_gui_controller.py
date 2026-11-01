@@ -9,11 +9,11 @@ from collections import deque
 from collections.abc import Callable
 from pathlib import Path
 
-from bloxorz.core.contracts import Action, State
+from bloxorz.core.contracts import Action, Outcome, State
 from bloxorz.core.engine import Board
 from bloxorz.core.stage import load_stage
 from bloxorz.gui import reaction
-from bloxorz.gui.controller import OPPOSITE, PlayerController
+from bloxorz.gui.controller import OPPOSITE, PlayerController, tipping_direction
 
 ROOT = Path(__file__).resolve().parents[1]
 STAGES = ROOT / "Source" / "bloxorz" / "core" / "stages"
@@ -26,22 +26,30 @@ class FakeBlock:
         self.action = None
         self.state = None
         self.fatal = False
+        self.dropping = None
+        self.tipping = None
 
     def animate(self, start, next_state, action, on_done) -> None:
         self.action = action
         self.on_done = on_done
 
-    def fall(self, start, fatal_state, action, on_done, on_drop=None) -> None:
+    def fall(
+        self, start, fatal_state, action, on_done, on_drop=None, dropping=None, tipping=None
+    ) -> None:
         self.action = action
         self.on_done = on_done
         self.on_drop = on_drop
         self.fatal = True
+        self.dropping = dropping
+        self.tipping = tipping
 
     def sync(self, state) -> None:
         self.state = state
         self.on_done = None
         self.on_drop = None
         self.fatal = False
+        self.dropping = None
+        self.tipping = None
 
     def finish(self) -> None:
         callback = self.on_done
@@ -65,6 +73,9 @@ class StubBoard:
 
     def successors(self, state: State) -> list[tuple[State, Action]]:
         return [(self._east, (1, "R"))] if state == self._start else []
+
+    def outcome(self, state: State, action: Action):
+        return Outcome(kind="refused", state=None)
 
     def is_goal(self, state: State) -> bool:
         return False
@@ -111,18 +122,19 @@ def test_reaching_the_goal_calls_the_exit_hook_once() -> None:
     assert exits == [True]
 
 
-def test_illegal_direction_does_not_start_a_move() -> None:
-    stage = load_stage(STAGES / "L1-01_long_corridor.json")
-    board = Board(stage)
+def test_a_direction_no_cube_can_take_does_not_start_a_move() -> None:
+    """``StubBoard`` accepts one action only, so every other direction has no answer at all."""
+    board = StubBoard()
     block = FakeBlock()
     controller = PlayerController(board, block, lambda: None)
 
-    # The start of L1-01 has void to its left: the action is absent, not fatal.
-    assert controller.move("L") is False
+    assert controller.move("U") is False
     assert controller.animating is False
     assert block.on_done is None
     # An unsplit block has one cube, so there is nothing to switch to.
-    assert controller.switch_cube() is False
+    stage = load_stage(STAGES / "L1-01_long_corridor.json")
+    unsplit = PlayerController(Board(stage), FakeBlock(), lambda: None)
+    assert unsplit.switch_cube() is False
 
 
 def test_a_split_pair_is_steered_one_cube_at_a_time() -> None:
@@ -517,3 +529,53 @@ def test_fatal_move_animates_fall_triggers_loss_and_allows_undo_and_retry() -> N
     assert controller.state == board.start()
     assert controller.moves == 0
 
+
+def test_a_step_off_the_platform_is_a_fall() -> None:
+    stage = load_stage(STAGES / "L1-01_long_corridor.json")
+    board = Board(stage)
+    block = FakeBlock()
+    lost: list[bool] = []
+    controller = PlayerController(board, block, lambda: None, on_loss=lambda: lost.append(True))
+
+    # West of the start the lying block spans (3, 1) and (3, 2); only (3, 2) is a tile.
+    assert controller.move("L") is True
+    assert controller.lost is True
+    assert block.fatal is True
+    assert block.dropping == frozenset({0}), "the one piece has nothing under it"
+    assert block.tipping == "L", "it still rests on one tile, so it tips off the edge first"
+    assert controller.state.cubes == (((3, 1), (3, 2)),)
+    assert lost == []
+
+    block.finish()
+    assert lost == [True]
+
+
+def test_only_the_cube_that_left_the_platform_falls() -> None:
+    stage = load_stage(STAGES / "L4-01_split_into_the_far_room.json")
+    board = Board(stage)
+    block = FakeBlock()
+    controller = PlayerController(board, block, lambda: None)
+
+    # Two rolls east put the standing block on the split switch and send the cubes to the far room.
+    for _ in range(2):
+        assert controller.move("R") is True
+        block.finish()
+    assert controller.split is True
+
+    assert controller.move("L") is True
+    block.finish()
+    # The other cube could still move west, but the active cube's fall is its own answer.
+    assert controller.move("L") is True
+    assert controller.lost is True
+    assert block.dropping == frozenset({0}), "only the cube off the edge drops"
+    assert block.tipping is None, "a lone cube has no tile left to tip over"
+    assert controller.state.cubes[0] == ((1, 8),)
+    assert controller.state.cubes[1] == ((7, 10),), "the cube on the far room keeps standing"
+    block.finish()
+
+
+def test_a_lying_block_over_nothing_at_all_does_not_tip() -> None:
+    stage = load_stage(STAGES / "L1-01_long_corridor.json")
+    board = Board(stage)
+    state = State(cubes=(((2, 0), (2, 1)),), bridges=board.start().bridges)
+    assert tipping_direction(board, state) is None, "no tile is left to pivot on"

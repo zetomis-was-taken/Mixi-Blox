@@ -23,11 +23,52 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from bloxorz.core.contracts import Action, Direction, State
-from bloxorz.core.engine import Board, roll
+from bloxorz.core.contracts import Action, Direction, State, Verdict
+from bloxorz.core.engine import Board, orientation, roll
 
 # The direction that rolls a move back. An undo is the same quarter-turn, mirrored.
 OPPOSITE: dict[Direction, Direction] = {"U": "D", "D": "U", "L": "R", "R": "L"}
+
+# The hole's direction from the cell that still has a tile under it.
+_TIP_DIRECTIONS: dict[tuple[int, int], Direction] = {
+    (0, -1): "L",
+    (0, 1): "R",
+    (-1, 0): "U",
+    (1, 0): "D",
+}
+
+
+def falling_cubes(board: Board, state: State) -> frozenset[int]:
+    """Which cubes of a fatal ``state`` have nothing left under them.
+
+    On a split stage one cube can stand on a tile while the other hangs over void or a bridge that
+    just closed, and only that cube drops; on an unsplit block the one piece is always the one that
+    falls. Read from ``Board.passable``, so the view drops by the same rule the engine fell by.
+    """
+    split = len(state.cubes) == 2
+    return frozenset(
+        index
+        for index, cube in enumerate(state.cubes)
+        if not all(board.passable(cell, orientation(cube, split), state.bridges) for cell in cube)
+    )
+
+
+def tipping_direction(board: Board, state: State) -> Direction | None:
+    """Toward the hole under half of a lying block, when that is how the fall is supported.
+
+    Only a lying block can be half supported: a standing block or a lone cube is one cell, so it
+    either stands or falls whole. A block with both cells over nothing drops straight down, so the
+    answer is ``None`` there too.
+    """
+    if len(state.cubes) != 1 or len(state.cubes[0]) != 2:
+        return None
+    cube = state.cubes[0]
+    piece = orientation(cube, split=False)
+    grounded = [board.passable(cell, piece, state.bridges) for cell in cube]
+    if grounded.count(True) != 1:
+        return None
+    kept, hole = cube[grounded.index(True)], cube[grounded.index(False)]
+    return _TIP_DIRECTIONS[(hole[0] - kept[0], hole[1] - kept[1])]
 
 
 @dataclass(frozen=True)
@@ -87,53 +128,40 @@ class PlayerController:
         self._active = 1 - self.active
         return True
 
-    def resolve(self, direction: Direction) -> tuple[State, Action] | None:
-        """The active cube's ``(next_state, action)`` in ``direction``, if there is one.
-
-        When only the other cube can move that way the move is still offered, so a direction key is
-        never dead: the active cube is a preference, not a filter. Ties go to engine order, so the
-        game and solver playback pick the same action.
-        """
-        options = [pair for pair in self.board.successors(self.state) if pair[1][1] == direction]
-        for option in options:
-            if option[1][0] == self.active:
-                return option
-        return options[0] if options else None
-
-    def resolve_fatal(self, direction: Direction) -> tuple[State, Action] | None:
-        """The active cube's fatal ``(fatal_state, action)`` in ``direction``, if there is one.
-
-        When the active cube cannot move, the other cube is checked.
-        """
-        candidates = (self.active, 1 - self.active) if self.split else (self.active,)
-        for index in candidates:
-            action = (index, direction)
-            outcome = self.board.outcome(self.state, action)
-            if outcome.kind == "fatal" and outcome.state is not None:
-                return outcome.state, action
-        return None
-
     def move(self, direction: Direction) -> bool:
         """Move the active cube one action in ``direction``. Returns whether one was started."""
         if self.animating or self.cleared or self.lost:
             return False
-        resolved = self.resolve(direction)
-        if resolved is not None:
-            next_state, action = resolved
-            self.history.append((self.state, action))
-            self.moves += 1
+        choice = self._choose(direction)
+        if choice is None:
+            return False
+        verdict, next_state, action = choice
+        self.history.append((self.state, action))
+        self.moves += 1
+        if verdict == "fatal":
+            self._begin_fatal(next_state, action)
+        else:
             self._begin(next_state, action)
-            return True
+        return True
 
-        fatal = self.resolve_fatal(direction)
-        if fatal is not None:
-            fatal_state, action = fatal
-            self.history.append((self.state, action))
-            self.moves += 1
-            self._begin_fatal(fatal_state, action)
-            return True
+    def _choose(self, direction: Direction) -> tuple[Verdict, State, Action] | None:
+        """The active cube's answer in ``direction``, else the other cube's.
 
-        return False
+        The active cube is a preference, not a filter: when it has nothing to do the key is handed
+        to the other cube rather than dropped. Its own fall counts as something to do, so a step off
+        the platform is never quietly replaced by the other cube's move. Legal actions are read from
+        ``successors`` and falls from ``outcome``, so the game and playback pick the same one.
+        """
+        legal = {action: state for state, action in self.board.successors(self.state)}
+        order = (self.active, 1 - self.active) if self.split else (self.active,)
+        for index in order:
+            action = (index, direction)
+            if action in legal:
+                return "moves", legal[action], action
+            outcome = self.board.outcome(self.state, action)
+            if outcome.kind == "fatal" and outcome.state is not None:
+                return "fatal", outcome.state, action
+        return None
 
     def play(self, next_state: State, action: Action) -> bool:
         """Apply one action chosen elsewhere — solver playback — as a move that costs nothing.
@@ -166,7 +194,13 @@ class PlayerController:
         self.lost = True
         self.animating = True
         self.block.fall(
-            start, fatal_state, action, self._fatal_animation_finished, self.on_drop
+            start,
+            fatal_state,
+            action,
+            self._fatal_animation_finished,
+            on_drop=self.on_drop,
+            dropping=falling_cubes(self.board, fatal_state) or None,
+            tipping=tipping_direction(self.board, fatal_state),
         )
 
     def _fatal_animation_finished(self) -> None:

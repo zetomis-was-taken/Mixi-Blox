@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from bloxorz.core.contracts import Action, Stage, State
+from bloxorz.core.contracts import Action, Direction, Stage, State
 from bloxorz.core.engine import orientation, roll
 
 TILE_SIZE = 1.0
@@ -104,6 +104,41 @@ def poses_for_state(state: State, rows: int, cols: int) -> tuple[Pose, ...]:
             x, z = cell_to_world(cube[0], rows, cols)
             poses.append(Pose((x, 0.5, z), (1.0, 1.0, 1.0)))
     return tuple(poses)
+
+
+# The tip is a quarter-turn like a roll, in the unit the quaternion helper reads.
+TIP_ANGLE = 90.0
+
+# Per hole direction: the axis to turn about, and which way, so the half over the hole swings down.
+_TIP_TURNS: dict[str, tuple[tuple[float, float, float], float]] = {
+    "L": ((0.0, 0.0, 1.0), TIP_ANGLE),
+    "R": ((0.0, 0.0, 1.0), -TIP_ANGLE),
+    "U": ((1.0, 0.0, 0.0), TIP_ANGLE),
+    "D": ((1.0, 0.0, 0.0), -TIP_ANGLE),
+}
+
+
+@dataclass(frozen=True)
+class Tip:
+    """A quarter-turn about the bottom edge a half-supported block hangs on."""
+
+    pivot: tuple[float, float, float]
+    offset: tuple[float, float, float]
+    axis: tuple[float, float, float]
+    angle: float
+
+
+def tip_plan(pose: Pose, direction: Direction) -> Tip:
+    """The quarter-turn that takes a block half over a hole off the platform.
+
+    The pivot is the bottom edge shared with the hole, straight under the box's centre, so the half
+    over the hole swings down while the half still on a tile lifts and swings over it. The block
+    leaves the platform instead of dropping through the tile it was resting on.
+    """
+    axis, angle = _TIP_TURNS[direction]
+    pivot = (pose.center[0], pose.center[1] - pose.scale[1] / 2.0, pose.center[2])
+    offset = tuple(center - point for center, point in zip(pose.center, pivot))
+    return Tip(pivot=pivot, offset=offset, axis=axis, angle=angle)
 
 
 def landed_cube_index(start: State, next_state: State, action: Action) -> int | None:

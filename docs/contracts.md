@@ -146,12 +146,13 @@ class Outcome:
 
 - `moves` carries the successor, and it is the same transition `successors` emits. Both read one
   pipeline, so "legal there, fatal here" cannot happen.
-- `refused` is a wall — void, a closed bridge, a cell the other cube already occupies — and carries
-  no state, because nothing happened.
-- `fatal` is a fall: a fragile tile giving way under a standing block (§2.5), or a switch closing
-  the bridge under the block (ADR-005). Its state is a rendering prop, not a state of play — it is
-  precisely a state `successors` refuses to generate, so expanding it reaches nothing. Both readings
-  are ADR-010's decision.
+- `refused` is a wall — a cell the other cube already occupies — and carries no state, because
+  nothing happened.
+- `fatal` is a fall: a move that leaves the platform (void or a closed bridge, #54), a fragile
+  tile giving way under a standing block (§2.5), or a switch closing the bridge under the block
+  (ADR-005). Its state is a rendering prop, not a state of play — it is precisely a state
+  `successors` refuses to generate, so expanding it reaches nothing. Both readings are ADR-010's
+  decision.
 
 Neither the generated actions nor the reachable state set change: a fatal action is still absent
 from `successors`, which ignores the verdict and keeps only `moves`.
@@ -175,15 +176,16 @@ Rules:
 
 - `successors` is pure and carries no cost. An `Action` names its cube, so a cube may be moved
   twice in a row; while unsplit only index `0` is emitted. Actions that would place any cell over
-  void or a closed bridge, or two cubes on one cell, are not generated — an illegal move is
-  absence, not a losing transition. Fragile follows the same style: impassable for `standing`,
-  rather than passable-then-detect-the-loss. A **switch** action is filtered the same way:
-  `bridges` is updated first, and if the result leaves an occupied cell over a closed bridge, the
-  action is not generated (ADR-005: a switch may not close a bridge under the block).
-- Absence is the **search-side** reading, not the whole story (ADR-010). A player does not see two
-  of those refusals as walls: a fragile tile breaks under a standing block (§2.5), and a switch that
-  closes the bridge under the block drops it (ADR-005). `outcome` reports which of the three things a
-  pressed action does, so a renderer can tell a wall from a fall without re-deriving the transition.
+  void or a closed bridge, or two cubes on one cell, are not generated. Fragile follows the same
+  style: impassable for `standing`, rather than passable-then-detect-the-loss. A **switch** action
+  is filtered the same way: `bridges` is updated first, and if the result leaves an occupied cell
+  over a closed bridge, the action is not generated (ADR-005: a switch may not close a bridge under
+  the block).
+- Absence is the **search-side** reading, not the whole story (ADR-010). A player sees most of those
+  absences as falls: stepping off the platform (#54), a fragile tile breaking under a standing
+  block (§2.5), and a switch that closes the bridge under the block (ADR-005). Only a cell the other
+  cube holds is a wall. `outcome` reports which of the three things a pressed action does, so a
+  renderer can tell a wall from a fall without re-deriving the transition.
 - `step_cost` is the only place a transition is priced (#7). The policy in `core/costs.py` charges
   `1` per roll plus `1` per newly contacted fragile tile, so a price lies in `{1, 2, 3}` and
   `c_min = 1`. Non-uniform weights are policy: tuning them never edits engine code.
@@ -499,19 +501,19 @@ Consumers: #24 tabulates `status` with no special-casing; #21 replays `path` whe
 ## Mechanics answers
 
 §2.5 leaves six interactions unstated. All six now have an answer: #11 by ADR-005, #12 by ADR-003,
-#13 by ADR-006, #14 by ADR-007, #15 by ADR-008, #16 by ADR-004. None of them changes a signature.
-#65 asks the same question of a teleport that cannot land, and needs no new rule: the block is never
-placed, so it is void contact, which ADR-004 already covers.
+#13 by ADR-006, #14 by ADR-007, #15 by ADR-008, #16 by #54 (amending ADR-004). None of them
+changes a signature. #65 asks the same question of a teleport that cannot land: the same answer as
+any other void contact, so #54 covers it too.
 
 | Issue | Outcome | Where it is assumed | Status |
 | --- | --- | --- | --- |
-| #11 bridge closing under the block | the action is not generated, not lost | `successors` legality | answered, ADR-005 |
+| #11 bridge closing under the block | the action is not generated; `outcome` reports the fall | `successors` legality, `outcome` | answered, ADR-005 |
 | #12 fragile under a lone cube | safe — one unit on one tile equals a lying block's load | the `fragile` row of the passability table | answered, ADR-003 |
 | #13 cube-cube interaction | no shared cell, no cell swap in one action | `successors` legality | answered, ADR-006 |
 | #14 merge orientation | decided by the pair's adjacency axis | `successors`, "merging" rule | answered, ADR-007 |
 | #15 split switch re-trigger | always fires for a full block, inert for a lone cube | the `Y` activation rule | answered, ADR-008 |
-| #16 one cube falls off | the move is not generated, equivalent to immediate loss | `successors` legality | answered as subsumed by #11, ADR-004 |
-| #65 a split's teleport cannot land | the move is not generated, and there is no fall to animate | `successors` legality | answered as subsumed by ADR-004 |
+| #16 one cube falls off | the action is not generated; `outcome` reports the fall | `successors` legality, `outcome` | answered, #54 |
+| #65 a split's teleport cannot land | the action is not generated; `outcome` reports the fall | `successors` legality, `outcome` | answered, #54 |
 
 ## Obligations
 

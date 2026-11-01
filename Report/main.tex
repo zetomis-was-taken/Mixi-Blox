@@ -114,7 +114,7 @@
         24120070 -- Vương Hữu Khang\\[0.3cm]
         \textbf{Mã nguồn GitHub:}\\
         \href{https://github.com/zetomis-was-taken/Mixi-Blox}{zetomis-was-taken/Mixi-Blox}\\[0.2cm]
-        \textbf{Video Demo YouTube:}\\
+        \textbf{Video minh họa (YouTube):}\\
         \href{https://youtu.be/SQkEpJWEgQo}{https://youtu.be/SQkEpJWEgQo}
     \end{minipage}
 
@@ -362,19 +362,19 @@ Từ dữ liệu thực nghiệm tại Bảng \ref{tab:benchmark_results} và c�
 \section{Giao diện chương trình \& Video Demo (GUI \& Demo)}
 
 \subsection{Mô tả giao diện đồ họa (GUI)}
-Chương trình được phát triển giao diện 3D tương tác hoàn chỉnh bằng thư viện Ursina (dựa trên nền tảng Panda3D), bao gồm:
+Chương trình được phát triển giao diện 3D tương tác hoàn chỉnh bằng thư viện Ursina (dựa trên nền tảng Panda3D), vận hành nhất quán theo cấu trúc trải nghiệm:
 \begin{itemize}
-    \item Bàn cờ hiển thị dạng 3D trực quan, phân biệt rõ màu sắc và vật liệu của từng loại ô (Sàn tiêu chuẩn, Ô cam dễ vỡ, Cầu đóng/mở linh hoạt, Công tắc hình tròn Soft Switch và hình chữ X Heavy Switch).
-    \item Khối hộp hiển thị chuyển động lăn 3D mượt mà (Smooth roll animation qua 12 trường hợp xoay góc).
-    \item Bảng điều khiển tích hợp: Chọn màn chơi trong bộ Test Set, New Game / Restart, và 4 nút kích hoạt các thuật toán tìm kiếm (BFS, DFS, UCS, A*) kèm bảng số liệu thống kê thời gian, bộ nhớ, số bước.
-    \item Chế độ phát lại (Replay mode): Cho phép Play, Pause, Step từng bước hoặc điều chỉnh tốc độ lăn của lời giải.
+    \item \textbf{Khởi động \& Chọn màn (Title \& Level Select)}: Màn hình mở đầu (Title screen) với hiệu ứng đồ họa khối 3D dẫn vào danh sách chọn màn chơi (Level select) phân chia trực quan theo 4 nhóm cấp độ (L1--L4).
+    \item \textbf{Môi trường chơi 3D (Play Scene)}: Bàn cờ hiển thị 3D sắc nét theo góc nhìn isometric nghiêng 40°, phân biệt rõ màu sắc và chất liệu của từng loại ô (sàn tiêu chuẩn, ô cam dễ vỡ, cầu đóng/mở linh hoạt, công tắc mềm tròn và công tắc nặng chữ X). Khối hộp lăn mượt mà qua 12 trường hợp góc xoay tất định.
+    \item \textbf{Cơ chế tương tác \& Trạng thái kết thúc}: Người chơi điều khiển bằng cụm phím mũi tên hoặc \texttt{W, A, S, D}, phím \texttt{Z} để đi lại (Undo), phím \texttt{Tab} để hoán đổi khối khi phân tách (Split). Khi khối lăn ra ngoài mép sàn hoặc làm sập ô dễ vỡ, hoạt ảnh rơi tự do gia tốc được kích hoạt cùng bảng thông báo thất bại (\textit{Stage failed}) cung cấp hai lựa chọn Chơi lại (\texttt{R} / Enter) hoặc Trở về danh sách màn (\texttt{Esc} / \texttt{L}). Khi khối đứng vào ô đích, bảng chiến thắng (\textit{Level cleared}) hiển thị tổng số bước và thời gian hoàn thành.
+    \item \textbf{Bảng giải thuật toán \& Phát lại (Solve \& Replay)}: Tích hợp 4 thẻ giải thuật toán độc lập (BFS, DFS, UCS, A*). Khi chọn thuật toán, chương trình thực thi tìm kiếm và hiển thị bảng thẻ thống kê chính xác (thời gian tính toán, bộ nhớ RAM đỉnh, tổng chi phí và số bước đi). Người dùng có thể nhấn \textbf{Replay} để xem khối tự động lăn theo đường đi tối ưu về đích, hỗ trợ phím \texttt{Space} để tạm dừng/tiếp tục và \texttt{Esc} để dừng phát lại.
 \end{itemize}
 
-\subsection{Liên kết Video Demo YouTube}
+\subsection{Liên kết Video minh họa}
 Video trình diễn đầy đủ các tính năng của chương trình và giải các màn chơi mẫu:
 \begin{center}
     \large
-    \textbf{Link Video YouTube:} \url{https://youtu.be/SQkEpJWEgQo}
+    \textbf{Đường dẫn video (YouTube):} \url{https://youtu.be/SQkEpJWEgQo}
 \end{center}
 
 % ==============================================================================
